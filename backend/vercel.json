@@ -1,0 +1,24 @@
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "api/**/*.js",
+            "use": "@vercel/node"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/api/$1"
+        }
+    ],
+    "env": {
+        "PADDLE_API_KEY": "@paddle_api_key",
+        "PADDLE_WEBHOOK_SECRET": "@paddle_webhook_secret",
+        "PADDLE_VENDOR_ID": "@paddle_vendor_id",
+        "PADDLE_PRICE_MONTHLY": "@paddle_price_monthly",
+        "PADDLE_PRICE_ANNUAL": "@paddle_price_annual",
+        "PADDLE_PRICE_LIFETIME": "@paddle_price_lifetime",
+        "POSTGRES_URL": "@postgres_url"
+    }
+}

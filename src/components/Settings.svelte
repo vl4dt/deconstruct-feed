@@ -4,6 +4,7 @@
     import { userSubscription } from "../lib/stores/subscription";
     import { theme } from "../lib/stores/theme";
     import UpgradeModal from "../components/UpgradeModal.svelte";
+    import LicenseActivation from "../components/LicenseActivation.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -13,9 +14,10 @@
     let newSource = $state("");
     let selectedTopic = $state(null);
 
-    // Upgrade Modal State
+    // Modal State
     let showUpgradeModal = $state(false);
     let upgradeMessage = $state("");
+    let showLicenseActivation = $state(false);
 
     onMount(async () => {
         await userSubscription.init();
@@ -94,9 +96,29 @@
         }
     }
 
-    function handleUpgrade() {
+    function handleCheckoutOpened() {
+        // User is going to checkout, no action needed
+    }
+
+    function handleShowActivation() {
         showUpgradeModal = false;
-        userSubscription.upgrade();
+        showLicenseActivation = true;
+    }
+
+    function handleLicenseActivated() {
+        showLicenseActivation = false;
+        // Reload data to reflect new Pro status
+        loadData();
+    }
+
+    async function deactivateLicense() {
+        if (
+            confirm(
+                "Are you sure you want to deactivate your license? You'll lose access to Pro features.",
+            )
+        ) {
+            await userSubscription.deactivateLicense();
+        }
     }
 </script>
 
@@ -105,7 +127,14 @@
         show={showUpgradeModal}
         message={upgradeMessage}
         on:close={() => (showUpgradeModal = false)}
-        on:upgrade={handleUpgrade}
+        on:checkout-opened={handleCheckoutOpened}
+        on:show-activation={handleShowActivation}
+    />
+
+    <LicenseActivation
+        show={showLicenseActivation}
+        on:close={() => (showLicenseActivation = false)}
+        on:activated={handleLicenseActivated}
     />
 
     <header>
@@ -156,6 +185,67 @@
                 <button class="toggle-btn" onclick={theme.toggle}>
                     {$theme === "light" ? "☀️ Light" : "🌙 Dark"}
                 </button>
+            </div>
+
+            <!-- License Management Section -->
+            <div class="license-section">
+                <h3>License</h3>
+                {#if $userSubscription.isPro}
+                    <div class="license-info">
+                        <div class="info-row">
+                            <span class="label">Status:</span>
+                            <span class="value pro">✓ Pro Active</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Tier:</span>
+                            <span class="value"
+                                >{$userSubscription.tier || "N/A"}</span
+                            >
+                        </div>
+                        {#if $userSubscription.email}
+                            <div class="info-row">
+                                <span class="label">Email:</span>
+                                <span class="value"
+                                    >{$userSubscription.email}</span
+                                >
+                            </div>
+                        {/if}
+                        {#if $userSubscription.expiresAt}
+                            <div class="info-row">
+                                <span class="label">Expires:</span>
+                                <span class="value"
+                                    >{new Date(
+                                        $userSubscription.expiresAt,
+                                    ).toLocaleDateString()}</span
+                                >
+                            </div>
+                        {/if}
+                        {#if $userSubscription.error}
+                            <div class="error-notice">
+                                {$userSubscription.error}
+                            </div>
+                        {/if}
+                        <button
+                            class="deactivate-btn"
+                            onclick={deactivateLicense}
+                        >
+                            Deactivate License
+                        </button>
+                    </div>
+                {:else}
+                    <div class="license-info">
+                        <div class="info-row">
+                            <span class="label">Status:</span>
+                            <span class="value free">Free Tier</span>
+                        </div>
+                        <button
+                            class="activate-btn"
+                            onclick={() => (showLicenseActivation = true)}
+                        >
+                            Activate License
+                        </button>
+                    </div>
+                {/if}
             </div>
 
             {#if !$userSubscription.isPro}
@@ -441,5 +531,78 @@
     button:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+    }
+
+    /* License Management Section */
+    .license-section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .license-info {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .info-row:last-of-type {
+        border-bottom: none;
+    }
+
+    .info-row .label {
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .info-row .value {
+        color: var(--text-primary);
+    }
+
+    .info-row .value.pro {
+        color: #4caf50;
+        font-weight: 600;
+    }
+
+    .info-row .value.free {
+        color: var(--text-tertiary);
+    }
+
+    .error-notice {
+        background: #fff3cd;
+        color: #856404;
+        padding: 0.75rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-top: 0.75rem;
+    }
+
+    .activate-btn {
+        width: 100%;
+        margin-top: 1rem;
+        background: linear-gradient(135deg, #4a90e2, #357abd);
+    }
+
+    .activate-btn:hover {
+        opacity: 0.9;
+    }
+
+    .deactivate-btn {
+        width: 100%;
+        margin-top: 1rem;
+        background: #f44336;
+        color: white;
+    }
+
+    .deactivate-btn:hover {
+        background: #d32f2f;
     }
 </style>

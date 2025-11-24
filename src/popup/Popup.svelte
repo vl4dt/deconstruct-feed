@@ -719,13 +719,15 @@ ${getTextContent(selectedArticle.description)}
     font-family: "Inter", system-ui, sans-serif;
     background: var(--bg-secondary);
     color: var(--text-primary);
+    overflow: hidden;
   }
   main {
-    width: 600px;
-    min-height: 600px;
+    width: 800px;
+    height: 600px;
     background: var(--bg-primary);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
   header {
     padding: 1rem;
@@ -733,11 +735,10 @@ ${getTextContent(selectedArticle.description)}
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: sticky;
-    top: 0;
     background: var(--bg-header);
     backdrop-filter: blur(10px);
     z-index: 10;
+    flex-shrink: 0;
   }
   h1 {
     margin: 0;
@@ -766,6 +767,8 @@ ${getTextContent(selectedArticle.description)}
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
   }
   .topic-group {
     display: flex;
@@ -1083,25 +1086,36 @@ ${getTextContent(selectedArticle.description)}
   .view-more-btn:hover {
     text-decoration: underline;
   }
+  .article-view {
+    padding: 1rem;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
   .article-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    background: var(--bg-tertiary);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  .back-btn:hover {
+    background: var(--bg-secondary);
   }
   .export-btn {
-    background: none;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 0.3rem 0.6rem;
-    font-size: 0.85rem;
-    cursor: pointer;
-    color: var(--text-secondary);
-    transition: all 0.2s;
-  }
-  .export-btn:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
+    background: var(--accent-primary);
+    color: white;
     border-color: var(--accent-primary);
   }
   .toast {
