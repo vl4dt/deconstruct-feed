@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "News Curator AI",
+  "name": "NewsLens AI",
   "version": "1.0.0",
-  "description": "Curate, summarize and group news using Chrome Built-in AI.",
+  "description": "AI-powered news curation with smart analysis, summaries, and multi-topic tracking.",
   "permissions": [
     "storage",
     "activeTab",

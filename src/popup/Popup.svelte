@@ -381,7 +381,7 @@ ${getTextContent(selectedArticle.description)}
   {#if view !== "settings"}
     <header>
       <div class="header-left">
-        <h1>News Curator</h1>
+        <h1>NewsLens AI</h1>
         {#if $userSubscription.isPro}
           <button
             class="icon-btn fire-btn"

@@ -1,8 +1,8 @@
 {
-    "name": "newscurator-backend",
+    "name": "newslens-ai-backend",
     "version": "1.0.0",
     "type": "module",
-    "description": "Backend API for News Curator licensing",
+    "description": "Backend API for NewsLens AI licensing and payments",
     "scripts": {
         "dev": "vercel dev",
         "deploy": "vercel --prod"
