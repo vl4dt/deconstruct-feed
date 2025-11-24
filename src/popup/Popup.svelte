@@ -11,10 +11,11 @@
     checkBias,
   } from "../lib/ai/aiService";
   import { sourceService } from "../lib/news/sourceService";
-  import { userSubscription } from "../lib/stores/subscription";
-  import { theme } from "../lib/stores/theme";
   import Settings from "../components/Settings.svelte";
   import UpgradeModal from "../components/UpgradeModal.svelte";
+  import MarkdownRenderer from "../components/MarkdownRenderer.svelte";
+  import { userSubscription } from "../lib/stores/subscription";
+  import { theme } from "../lib/stores/theme";
 
   let articles = $state([]);
   let loading = $state(false);
@@ -431,7 +432,7 @@ ${getTextContent(selectedArticle.description)}
         <div class="loading">Analyzing with AI...</div>
       {:else}
         <div class="script-content">
-          <pre>{analysisResult}</pre>
+          <MarkdownRenderer content={analysisResult} />
         </div>
         <button
           class="read-more"
@@ -514,7 +515,7 @@ ${getTextContent(selectedArticle.description)}
               <div class="loading-pulse">Generating summary...</div>
             {:else}
               <div class="markdown-content">
-                <pre>{summary}</pre>
+                <MarkdownRenderer content={summary} />
               </div>
             {/if}
           </div>
@@ -541,7 +542,7 @@ ${getTextContent(selectedArticle.description)}
               <div class="loading-pulse">Checking bias...</div>
             {:else}
               <div class="markdown-content">
-                <pre>{biasResult}</pre>
+                <MarkdownRenderer content={biasResult} />
               </div>
             {/if}
           </div>
