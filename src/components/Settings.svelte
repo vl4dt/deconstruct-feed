@@ -3,6 +3,7 @@
     import { sourceService } from "../lib/news/sourceService";
     import { userSubscription } from "../lib/stores/subscription";
     import { theme } from "../lib/stores/theme";
+    import UpgradeModal from "../components/UpgradeModal.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -11,6 +12,10 @@
     let newTopic = $state("");
     let newSource = $state("");
     let selectedTopic = $state(null);
+
+    // Upgrade Modal State
+    let showUpgradeModal = $state(false);
+    let upgradeMessage = $state("");
 
     onMount(async () => {
         await userSubscription.init();
@@ -24,9 +29,9 @@
 
     async function addTopic() {
         if (!$userSubscription.isPro && topics.length >= 3) {
-            alert(
-                "Free tier is limited to 3 topics. Upgrade to Pro for unlimited topics!",
-            );
+            upgradeMessage =
+                "Free tier is limited to 3 topics. Upgrade to Pro for unlimited topics!";
+            showUpgradeModal = true;
             return;
         }
         if (newTopic) {
@@ -88,9 +93,21 @@
             userSubscription.upgrade();
         }
     }
+
+    function handleUpgrade() {
+        showUpgradeModal = false;
+        userSubscription.upgrade();
+    }
 </script>
 
 <div class="settings-container">
+    <UpgradeModal
+        show={showUpgradeModal}
+        message={upgradeMessage}
+        on:close={() => (showUpgradeModal = false)}
+        on:upgrade={handleUpgrade}
+    />
+
     <header>
         <button class="back-btn" onclick={goBack}>&larr;</button>
         <h2>{selectedTopic ? selectedTopic : "Settings"}</h2>

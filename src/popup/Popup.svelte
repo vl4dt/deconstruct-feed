@@ -1,11 +1,20 @@
 <script>
   import { onMount } from "svelte";
-  import { fetchNewsForTopics } from "../lib/news/newsEngine";
-  import { summarize } from "../lib/ai/aiService";
+  import {
+    fetchNewsForTopics,
+    fetchTrendingNews,
+  } from "../lib/news/newsEngine";
+  import {
+    summarize,
+    generateScript,
+    deepDive,
+    checkBias,
+  } from "../lib/ai/aiService";
   import { sourceService } from "../lib/news/sourceService";
   import { userSubscription } from "../lib/stores/subscription";
   import { theme } from "../lib/stores/theme";
   import Settings from "../components/Settings.svelte";
+  import UpgradeModal from "../components/UpgradeModal.svelte";
 
   let articles = $state([]);
   let loading = $state(false);
@@ -13,9 +22,28 @@
   let summary = $state("");
   let summaryLoading = $state(false);
   let topics = $state([]);
-  let view = $state("feed"); // 'feed', 'article', 'settings'
+  let view = $state("feed"); // 'feed', 'article', 'settings', 'script', 'trending', 'analysis'
   let expandedTopics = $state(new Set());
   let collapsedTopics = $state(new Set());
+
+  // Selection Mode State
+  let selectionMode = $state(false);
+  let selectedArticleIds = $state(new Set());
+  let generatedScript = $state("");
+  let scriptLoading = $state(false);
+  let analysisResult = $state("");
+  let analysisTitle = $state("");
+
+  // Trending State
+  let trendingArticles = $state([]);
+
+  // Bias Check State
+  let biasResult = $state("");
+  let biasLoading = $state(false);
+
+  // Upgrade Modal State
+  let showUpgradeModal = $state(false);
+  let upgradeMessage = $state("");
 
   // Derived state for grouped articles
   let groupedArticles = $derived.by(() => {
@@ -70,10 +98,113 @@
     }
   }
 
+  async function loadTrending() {
+    if (!$userSubscription.isPro) {
+      upgradeMessage = "Trending Topics is a Pro feature. Upgrade to unlock!";
+      showUpgradeModal = true;
+      return;
+    }
+    view = "trending";
+    loading = true;
+    try {
+      trendingArticles = await fetchTrendingNews();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      loading = false;
+    }
+  }
+
   function selectArticle(article) {
-    selectedArticle = article;
-    summary = "";
-    view = "article";
+    if (selectionMode) {
+      toggleSelection(article);
+    } else {
+      selectedArticle = article;
+      summary = "";
+      biasResult = "";
+      view = "article";
+    }
+  }
+
+  function toggleSelection(article) {
+    const newSet = new Set(selectedArticleIds);
+    // Use link as unique ID since we don't have real IDs
+    if (newSet.has(article.link)) {
+      newSet.delete(article.link);
+    } else {
+      newSet.add(article.link);
+    }
+    selectedArticleIds = newSet;
+  }
+
+  function toggleSelectionMode() {
+    if (!$userSubscription.isPro) {
+      upgradeMessage = "Selection Mode is a Pro feature. Upgrade to unlock!";
+      showUpgradeModal = true;
+      return;
+    }
+    selectionMode = !selectionMode;
+    selectedArticleIds = new Set();
+  }
+
+  async function generateVideoScript() {
+    if (selectedArticleIds.size === 0) return;
+
+    const selectedArticles = getAllArticles().filter((a) =>
+      selectedArticleIds.has(a.link),
+    );
+    scriptLoading = true;
+    analysisTitle = "Video Script";
+    view = "analysis";
+
+    try {
+      analysisResult = await generateScript(selectedArticles);
+    } catch (e) {
+      analysisResult = "Error generating script: " + e.message;
+    } finally {
+      scriptLoading = false;
+    }
+  }
+
+  async function performDeepDive() {
+    if (selectedArticleIds.size === 0) return;
+
+    const selectedArticles = getAllArticles().filter((a) =>
+      selectedArticleIds.has(a.link),
+    );
+    scriptLoading = true;
+    analysisTitle = "Deep Dive Analysis";
+    view = "analysis";
+
+    try {
+      analysisResult = await deepDive(selectedArticles);
+    } catch (e) {
+      analysisResult = "Error performing deep dive: " + e.message;
+    } finally {
+      scriptLoading = false;
+    }
+  }
+
+  async function doBiasCheck() {
+    if (!selectedArticle) return;
+    if (!$userSubscription.isPro) {
+      upgradeMessage = "Bias Check is a Pro feature. Upgrade to unlock!";
+      showUpgradeModal = true;
+      return;
+    }
+    biasLoading = true;
+    try {
+      const text = `${selectedArticle.title}\n\n${selectedArticle.description}`;
+      biasResult = await checkBias(text);
+    } catch (e) {
+      biasResult = "Error: " + e.message;
+    } finally {
+      biasLoading = false;
+    }
+  }
+
+  function getAllArticles() {
+    return view === "trending" ? trendingArticles : articles;
   }
 
   async function doSummarize() {
@@ -95,7 +226,9 @@
     if (!selectedArticle) return;
 
     if (!$userSubscription.isPro) {
-      alert("Export to Markdown is a Pro feature. Upgrade in Settings!");
+      upgradeMessage =
+        "Export to Markdown is a Pro feature. Upgrade to unlock!";
+      showUpgradeModal = true;
       return;
     }
 
@@ -125,6 +258,8 @@ ${getTextContent(selectedArticle.description)}
     selectedArticle = null;
     summary = "";
     view = "feed";
+    selectionMode = false;
+    selectedArticleIds = new Set();
   }
 
   function openSettings() {
@@ -135,6 +270,11 @@ ${getTextContent(selectedArticle.description)}
     view = "feed";
     await loadTopics();
     loadNews(); // Reload news with potentially new topics
+  }
+
+  function handleUpgrade() {
+    showUpgradeModal = false;
+    view = "settings";
   }
 
   function getSnippet(html) {
@@ -176,15 +316,76 @@ ${getTextContent(selectedArticle.description)}
     <div class="toast">Copied to clipboard!</div>
   {/if}
 
+  <UpgradeModal
+    show={showUpgradeModal}
+    message={upgradeMessage}
+    on:close={() => (showUpgradeModal = false)}
+    on:upgrade={handleUpgrade}
+  />
+
   {#if view !== "settings"}
     <header>
-      <h1>News Curator</h1>
-      <button class="icon-btn" onclick={openSettings}>⚙️</button>
+      <div class="header-left">
+        <h1>News Curator</h1>
+        {#if $userSubscription.isPro}
+          <button
+            class="icon-btn fire-btn"
+            class:active={view === "trending"}
+            onclick={loadTrending}
+            title="Trending Topics"
+          >
+            🔥
+          </button>
+          <button
+            class="icon-btn home-btn"
+            class:active={view === "feed"}
+            onclick={() => {
+              view = "feed";
+              loadNews();
+            }}
+            title="My Feed"
+          >
+            🏠
+          </button>
+        {/if}
+      </div>
+      <div class="header-actions">
+        {#if $userSubscription.isPro}
+          <button
+            class="icon-btn select-btn"
+            class:active={selectionMode}
+            onclick={toggleSelectionMode}
+            title="Select articles for video script"
+          >
+            {selectionMode ? "Cancel" : "Select"}
+          </button>
+        {/if}
+        <button class="icon-btn" onclick={openSettings}>⚙️</button>
+      </div>
     </header>
   {/if}
 
   {#if view === "settings"}
     <Settings on:back={closeSettings} />
+  {:else if view === "analysis"}
+    <div class="article-view">
+      <button class="back-btn" onclick={backToFeed}>&larr; Back</button>
+      <h2>{analysisTitle}</h2>
+
+      {#if scriptLoading}
+        <div class="loading">Analyzing with AI...</div>
+      {:else}
+        <div class="script-content">
+          <pre>{analysisResult}</pre>
+        </div>
+        <button
+          class="read-more"
+          onclick={() => navigator.clipboard.writeText(analysisResult)}
+        >
+          Copy Result
+        </button>
+      {/if}
+    </div>
   {:else if view === "article" && selectedArticle}
     <div class="article-view">
       <div class="article-nav">
@@ -203,18 +404,35 @@ ${getTextContent(selectedArticle.description)}
 
       <div class="ai-section">
         <div class="ai-header">
-          <h3>AI Summary</h3>
-          {#if !summary && !summaryLoading}
-            <button class="ai-btn" onclick={doSummarize}>✨ Summarize</button>
-          {/if}
+          <h3>AI Analysis</h3>
+          <div class="ai-actions">
+            {#if !summary && !summaryLoading}
+              <button class="ai-btn" onclick={doSummarize}>✨ Summarize</button>
+            {/if}
+            {#if !biasResult && !biasLoading}
+              <button class="ai-btn bias-btn" onclick={doBiasCheck}
+                >⚖️ Bias Check</button
+              >
+            {/if}
+          </div>
         </div>
 
         {#if summary}
           <div class="summary-box">
+            <h4>Summary</h4>
             <p>{summary}</p>
           </div>
         {:else if summaryLoading}
           <div class="loading">Generating summary...</div>
+        {/if}
+
+        {#if biasResult}
+          <div class="summary-box bias-box">
+            <h4>Bias Check</h4>
+            <p>{biasResult}</p>
+          </div>
+        {:else if biasLoading}
+          <div class="loading">Checking bias...</div>
         {/if}
       </div>
 
@@ -222,8 +440,72 @@ ${getTextContent(selectedArticle.description)}
         >Read full article</a
       >
     </div>
+  {:else if view === "trending"}
+    <div class="feed" class:selection-mode={selectionMode}>
+      <h2 class="section-title">🔥 Trending Now</h2>
+      {#if loading}
+        <div class="loading">Loading trending news...</div>
+      {:else if trendingArticles.length > 0}
+        {#each trendingArticles as article}
+          <div
+            class="card"
+            class:selected={selectedArticleIds.has(article.link)}
+            role="button"
+            tabindex="0"
+            onclick={() => selectArticle(article)}
+            onkeydown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                selectArticle(article);
+              }
+            }}
+          >
+            {#if selectionMode}
+              <div class="checkbox">
+                {#if selectedArticleIds.has(article.link)}✓{/if}
+              </div>
+            {/if}
+            <h3>{article.title}</h3>
+            <p class="snippet">{getSnippet(article.description)}</p>
+            <div class="card-footer">
+              <button
+                class="action-btn youtube-btn"
+                onclick={(e) => {
+                  e.stopPropagation();
+                  window.open(
+                    `https://www.youtube.com/results?search_query=${encodeURIComponent(article.title)}`,
+                    "_blank",
+                  );
+                }}
+                title="Search on YouTube"
+              >
+                📺 Search YT
+              </button>
+              <span class="date"
+                >{new Date(article.pubDate).toLocaleDateString()}</span
+              >
+            </div>
+          </div>
+        {/each}
+      {:else}
+        <div class="empty-state">
+          <p>No trending news found.</p>
+        </div>
+      {/if}
+    </div>
+    {#if selectionMode && selectedArticleIds.size > 0}
+      <div class="action-bar">
+        <div class="selected-count">{selectedArticleIds.size} selected</div>
+        <button class="generate-btn" onclick={generateVideoScript}>
+          ✨ Script
+        </button>
+        <button class="generate-btn deep-dive-btn" onclick={performDeepDive}>
+          🧠 Deep Dive
+        </button>
+      </div>
+    {/if}
   {:else}
-    <div class="feed">
+    <div class="feed" class:selection-mode={selectionMode}>
       {#if loading}
         <div class="loading">Loading news...</div>
       {:else if topics.length > 0}
@@ -243,6 +525,7 @@ ${getTextContent(selectedArticle.description)}
                 {#each visibleArticles as article}
                   <div
                     class="card"
+                    class:selected={selectedArticleIds.has(article.link)}
                     role="button"
                     tabindex="0"
                     onclick={() => selectArticle(article)}
@@ -253,6 +536,11 @@ ${getTextContent(selectedArticle.description)}
                       }
                     }}
                   >
+                    {#if selectionMode}
+                      <div class="checkbox">
+                        {#if selectedArticleIds.has(article.link)}✓{/if}
+                      </div>
+                    {/if}
                     <h3>{article.title}</h3>
                     <p class="snippet">{getSnippet(article.description)}</p>
                     <div class="card-footer">
@@ -298,6 +586,18 @@ ${getTextContent(selectedArticle.description)}
         </div>
       {/if}
     </div>
+
+    {#if selectionMode && selectedArticleIds.size > 0}
+      <div class="action-bar">
+        <div class="selected-count">{selectedArticleIds.size} selected</div>
+        <button class="generate-btn" onclick={generateVideoScript}>
+          ✨ Script
+        </button>
+        <button class="generate-btn deep-dive-btn" onclick={performDeepDive}>
+          🧠 Deep Dive
+        </button>
+      </div>
+    {/if}
   {/if}
 </main>
 
@@ -630,5 +930,157 @@ ${getTextContent(selectedArticle.description)}
       opacity: 1;
       transform: translate(-50%, 0);
     }
+  }
+  .header-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .select-btn {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+  .select-btn.active {
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+    border-color: var(--accent-primary);
+  }
+  .card.selected {
+    border-color: var(--accent-primary);
+    background: var(--bg-tertiary);
+  }
+  .checkbox {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    color: var(--accent-primary);
+    font-weight: bold;
+  }
+  .card.selected .checkbox {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+  }
+  .feed.selection-mode .card {
+    position: relative;
+    padding-right: 3rem;
+  }
+  .action-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-header);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    padding: 0.8rem 1.5rem;
+    border-radius: 30px;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+    animation: slideUp 0.3s ease-out;
+  }
+  @keyframes slideUp {
+    from {
+      transform: translate(-50%, 100%);
+    }
+    to {
+      transform: translate(-50%, 0);
+    }
+  }
+  .selected-count {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .generate-btn {
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .generate-btn:hover {
+    background: var(--accent-hover);
+  }
+  .script-content {
+    background: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+  }
+  .script-content pre {
+    white-space: pre-wrap;
+    font-family: inherit;
+    margin: 0;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .fire-btn,
+  .home-btn {
+    font-size: 1.1rem;
+    padding: 0.3rem;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+  .fire-btn.active,
+  .home-btn.active {
+    background: var(--bg-tertiary);
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.1);
+  }
+  .section-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .ai-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .bias-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+  }
+  .bias-btn:hover {
+    background: var(--bg-secondary);
+    border-color: var(--accent-primary);
+  }
+  .bias-box {
+    margin-top: 1rem;
+    border-left: 4px solid #ff9800;
+  }
+  .summary-box h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+  .deep-dive-btn {
+    background: #9c27b0;
+  }
+  .deep-dive-btn:hover {
+    background: #7b1fa2;
   }
 </style>

@@ -105,3 +105,110 @@ async function summarizeWithGemini(text, apiKey) {
     }
     throw new Error('No response from Gemini');
 }
+
+export async function generateScript(articles, apiKey = null) {
+    const chromeAvailable = await isChromeAIAvailable();
+    const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
+    const prompt = `Create a YouTube video script covering these stories. Include an engaging hook, transition between topics, and a call to action.\n\n${combinedText}`;
+
+    if (chromeAvailable) {
+        try {
+            console.log('Attempting to generate script with Chrome AI...');
+            const session = await LanguageModel.create({
+                initialPrompts: [{
+                    role: 'system',
+                    content: 'You are a creative scriptwriter for a tech news YouTube channel.',
+                }],
+                expectedInputs: [
+                    { type: "text", languages: ["en"] }
+                ],
+                expectedOutputs: [
+                    { type: "text", languages: ["en"] }
+                ]
+            });
+            const result = await session.prompt(prompt);
+            session.destroy();
+            return result;
+        } catch (e) {
+            console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
+        }
+    }
+
+    if (apiKey) {
+        console.log('Attempting to generate script with Gemini...');
+        return summarizeWithGemini(prompt, apiKey); // Reusing summarizeWithGemini as it's just a generic prompt function
+    }
+
+    throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
+}
+
+export async function deepDive(articles, apiKey = null) {
+    const chromeAvailable = await isChromeAIAvailable();
+    const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
+    const prompt = `Analyze these articles. Identify common themes, contradictions, and causal relationships.\n\n${combinedText}`;
+
+    if (chromeAvailable) {
+        try {
+            console.log('Attempting to deep dive with Chrome AI...');
+            const session = await LanguageModel.create({
+                initialPrompts: [{
+                    role: 'system',
+                    content: 'You are an expert news analyst.',
+                }],
+                expectedInputs: [
+                    { type: "text", languages: ["en"] }
+                ],
+                expectedOutputs: [
+                    { type: "text", languages: ["en"] }
+                ]
+            });
+            const result = await session.prompt(prompt);
+            session.destroy();
+            return result;
+        } catch (e) {
+            console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
+        }
+    }
+
+    if (apiKey) {
+        console.log('Attempting to deep dive with Gemini...');
+        return summarizeWithGemini(prompt, apiKey);
+    }
+
+    throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
+}
+
+export async function checkBias(text, apiKey = null) {
+    const chromeAvailable = await isChromeAIAvailable();
+    const prompt = `Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why.\n\n${text}`;
+
+    if (chromeAvailable) {
+        try {
+            console.log('Attempting to check bias with Chrome AI...');
+            const session = await LanguageModel.create({
+                initialPrompts: [{
+                    role: 'system',
+                    content: 'You are an objective media analyst.',
+                }],
+                expectedInputs: [
+                    { type: "text", languages: ["en"] }
+                ],
+                expectedOutputs: [
+                    { type: "text", languages: ["en"] }
+                ]
+            });
+            const result = await session.prompt(prompt);
+            session.destroy();
+            return result;
+        } catch (e) {
+            console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
+        }
+    }
+
+    if (apiKey) {
+        console.log('Attempting to check bias with Gemini...');
+        return summarizeWithGemini(prompt, apiKey);
+    }
+
+    throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
+}

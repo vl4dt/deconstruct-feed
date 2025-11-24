@@ -36,3 +36,14 @@ async function fetchRSS(url) {
     }));
 }
 
+export async function fetchTrendingNews() {
+    const url = 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en';
+    try {
+        const articles = await fetchRSS(url);
+        return articles.map(a => ({ ...a, topic: 'Trending' }));
+    } catch (e) {
+        console.error("Failed to fetch trending news", e);
+        return [];
+    }
+}
+
