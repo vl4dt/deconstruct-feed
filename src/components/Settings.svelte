@@ -3,6 +3,7 @@
     import { sourceService } from "../lib/news/sourceService";
     import { userSubscription } from "../lib/stores/subscription";
     import { theme } from "../lib/stores/theme";
+    import { settings } from "../lib/stores/settings";
     import UpgradeModal from "../components/UpgradeModal.svelte";
     import LicenseActivation from "../components/LicenseActivation.svelte";
 
@@ -21,6 +22,7 @@
 
     onMount(async () => {
         await userSubscription.init();
+        await settings.init();
         await loadData();
     });
 
@@ -187,6 +189,64 @@
                 </button>
             </div>
 
+            <div class="preferences-section">
+                <h3>Auto-Analysis Preferences</h3>
+                <div class="pref-row">
+                    <span>Auto-Summarize</span>
+                    <button
+                        class="toggle-switch"
+                        class:active={$settings.autoSummarize}
+                        onclick={() => settings.toggle("autoSummarize")}
+                        title="Toggle Auto-Summarize"
+                    >
+                    </button>
+                </div>
+                <div class="pref-row">
+                    <span>Auto-Bias Check (Pro)</span>
+                    <button
+                        class="toggle-switch"
+                        class:active={$settings.autoBias}
+                        onclick={() => settings.toggle("autoBias")}
+                        disabled={!$userSubscription.isPro}
+                        title="Toggle Auto-Bias Check"
+                    >
+                    </button>
+                </div>
+                <div class="pref-row">
+                    <span>Preload Video Script (Pro)</span>
+                    <button
+                        class="toggle-switch"
+                        class:active={$settings.preloadScript}
+                        onclick={() => settings.toggle("preloadScript")}
+                        disabled={!$userSubscription.isPro}
+                        title="Toggle Preload Video Script"
+                    >
+                    </button>
+                </div>
+                <div class="pref-row">
+                    <span>Preload Podcast Script (Pro)</span>
+                    <button
+                        class="toggle-switch"
+                        class:active={$settings.preloadPodcast}
+                        onclick={() => settings.toggle("preloadPodcast")}
+                        disabled={!$userSubscription.isPro}
+                        title="Toggle Preload Podcast Script"
+                    >
+                    </button>
+                </div>
+                <div class="pref-row">
+                    <span>Preload Deep Dive (Pro)</span>
+                    <button
+                        class="toggle-switch"
+                        class:active={$settings.preloadDeepDive}
+                        onclick={() => settings.toggle("preloadDeepDive")}
+                        disabled={!$userSubscription.isPro}
+                        title="Toggle Preload Deep Dive"
+                    >
+                    </button>
+                </div>
+            </div>
+
             <!-- License Management Section -->
             <div class="license-section">
                 <h3>License</h3>
@@ -310,88 +370,155 @@
 
 <style>
     .settings-container {
-        padding: 1rem;
+        padding: 1.5rem;
         background: var(--bg-primary);
         height: 100%;
         box-sizing: border-box;
         color: var(--text-primary);
         overflow-y: auto;
+        font-family:
+            "Inter",
+            system-ui,
+            -apple-system,
+            sans-serif;
     }
+
+    /* Custom Scrollbar */
+    .settings-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    .settings-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .settings-container::-webkit-scrollbar-thumb {
+        background-color: var(--border-color);
+        border-radius: 4px;
+    }
+
     header {
         display: flex;
         align-items: center;
         gap: 1rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
         border-bottom: 1px solid var(--border-color);
-        padding-bottom: 0.5rem;
     }
     h2 {
         margin: 0;
-        font-size: 1.2rem;
+        font-size: 1.4rem;
+        font-weight: 700;
         flex: 1;
         color: var(--text-primary);
+        letter-spacing: -0.02em;
     }
     h3 {
-        margin: 0 0 0.5rem 0;
-        font-size: 1rem;
-        background: var(--bg-tertiary);
-        color: var(--text-primary);
+        margin: 0 0 1rem 0;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+        font-weight: 600;
     }
+
+    /* Card/Section Styling */
+    .section,
+    .preferences-section,
+    .license-section,
+    .theme-toggle {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    .theme-toggle {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1.25rem;
+    }
+    .theme-toggle h3 {
+        margin: 0;
+    }
+
+    /* Inputs & Buttons */
     .input-group {
         display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
+        gap: 0.8rem;
+        margin-bottom: 1.2rem;
     }
     input {
         flex: 1;
-        padding: 0.5rem;
+        padding: 0.6rem 1rem;
         border: 1px solid var(--border-color);
-        border-radius: 6px;
-        font-size: 0.9rem;
-        background: var(--bg-card);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: var(--bg-primary);
         color: var(--text-primary);
+        transition: all 0.2s;
     }
     input:focus {
         outline: none;
         border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.1);
     }
     button {
-        padding: 0.5rem 1rem;
+        padding: 0.6rem 1.2rem;
         background: var(--accent-primary);
         color: var(--text-inverse);
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
-        font-weight: 500;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
     button:hover {
         background: var(--accent-hover);
+        transform: translateY(-1px);
     }
+    button:active {
+        transform: translateY(0);
+    }
+
+    /* List Styling */
     .list {
         list-style: none;
         padding: 0;
         margin: 0;
         border: 1px solid var(--border-color);
-        border-radius: 8px;
+        border-radius: 10px;
         overflow: hidden;
     }
     li {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.8rem;
+        padding: 0.9rem 1rem;
         border-bottom: 1px solid var(--border-color);
         background: var(--bg-card);
-        gap: 0.5rem;
+        gap: 0.8rem;
+        transition: background 0.2s;
     }
     li:last-child {
         border-bottom: none;
+    }
+    li:hover {
+        background: var(--bg-tertiary);
     }
     li.empty {
         color: var(--text-tertiary);
         justify-content: center;
         font-style: italic;
+        padding: 2rem;
     }
+
+    /* Item Buttons */
     .item-btn {
         background: none;
         color: var(--text-primary);
@@ -399,56 +526,190 @@
         padding: 0;
         font-weight: 500;
         flex: 1;
+        font-size: 1rem;
     }
     .item-btn:hover {
         background: none;
         color: var(--accent-primary);
+        transform: none;
     }
     .delete-btn {
         background: none;
         color: var(--text-tertiary);
-        padding: 0 0.5rem;
-        font-size: 1.4rem;
+        padding: 0.4rem;
+        font-size: 1.2rem;
         line-height: 1;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     .delete-btn:hover {
-        background: none;
+        background: rgba(244, 67, 54, 0.1);
         color: #f44336;
+        transform: none;
     }
+
+    /* Preferences Rows */
+    .pref-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .pref-row:last-child {
+        border-bottom: none;
+    }
+    .pref-row span {
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    /* Modern Toggle Switch */
+    .toggle-switch {
+        width: 44px;
+        height: 24px;
+        border-radius: 12px;
+        position: relative;
+        background: var(--bg-tertiary);
+        transition: background 0.3s ease;
+        padding: 0;
+        overflow: visible;
+        border: 1px solid var(--border-color);
+    }
+    .toggle-switch::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: white;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+    .toggle-switch.active {
+        background: var(--accent-primary);
+        border-color: var(--accent-primary);
+    }
+    .toggle-switch.active::after {
+        transform: translateX(20px);
+    }
+    .toggle-switch:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* License Info */
+    .license-info {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .info-row:last-of-type {
+        border-bottom: none;
+    }
+    .info-row .label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    .info-row .value {
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+    .info-row .value.pro {
+        color: #4caf50;
+        font-weight: 700;
+    }
+
+    /* Badges & Banners */
+    .pro-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .pro-badge.is-pro {
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+        color: #000;
+        border: none;
+        box-shadow: 0 2px 4px rgba(255, 215, 0, 0.2);
+    }
+    .upgrade-banner {
+        background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+        border: 1px solid var(--accent-primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(var(--accent-primary-rgb), 0.1);
+    }
+    .upgrade-btn {
+        background: linear-gradient(135deg, #4a90e2, #357abd);
+        width: 100%;
+        margin-top: 0.5rem;
+        padding: 0.8rem;
+        font-size: 1rem;
+    }
+
+    /* Back Button */
+    .back-btn {
+        background: transparent;
+        color: var(--text-primary);
+        padding: 0.5rem;
+        font-size: 1.2rem;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+    }
+    .back-btn:hover {
+        background: var(--bg-tertiary);
+        transform: none;
+    }
+
+    /* URL Text */
     .url {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: var(--text-secondary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 220px;
+        max-width: 200px;
         display: block;
     }
-    .actions {
-        margin-top: 1.5rem;
-        display: flex;
-        justify-content: flex-end;
-    }
-    .done-btn {
-        background: #4caf50;
-        width: 100%;
-    }
-    .done-btn:hover {
-        background: #43a047;
-    }
+
+    /* Topic Controls */
     .topic-controls {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 4px;
     }
     .move-btn {
         background: none;
         color: var(--text-tertiary);
         padding: 0;
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         line-height: 1;
-        width: 20px;
-        height: 15px;
+        width: 24px;
+        height: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -456,142 +717,42 @@
     .move-btn:hover:not(:disabled) {
         background: var(--bg-tertiary);
         color: var(--text-primary);
+        transform: none;
     }
     .move-btn:disabled {
         color: var(--border-color);
         cursor: default;
     }
-    .theme-toggle {
+
+    /* Action Buttons */
+    .actions {
+        margin-top: 2rem;
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid var(--border-color);
+        justify-content: flex-end;
     }
-    .theme-toggle h3 {
-        margin: 0;
-    }
-    .toggle-btn {
-        background: var(--bg-tertiary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-    }
-    .toggle-btn:hover {
-        background: var(--bg-secondary);
-        border-color: var(--accent-primary);
-    }
-    .pro-badge {
-        font-size: 0.7rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        background: var(--bg-card);
-        color: var(--text-secondary);
-        cursor: pointer;
-        font-weight: 700;
-    }
-    .pro-badge.is-pro {
-        background: linear-gradient(135deg, #ffd700, #ffa500);
-        color: #000;
-        border: none;
-    }
-    .upgrade-banner {
-        background: var(--bg-tertiary);
-        border: 1px solid var(--accent-primary);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        text-align: center;
-    }
-    .upgrade-banner p {
-        margin: 0 0 0.5rem 0;
-        font-size: 0.9rem;
-        color: var(--text-primary);
-    }
-    .upgrade-btn {
-        background: linear-gradient(135deg, #4a90e2, #357abd);
+    .done-btn {
+        background: #4caf50;
         width: 100%;
+        padding: 0.8rem;
+        font-size: 1rem;
     }
-    .upgrade-btn:hover {
-        opacity: 0.9;
+    .done-btn:hover {
+        background: #43a047;
     }
-    input:disabled,
-    button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+    .deactivate-btn {
+        width: 100%;
+        margin-top: 1rem;
+        background: transparent;
+        border: 1px solid #f44336;
+        color: #f44336;
     }
-
-    /* License Management Section */
-    .license-section {
-        margin-bottom: 1.5rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid var(--border-color);
+    .deactivate-btn:hover {
+        background: #f44336;
+        color: white;
     }
-
-    .license-info {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 1rem;
-    }
-
-    .info-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .info-row:last-of-type {
-        border-bottom: none;
-    }
-
-    .info-row .label {
-        font-weight: 600;
-        color: var(--text-secondary);
-    }
-
-    .info-row .value {
-        color: var(--text-primary);
-    }
-
-    .info-row .value.pro {
-        color: #4caf50;
-        font-weight: 600;
-    }
-
-    .info-row .value.free {
-        color: var(--text-tertiary);
-    }
-
-    .error-notice {
-        background: #fff3cd;
-        color: #856404;
-        padding: 0.75rem;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        margin-top: 0.75rem;
-    }
-
     .activate-btn {
         width: 100%;
         margin-top: 1rem;
         background: linear-gradient(135deg, #4a90e2, #357abd);
-    }
-
-    .activate-btn:hover {
-        opacity: 0.9;
-    }
-
-    .deactivate-btn {
-        width: 100%;
-        margin-top: 1rem;
-        background: #f44336;
-        color: white;
-    }
-
-    .deactivate-btn:hover {
-        background: #d32f2f;
     }
 </style>

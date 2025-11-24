@@ -171,6 +171,56 @@ export async function generateScript(articles, apiKey = null) {
     throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
 }
 
+export async function generatePodcastScript(articles, apiKey = null) {
+    const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
+    const prompt = `Create a podcast script for two hosts (Alex and Sam) discussing these news stories. Include engaging banter, an intro with music cue, smooth transitions between topics, and an outro. Format in Markdown with **Host:** prefixes.\n\n${combinedText}`;
+
+    // Check cache
+    const contentHash = hashContent(prompt);
+    const cached = await getCachedAIResult(contentHash, 'podcast');
+    if (cached) {
+        return cached;
+    }
+
+    const chromeAvailable = await isChromeAIAvailable();
+
+    if (chromeAvailable) {
+        try {
+            console.log('Attempting to generate podcast script with Chrome AI...');
+            const session = await LanguageModel.create({
+                initialPrompts: [{
+                    role: 'system',
+                    content: 'You are a creative podcast producer writing a script for two engaging hosts.',
+                }],
+                expectedInputs: [
+                    { type: "text", languages: ["en"] }
+                ],
+                expectedOutputs: [
+                    { type: "text", languages: ["en"] }
+                ]
+            });
+            const result = await session.prompt(prompt);
+            session.destroy();
+
+            // Cache the result
+            await setCachedAIResult(contentHash, 'podcast', result);
+            return result;
+        } catch (e) {
+            console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
+        }
+    }
+
+    if (apiKey) {
+        console.log('Attempting to generate podcast script with Gemini...');
+        const result = await summarizeWithGemini(prompt, apiKey);
+        // Cache the result
+        await setCachedAIResult(contentHash, 'podcast', result);
+        return result;
+    }
+
+    throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
+}
+
 export async function deepDive(articles, apiKey = null) {
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
     const prompt = `Analyze these articles in Markdown format. Identify common themes, contradictions, and causal relationships.\n\n${combinedText}`;

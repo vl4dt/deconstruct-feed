@@ -7,8 +7,10 @@
   import {
     summarize,
     generateScript,
+    generatePodcastScript,
     deepDive,
     checkBias,
+    isChromeAIAvailable,
   } from "../lib/ai/aiService";
   import { sourceService } from "../lib/news/sourceService";
   import Settings from "../components/Settings.svelte";
@@ -16,6 +18,7 @@
   import MarkdownRenderer from "../components/MarkdownRenderer.svelte";
   import { userSubscription } from "../lib/stores/subscription";
   import { theme } from "../lib/stores/theme";
+  import { settings } from "../lib/stores/settings";
 
   let articles = $state([]);
   let loading = $state(false);
@@ -46,6 +49,9 @@
   let showUpgradeModal = $state(false);
   let upgradeMessage = $state("");
 
+  // Chrome AI State
+  let chromeAIAvailable = $state(true);
+
   // Derived state for grouped articles
   let groupedArticles = $derived.by(() => {
     const groups = {};
@@ -74,7 +80,9 @@
   onMount(async () => {
     await theme.init();
     await userSubscription.init();
+    await settings.init();
     await loadTopics();
+    chromeAIAvailable = await isChromeAIAvailable();
     if (topics.length > 0) {
       loadNews();
     }
@@ -132,6 +140,21 @@
       summary = "";
       biasResult = "";
       view = "article";
+
+      // Auto-Analysis Logic
+      if ($settings.autoSummarize) {
+        doSummarize();
+      }
+      if ($settings.autoBias && $userSubscription.isPro) {
+        doBiasCheck();
+      }
+
+      // Preloading Logic (Background)
+      if ($userSubscription.isPro) {
+        if ($settings.preloadScript) generateScript([article]);
+        if ($settings.preloadPodcast) generatePodcastScript([article]);
+        if ($settings.preloadDeepDive) deepDive([article]);
+      }
     }
   }
 
@@ -196,6 +219,13 @@
 
   async function doBiasCheck() {
     if (!selectedArticle) return;
+
+    // Toggle logic: If result exists, clear it (hide)
+    if (biasResult) {
+      biasResult = "";
+      return;
+    }
+
     if (!$userSubscription.isPro) {
       upgradeMessage = "Bias Check is a Pro feature. Upgrade to unlock!";
       showUpgradeModal = true;
@@ -218,6 +248,13 @@
 
   async function doSummarize() {
     if (!selectedArticle) return;
+
+    // Toggle logic: If summary exists, clear it (hide)
+    if (summary) {
+      summary = "";
+      return;
+    }
+
     summaryLoading = true;
     try {
       const text = `${selectedArticle.title}\n\n${selectedArticle.description}`;
@@ -245,6 +282,27 @@
       analysisResult = await generateScript([selectedArticle]);
     } catch (e) {
       analysisResult = "Error generating script: " + e.message;
+    } finally {
+      scriptLoading = false;
+    }
+  }
+
+  async function doGeneratePodcastScript() {
+    if (!selectedArticle) return;
+    if (!$userSubscription.isPro) {
+      upgradeMessage = "Podcast Script is a Pro feature. Upgrade to unlock!";
+      showUpgradeModal = true;
+      return;
+    }
+
+    scriptLoading = true;
+    analysisTitle = "Podcast Script";
+    view = "analysis";
+
+    try {
+      analysisResult = await generatePodcastScript([selectedArticle]);
+    } catch (e) {
+      analysisResult = "Error generating podcast script: " + e.message;
     } finally {
       scriptLoading = false;
     }
@@ -319,6 +377,14 @@ ${getTextContent(selectedArticle.description)}
     selectedArticleIds = new Set();
   }
 
+  function backFromAnalysis() {
+    if (selectedArticle) {
+      view = "article";
+    } else {
+      backToFeed();
+    }
+  }
+
   function openSettings() {
     view = "settings";
   }
@@ -371,6 +437,14 @@ ${getTextContent(selectedArticle.description)}
 <main>
   {#if showToast}
     <div class="toast">Copied to clipboard!</div>
+  {/if}
+
+  {#if !chromeAIAvailable}
+    <div class="warning-banner">
+      ⚠️ Chrome AI unavailable. <button onclick={openSettings} class="link-btn"
+        >Add API Key</button
+      >
+    </div>
   {/if}
 
   <UpgradeModal
@@ -433,7 +507,9 @@ ${getTextContent(selectedArticle.description)}
     <Settings on:back={closeSettings} />
   {:else if view === "analysis"}
     <div class="article-view">
-      <button class="back-btn" onclick={backToFeed}>&larr; Back</button>
+      <div class="article-nav">
+        <button class="back-btn" onclick={backFromAnalysis}>&larr; Back</button>
+      </div>
       <h2>{analysisTitle}</h2>
 
       {#if scriptLoading}
@@ -454,9 +530,6 @@ ${getTextContent(selectedArticle.description)}
     <div class="article-view">
       <div class="article-nav">
         <button class="back-btn" onclick={backToFeed}>&larr; Back</button>
-        <button class="export-btn" onclick={exportToMarkdown}
-          >📋 Export MD</button
-        >
       </div>
       <h2>{selectedArticle.title}</h2>
       <p class="meta">
@@ -491,14 +564,40 @@ ${getTextContent(selectedArticle.description)}
             onclick={doGenerateScript}
             title="Generate Video Script"
           >
-            🎬 Script
+            🎬 Script &rarr;
+          </button>
+          <button
+            class="ai-chip"
+            onclick={doGeneratePodcastScript}
+            title="Generate Podcast Script"
+          >
+            🎙️ Podcast &rarr;
           </button>
           <button
             class="ai-chip"
             onclick={doDeepDive}
             title="Deep Dive Analysis"
           >
-            🧠 Deep Dive
+            🧠 Deep Dive &rarr;
+          </button>
+          <button
+            class="ai-chip"
+            onclick={() =>
+              window.open(
+                `https://www.youtube.com/results?search_query=${encodeURIComponent(selectedArticle.title)}`,
+                "_blank",
+              )}
+            title="Search on YouTube"
+          >
+            📺 Search YT &rarr;
+          </button>
+          <div class="divider"></div>
+          <button
+            class="ai-chip export-chip"
+            onclick={exportToMarkdown}
+            title="Export to Markdown"
+          >
+            📋 Export
           </button>
         </div>
 
@@ -596,19 +695,6 @@ ${getTextContent(selectedArticle.description)}
               <p class="snippet">{getSnippet(article.description)}</p>
             </div>
             <div class="card-footer">
-              <button
-                class="action-btn youtube-btn"
-                onclick={(e) => {
-                  e.stopPropagation();
-                  window.open(
-                    `https://www.youtube.com/results?search_query=${encodeURIComponent(article.title)}`,
-                    "_blank",
-                  );
-                }}
-                title="Search on YouTube"
-              >
-                📺 Search YT
-              </button>
               <span class="date"
                 >{new Date(article.pubDate).toLocaleDateString()}</span
               >
@@ -683,19 +769,6 @@ ${getTextContent(selectedArticle.description)}
                       <p class="snippet">{getSnippet(article.description)}</p>
                     </div>
                     <div class="card-footer">
-                      <button
-                        class="action-btn youtube-btn"
-                        onclick={(e) => {
-                          e.stopPropagation();
-                          window.open(
-                            `https://www.youtube.com/results?search_query=${encodeURIComponent(article.title)}`,
-                            "_blank",
-                          );
-                        }}
-                        title="Search on YouTube"
-                      >
-                        📺 Search YT
-                      </button>
                       <span class="date"
                         >{new Date(article.pubDate).toLocaleDateString()}</span
                       >
@@ -961,12 +1034,8 @@ ${getTextContent(selectedArticle.description)}
   .ai-toolbar {
     display: flex;
     gap: 0.5rem;
-    overflow-x: auto;
-    padding: 0.2rem 0; /* Add top padding to prevent clipping */
-    scrollbar-width: none; /* Firefox */
-  }
-  .ai-toolbar::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    flex-wrap: wrap;
+    padding: 0.2rem 0;
   }
   .ai-chip {
     background: var(--bg-tertiary);
@@ -981,6 +1050,15 @@ ${getTextContent(selectedArticle.description)}
     display: flex;
     align-items: center;
     gap: 0.3rem;
+  }
+  .divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-color);
+    margin: 0 0.2rem;
+  }
+  .export-chip {
+    border-style: dashed;
   }
   .ai-chip:hover:not(:disabled) {
     background: var(--bg-secondary);
@@ -1172,14 +1250,31 @@ ${getTextContent(selectedArticle.description)}
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--accent-primary);
-    color: var(--text-inverse);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
     padding: 0.5rem 1rem;
     border-radius: 20px;
     font-size: 0.9rem;
-    box-shadow: var(--shadow-md);
-    z-index: 100;
+    z-index: 1000;
     animation: fadeIn 0.3s ease-out;
+  }
+  .warning-banner {
+    background: #fff3cd;
+    color: #856404;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #ffeeba;
+  }
+  .link-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+    font-weight: bold;
   }
   @keyframes fadeIn {
     from {
