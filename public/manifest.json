@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "News Curator AI",
+  "version": "1.0.0",
+  "description": "Curate, summarize and group news using Chrome Built-in AI.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "sidePanel",
+    "alarms"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "vite.svg",
+      "48": "vite.svg",
+      "128": "vite.svg"
+    }
+  },
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "src/background/index.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "icons": {
+    "16": "icons/logo_16.png",
+    "48": "icons/logo_48.png",
+    "128": "icons/logo_128.png"
+  }
+}

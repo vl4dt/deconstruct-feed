@@ -1,0 +1,15 @@
+
+> newscurator@0.0.0 build
+> vite build
+
+[36mvite v7.2.4 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 109 modules transformed.
+Γ£ù Build failed in 275ms
+error during build:
+Could not resolve "./assets/svelte.svg" from "src/popup/Popup.svelte"
+file: C:/Lab/Antigravity/ChromeExtensionProjects/NewsCurator/src/popup/Popup.svelte
+    at getRollupError (file:///C:/Lab/Antigravity/ChromeExtensionProjects/NewsCurator/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///C:/Lab/Antigravity/ChromeExtensionProjects/NewsCurator/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.handleInvalidResolvedId (file:///C:/Lab/Antigravity/ChromeExtensionProjects/NewsCurator/node_modules/rollup/dist/es/shared/node-entry.js:21590:24)
+    at file:///C:/Lab/Antigravity/ChromeExtensionProjects/NewsCurator/node_modules/rollup/dist/es/shared/node-entry.js:21550:26
