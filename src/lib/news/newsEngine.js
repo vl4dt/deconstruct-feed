@@ -20,6 +20,37 @@ export async function fetchNewsForTopics(topics) {
     return allArticles.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
 }
 
+function extractImageFromItem(item) {
+    // Try 1: <enclosure> tag with image type
+    const enclosure = item.querySelector('enclosure[type^="image"]');
+    if (enclosure?.getAttribute('url')) {
+        return enclosure.getAttribute('url');
+    }
+
+    // Try 2: <media:content> or <media:thumbnail> (Media RSS)
+    const mediaContent = item.querySelector('content[medium="image"], thumbnail');
+    if (mediaContent?.getAttribute('url')) {
+        return mediaContent.getAttribute('url');
+    }
+
+    // Try 3: Extract from description HTML
+    const description = item.querySelector('description')?.textContent;
+    if (description) {
+        const imgMatch = description.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (imgMatch?.[1]) {
+            return imgMatch[1];
+        }
+    }
+
+    // Try 4: <image> tag
+    const imageTag = item.querySelector('image');
+    if (imageTag?.textContent) {
+        return imageTag.textContent;
+    }
+
+    return null;
+}
+
 async function fetchRSS(url) {
     const response = await fetch(url);
     const text = await response.text();
@@ -32,7 +63,8 @@ async function fetchRSS(url) {
         description: item.querySelector('description')?.textContent,
         pubDate: item.querySelector('pubDate')?.textContent,
         source: url,
-        guid: item.querySelector('guid')?.textContent || item.querySelector('link')?.textContent
+        guid: item.querySelector('guid')?.textContent || item.querySelector('link')?.textContent,
+        image: extractImageFromItem(item)
     }));
 }
 

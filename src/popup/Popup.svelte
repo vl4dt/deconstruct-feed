@@ -577,8 +577,15 @@ ${getTextContent(selectedArticle.description)}
                 {#if selectedArticleIds.has(article.link)}✓{/if}
               </div>
             {/if}
-            <h3>{article.title}</h3>
-            <p class="snippet">{getSnippet(article.description)}</p>
+            {#if article.image}
+              <div class="card-image">
+                <img src={article.image} alt={article.title} loading="lazy" />
+              </div>
+            {/if}
+            <div class="card-content">
+              <h3>{article.title}</h3>
+              <p class="snippet">{getSnippet(article.description)}</p>
+            </div>
             <div class="card-footer">
               <button
                 class="action-btn youtube-btn"
@@ -653,8 +660,19 @@ ${getTextContent(selectedArticle.description)}
                         {#if selectedArticleIds.has(article.link)}✓{/if}
                       </div>
                     {/if}
-                    <h3>{article.title}</h3>
-                    <p class="snippet">{getSnippet(article.description)}</p>
+                    {#if article.image}
+                      <div class="card-image">
+                        <img
+                          src={article.image}
+                          alt={article.title}
+                          loading="lazy"
+                        />
+                      </div>
+                    {/if}
+                    <div class="card-content">
+                      <h3>{article.title}</h3>
+                      <p class="snippet">{getSnippet(article.description)}</p>
+                    </div>
                     <div class="card-footer">
                       <button
                         class="action-btn youtube-btn"
@@ -815,15 +833,37 @@ ${getTextContent(selectedArticle.description)}
       transform 0.2s,
       box-shadow 0.2s;
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: flex-start;
   }
   .card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
     border-color: var(--border-hover);
   }
-  .card h3 {
+  .card-image {
+    width: 120px;
+    height: 90px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+  }
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .card-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .card-content h3 {
     margin: 0;
     font-size: 1rem;
     line-height: 1.4;

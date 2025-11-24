@@ -315,6 +315,7 @@
         height: 100%;
         box-sizing: border-box;
         color: var(--text-primary);
+        overflow-y: auto;
     }
     header {
         display: flex;
@@ -333,18 +334,6 @@
     h3 {
         margin: 0 0 0.5rem 0;
         font-size: 1rem;
-        color: var(--text-secondary);
-    }
-    .back-btn {
-        background: none;
-        border: none;
-        font-size: 1.2rem;
-        cursor: pointer;
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-        color: var(--text-secondary);
-    }
-    .back-btn:hover {
         background: var(--bg-tertiary);
         color: var(--text-primary);
     }
