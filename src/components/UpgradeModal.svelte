@@ -1,5 +1,6 @@
 <script>
     import { createEventDispatcher } from "svelte";
+    import { t } from "../lib/stores/i18n";
 
     let {
         show = false,
@@ -104,7 +105,7 @@
                 <div class="header-content">
                     <div class="sparkle">✨</div>
                     <div>
-                        <h3>Upgrade to Pro</h3>
+                        <h3>{$t("upgradeToPro")}</h3>
                         <p class="header-subtitle">
                             Unlock the full power of AI-driven news curation
                         </p>

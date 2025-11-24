@@ -4,6 +4,7 @@
     import { userSubscription } from "../lib/stores/subscription";
     import { theme } from "../lib/stores/theme";
     import { settings } from "../lib/stores/settings";
+    import { t, locale, availableLanguages } from "../lib/stores/i18n";
     import UpgradeModal from "../components/UpgradeModal.svelte";
     import LicenseActivation from "../components/LicenseActivation.svelte";
 
@@ -141,7 +142,7 @@
 
     <header>
         <button class="back-btn" onclick={goBack}>&larr;</button>
-        <h2>{selectedTopic ? selectedTopic : "Settings"}</h2>
+        <h2>{selectedTopic ? selectedTopic : $t("settings")}</h2>
         {#if !$userSubscription.loading}
             <button
                 class="pro-badge"
@@ -160,9 +161,9 @@
                 <input
                     type="text"
                     bind:value={newSource}
-                    placeholder="Add RSS URL"
+                    placeholder={$t("add") + " RSS URL"}
                 />
-                <button onclick={addSource}>Add</button>
+                <button onclick={addSource}>{$t("add")}</button>
             </div>
             <ul class="list">
                 {#each sources[selectedTopic] || [] as source}
@@ -176,33 +177,40 @@
                     </li>
                 {/each}
                 {#if !(sources[selectedTopic] && sources[selectedTopic].length)}
-                    <li class="empty">No sources yet.</li>
+                    <li class="empty">{$t("noRecentNews")}</li>
                 {/if}
             </ul>
         </div>
     {:else}
         <div class="section">
             <div class="theme-toggle">
-                <h3>Theme</h3>
+                <h3>{$t("theme")}</h3>
                 <button class="toggle-btn" onclick={theme.toggle}>
-                    {$theme === "light" ? "☀️ Light" : "🌙 Dark"}
+                    {$theme === "light"
+                        ? "☀️ " + $t("light")
+                        : "🌙 " + $t("dark")}
                 </button>
             </div>
 
-            <div class="preferences-section">
-                <h3>Auto-Analysis Preferences</h3>
-                <div class="pref-row">
-                    <span>Auto-Summarize</span>
-                    <button
-                        class="toggle-switch"
-                        class:active={$settings.autoSummarize}
-                        onclick={() => settings.toggle("autoSummarize")}
-                        title="Toggle Auto-Summarize"
-                    >
-                    </button>
+            <div class="section">
+                <h3>{$t("language")}</h3>
+                <div class="language-selector">
+                    {#each availableLanguages as lang}
+                        <button
+                            class="lang-btn"
+                            class:active={$locale === lang.code}
+                            onclick={() => ($locale = lang.code)}
+                        >
+                            {lang.label}
+                        </button>
+                    {/each}
                 </div>
+            </div>
+
+            <div class="preferences-section">
+                <h3>{$t("general")}</h3>
                 <div class="pref-row">
-                    <span>Auto-Bias Check (Pro)</span>
+                    <span>{$t("autoSummarize")}</span>
                     <button
                         class="toggle-switch"
                         class:active={$settings.autoBias}
@@ -213,7 +221,7 @@
                     </button>
                 </div>
                 <div class="pref-row">
-                    <span>Preload Video Script (Pro)</span>
+                    <span>{$t("preloadScript")} ({$t("proFeatures")})</span>
                     <button
                         class="toggle-switch"
                         class:active={$settings.preloadScript}
@@ -224,7 +232,7 @@
                     </button>
                 </div>
                 <div class="pref-row">
-                    <span>Preload Podcast Script (Pro)</span>
+                    <span>{$t("preloadPodcast")} ({$t("proFeatures")})</span>
                     <button
                         class="toggle-switch"
                         class:active={$settings.preloadPodcast}
@@ -235,7 +243,7 @@
                     </button>
                 </div>
                 <div class="pref-row">
-                    <span>Preload Deep Dive (Pro)</span>
+                    <span>{$t("preloadDeepDive")} ({$t("proFeatures")})</span>
                     <button
                         class="toggle-switch"
                         class:active={$settings.preloadDeepDive}
@@ -310,29 +318,29 @@
 
             {#if !$userSubscription.isPro}
                 <div class="upgrade-banner">
-                    <p>Free Tier: {topics.length} / 3 Topics</p>
+                    <p>Free Tier: {topics.length} / 3 {$t("topics")}</p>
                     <button
                         class="upgrade-btn"
                         onclick={() => userSubscription.upgrade()}
-                        >Upgrade to Pro</button
+                        >{$t("upgradeToPro")}</button
                     >
                 </div>
             {/if}
 
-            <h3>Topics</h3>
+            <h3>{$t("topics")}</h3>
             <div class="input-group">
                 <input
                     type="text"
                     bind:value={newTopic}
                     placeholder={$userSubscription.isPro || topics.length < 3
-                        ? "New topic..."
+                        ? $t("add") + " topic..."
                         : "Limit reached"}
                     disabled={!$userSubscription.isPro && topics.length >= 3}
                 />
                 <button
                     onclick={addTopic}
                     disabled={!$userSubscription.isPro && topics.length >= 3}
-                    >Add</button
+                    >{$t("add")}</button
                 >
             </div>
             <ul class="list">
@@ -754,5 +762,21 @@
         width: 100%;
         margin-top: 1rem;
         background: linear-gradient(135deg, #4a90e2, #357abd);
+    }
+
+    .language-selector {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .lang-btn {
+        flex: 1;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+    .lang-btn.active {
+        background: var(--accent-primary);
+        color: white;
+        border-color: var(--accent-primary);
     }
 </style>

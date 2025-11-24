@@ -22,6 +22,7 @@
   import { userSubscription } from "../lib/stores/subscription";
   import { theme } from "../lib/stores/theme";
   import { settings } from "../lib/stores/settings";
+  import { t } from "../lib/stores/i18n";
 
   let articles = $state([]);
   let loading = $state(false);
@@ -85,23 +86,23 @@
   onMount(async () => {
     loading = true;
     try {
-      loadingMessage = "Initializing theme...";
+      loadingMessage = $t("initializingTheme");
       await theme.init();
 
-      loadingMessage = "Checking subscription...";
+      loadingMessage = $t("checkingSubscription");
       await userSubscription.init();
 
-      loadingMessage = "Loading settings...";
+      loadingMessage = $t("loadingSettings");
       await settings.init();
 
-      loadingMessage = "Loading topics...";
+      loadingMessage = $t("loadingTopics");
       await loadTopics();
 
-      loadingMessage = "Checking AI availability...";
+      loadingMessage = $t("checkingAI");
       chromeAIAvailable = await isChromeAIAvailable();
 
       if (topics.length > 0) {
-        loadingMessage = "Fetching news...";
+        loadingMessage = $t("fetchingNews");
         await loadNews();
       }
     } catch (e) {
@@ -143,7 +144,7 @@
       isRefreshing = true;
     }
 
-    loadingMessage = "Fetching news...";
+    loadingMessage = $t("fetchingNews");
     try {
       const freshArticles = await fetchNewsForTopics(
         topics,
@@ -169,7 +170,7 @@
     }
     view = "trending";
     loading = true;
-    loadingMessage = "Loading trending topics...";
+    loadingMessage = $t("loadingTrending");
     try {
       trendingArticles = await fetchTrendingNews(forceRefresh);
     } catch (e) {
@@ -351,7 +352,7 @@
     }
 
     scriptLoading = true;
-    analysisTitle = "Podcast Script";
+    analysisTitle = $t("podcastScript");
     view = "analysis";
 
     try {
@@ -491,14 +492,13 @@ ${getTextContent(selectedArticle.description)}
 
 <main>
   {#if showToast}
-    <div class="toast">Copied to clipboard!</div>
+    <div class="toast">{$t("copiedToClipboard")}</div>
   {/if}
 
   {#if !chromeAIAvailable}
     <div class="warning-banner">
-      ⚠️ Chrome AI unavailable. <button onclick={openSettings} class="link-btn"
-        >Add API Key</button
-      >
+      ⚠️ {$t("chromeAIUnavailable")}
+      <button onclick={openSettings} class="link-btn">{$t("addAPIKey")}</button>
     </div>
   {/if}
 
@@ -512,13 +512,13 @@ ${getTextContent(selectedArticle.description)}
   {#if view !== "settings"}
     <header>
       <div class="header-left">
-        <h1>NewsLens AI</h1>
+        <h1>{$t("appTitle")}</h1>
         {#if $userSubscription.isPro}
           <button
             class="icon-btn fire-btn"
             class:active={view === "trending"}
             onclick={() => loadTrending()}
-            title="Trending Topics"
+            title={$t("trendingTopics")}
           >
             🔥
           </button>
@@ -529,7 +529,7 @@ ${getTextContent(selectedArticle.description)}
               view = "feed";
               loadNews();
             }}
-            title="My Feed"
+            title={$t("myFeed")}
           >
             🏠
           </button>
@@ -539,14 +539,14 @@ ${getTextContent(selectedArticle.description)}
         <button
           class="icon-btn refresh-btn"
           onclick={refreshNews}
-          title="Refresh News"
+          title={$t("refreshNews")}
         >
           🔄
         </button>
         {#if isRefreshing}
           <div class="refresh-indicator" title={loadingMessage}>
             <div class="spinner-small"></div>
-            <span class="refresh-text">Updating...</span>
+            <span class="refresh-text">{$t("updating")}</span>
           </div>
         {/if}
         {#if $userSubscription.isPro && view !== "article" && view !== "analysis"}
@@ -556,7 +556,7 @@ ${getTextContent(selectedArticle.description)}
             onclick={toggleSelectionMode}
             title="Select articles for video script"
           >
-            {selectionMode ? "Cancel" : "Select"}
+            {selectionMode ? $t("cancel") : $t("select")}
           </button>
         {/if}
         <button class="icon-btn" onclick={openSettings}>⚙️</button>
@@ -569,12 +569,14 @@ ${getTextContent(selectedArticle.description)}
   {:else if view === "analysis"}
     <div class="article-view">
       <div class="article-nav">
-        <button class="back-btn" onclick={backFromAnalysis}>&larr; Back</button>
+        <button class="back-btn" onclick={backFromAnalysis}
+          >&larr; {$t("back")}</button
+        >
       </div>
       <h2>{analysisTitle}</h2>
 
       {#if scriptLoading}
-        <LoadingSpinner text="Analyzing with AI..." />
+        <LoadingSpinner text={$t("analyzingAI")} />
       {:else}
         <div class="script-content">
           <MarkdownRenderer content={analysisResult} />
@@ -583,14 +585,16 @@ ${getTextContent(selectedArticle.description)}
           class="read-more"
           onclick={() => copyToClipboard(analysisResult)}
         >
-          Copy Result
+          {$t("copyResult")}
         </button>
       {/if}
     </div>
   {:else if view === "article" && selectedArticle}
     <div class="article-view">
       <div class="article-nav">
-        <button class="back-btn" onclick={backToFeed}>&larr; Back</button>
+        <button class="back-btn" onclick={backToFeed}
+          >&larr; {$t("back")}</button
+        >
       </div>
       <h2>{selectedArticle.title}</h2>
       <p class="meta">
@@ -607,39 +611,39 @@ ${getTextContent(selectedArticle.description)}
             class:active={summary}
             onclick={doSummarize}
             disabled={summaryLoading}
-            title="Generate Summary"
+            title={$t("summarize")}
           >
-            ✨ Summarize
+            ✨ {$t("summarize")}
           </button>
           <button
             class="ai-chip"
             class:active={biasResult}
             onclick={doBiasCheck}
             disabled={biasLoading}
-            title="Check for Bias"
+            title={$t("biasCheck")}
           >
-            ⚖️ Bias
+            ⚖️ {$t("bias")}
           </button>
           <button
             class="ai-chip"
             onclick={doGenerateScript}
-            title="Generate Video Script"
+            title={$t("videoScript")}
           >
-            🎬 Script &rarr;
+            🎬 {$t("script")} &rarr;
           </button>
           <button
             class="ai-chip"
             onclick={doGeneratePodcastScript}
-            title="Generate Podcast Script"
+            title={$t("podcastScript")}
           >
-            🎙️ Podcast &rarr;
+            🎙️ {$t("podcast")} &rarr;
           </button>
           <button
             class="ai-chip"
             onclick={doDeepDive}
-            title="Deep Dive Analysis"
+            title={$t("deepDiveAnalysis")}
           >
-            🧠 Deep Dive &rarr;
+            🧠 {$t("deepDive")} &rarr;
           </button>
           <button
             class="ai-chip"
@@ -648,24 +652,24 @@ ${getTextContent(selectedArticle.description)}
                 `https://www.youtube.com/results?search_query=${encodeURIComponent(selectedArticle.title)}`,
                 "_blank",
               )}
-            title="Search on YouTube"
+            title={$t("searchYT")}
           >
-            📺 Search YT &rarr;
+            📺 {$t("searchYT")} &rarr;
           </button>
           <div class="divider"></div>
           <button
             class="ai-chip export-chip"
             onclick={exportToMarkdown}
-            title="Export to Markdown"
+            title={$t("export")}
           >
-            📋 Export
+            📋 {$t("export")}
           </button>
         </div>
 
         {#if summary || summaryLoading}
           <div class="ai-result-card" class:loading={summaryLoading}>
             <div class="result-header">
-              <h4>Summary</h4>
+              <h4>{$t("summary")}</h4>
               <div class="result-actions">
                 {#if summary && !summaryLoading}
                   <button
@@ -681,7 +685,7 @@ ${getTextContent(selectedArticle.description)}
             </div>
             {#if summaryLoading}
               <div class="loading-pulse">
-                <p class="loading-text">Generating Summary...</p>
+                <p class="loading-text">{$t("generatingSummary")}</p>
                 <SkeletonLoader lines={3} />
               </div>
             {:else}
@@ -695,7 +699,7 @@ ${getTextContent(selectedArticle.description)}
         {#if biasResult || biasLoading}
           <div class="ai-result-card bias-card" class:loading={biasLoading}>
             <div class="result-header">
-              <h4>Bias Check</h4>
+              <h4>{$t("biasCheck")}</h4>
               <div class="result-actions">
                 {#if biasResult && !biasLoading}
                   <button
@@ -723,12 +727,12 @@ ${getTextContent(selectedArticle.description)}
       </div>
 
       <a href={selectedArticle.link} target="_blank" class="read-more"
-        >Read full article</a
+        >{$t("readFullArticle")}</a
       >
     </div>
   {:else if view === "trending"}
     <div class="feed" class:selection-mode={selectionMode}>
-      <h2 class="section-title">🔥 Trending Now</h2>
+      <h2 class="section-title">🔥 {$t("trendingNow")}</h2>
       {#if loading}
         <LoadingSpinner text={loadingMessage} />
       {:else if trendingArticles.length > 0}
@@ -769,7 +773,7 @@ ${getTextContent(selectedArticle.description)}
         {/each}
       {:else}
         <div class="empty-state">
-          <p>No trending news found.</p>
+          <p>{$t("noTrendingNews")}</p>
         </div>
       {/if}
     </div>
