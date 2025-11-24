@@ -88,10 +88,10 @@
     }
   }
 
-  async function loadNews() {
+  async function loadNews(forceRefresh = false) {
     loading = true;
     try {
-      articles = await fetchNewsForTopics(topics);
+      articles = await fetchNewsForTopics(topics, forceRefresh);
     } catch (e) {
       console.error(e);
     } finally {
@@ -99,7 +99,7 @@
     }
   }
 
-  async function loadTrending() {
+  async function loadTrending(forceRefresh = false) {
     if (!$userSubscription.isPro) {
       upgradeMessage = "Trending Topics is a Pro feature. Upgrade to unlock!";
       showUpgradeModal = true;
@@ -108,11 +108,19 @@
     view = "trending";
     loading = true;
     try {
-      trendingArticles = await fetchTrendingNews();
+      trendingArticles = await fetchTrendingNews(forceRefresh);
     } catch (e) {
       console.error(e);
     } finally {
       loading = false;
+    }
+  }
+
+  function refreshNews() {
+    if (view === "trending") {
+      loadTrending(true); // Force refresh
+    } else {
+      loadNews(true); // Force refresh
     }
   }
 
@@ -268,13 +276,6 @@
   async function exportToMarkdown() {
     if (!selectedArticle) return;
 
-    if (!$userSubscription.isPro) {
-      upgradeMessage =
-        "Export to Markdown is a Pro feature. Upgrade to unlock!";
-      showUpgradeModal = true;
-      return;
-    }
-
     const md = `# ${selectedArticle.title}
 **Source:** ${selectedArticle.source || selectedArticle.topic} | **Date:** ${new Date(selectedArticle.pubDate).toLocaleDateString()}
 [Read Original](${selectedArticle.link})
@@ -406,6 +407,13 @@ ${getTextContent(selectedArticle.description)}
         {/if}
       </div>
       <div class="header-actions">
+        <button
+          class="icon-btn refresh-btn"
+          onclick={refreshNews}
+          title="Refresh News"
+        >
+          🔄
+        </button>
         {#if $userSubscription.isPro && view !== "article" && view !== "analysis"}
           <button
             class="icon-btn select-btn"
@@ -954,7 +962,7 @@ ${getTextContent(selectedArticle.description)}
     display: flex;
     gap: 0.5rem;
     overflow-x: auto;
-    padding-bottom: 0.2rem;
+    padding: 0.2rem 0; /* Add top padding to prevent clipping */
     scrollbar-width: none; /* Firefox */
   }
   .ai-toolbar::-webkit-scrollbar {
@@ -978,7 +986,7 @@ ${getTextContent(selectedArticle.description)}
     background: var(--bg-secondary);
     color: var(--text-primary);
     border-color: var(--accent-primary);
-    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   .ai-chip.active {
     background: var(--accent-primary);

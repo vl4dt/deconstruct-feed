@@ -1,4 +1,6 @@
 
+import { getCachedAIResult, setCachedAIResult, hashContent } from '../cache/aiCache';
+
 async function initDefaults() {
     const defaults = await LanguageModel.params();
     console.log('Model default:', defaults);
@@ -46,6 +48,13 @@ export async function isChromeAIAvailable() {
 }
 
 export async function summarize(text, apiKey = null) {
+    // Check cache first
+    const contentHash = hashContent(text);
+    const cached = await getCachedAIResult(contentHash, 'summary');
+    if (cached) {
+        return cached;
+    }
+
     const chromeAvailable = await isChromeAIAvailable();
 
     if (chromeAvailable) {
@@ -66,6 +75,9 @@ export async function summarize(text, apiKey = null) {
             });
             const result = await session.prompt(text);
             session.destroy();
+
+            // Cache the result
+            await setCachedAIResult(contentHash, 'summary', result);
             return result;
         } catch (e) {
             console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
@@ -76,7 +88,10 @@ export async function summarize(text, apiKey = null) {
 
     if (apiKey) {
         console.log('Attempting to summarize with Gemini...');
-        return summarizeWithGemini(text, apiKey);
+        const result = await summarizeWithGemini(text, apiKey);
+        // Cache the result
+        await setCachedAIResult(contentHash, 'summary', result);
+        return result;
     }
 
     throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
@@ -107,9 +122,17 @@ async function summarizeWithGemini(text, apiKey) {
 }
 
 export async function generateScript(articles, apiKey = null) {
-    const chromeAvailable = await isChromeAIAvailable();
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
     const prompt = `Create a YouTube video script covering these stories in Markdown format. Include an engaging hook, transition between topics, and a call to action.\n\n${combinedText}`;
+
+    // Check cache
+    const contentHash = hashContent(prompt);
+    const cached = await getCachedAIResult(contentHash, 'script');
+    if (cached) {
+        return cached;
+    }
+
+    const chromeAvailable = await isChromeAIAvailable();
 
     if (chromeAvailable) {
         try {
@@ -128,6 +151,9 @@ export async function generateScript(articles, apiKey = null) {
             });
             const result = await session.prompt(prompt);
             session.destroy();
+
+            // Cache the result
+            await setCachedAIResult(contentHash, 'script', result);
             return result;
         } catch (e) {
             console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
@@ -136,16 +162,27 @@ export async function generateScript(articles, apiKey = null) {
 
     if (apiKey) {
         console.log('Attempting to generate script with Gemini...');
-        return summarizeWithGemini(prompt, apiKey); // Reusing summarizeWithGemini as it's just a generic prompt function
+        const result = await summarizeWithGemini(prompt, apiKey); // Reusing summarizeWithGemini as it's just a generic prompt function
+        // Cache the result
+        await setCachedAIResult(contentHash, 'script', result);
+        return result;
     }
 
     throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
 }
 
 export async function deepDive(articles, apiKey = null) {
-    const chromeAvailable = await isChromeAIAvailable();
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
     const prompt = `Analyze these articles in Markdown format. Identify common themes, contradictions, and causal relationships.\n\n${combinedText}`;
+
+    // Check cache
+    const contentHash = hashContent(prompt);
+    const cached = await getCachedAIResult(contentHash, 'deepdive');
+    if (cached) {
+        return cached;
+    }
+
+    const chromeAvailable = await isChromeAIAvailable();
 
     if (chromeAvailable) {
         try {
@@ -164,6 +201,9 @@ export async function deepDive(articles, apiKey = null) {
             });
             const result = await session.prompt(prompt);
             session.destroy();
+
+            // Cache the result
+            await setCachedAIResult(contentHash, 'deepdive', result);
             return result;
         } catch (e) {
             console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
@@ -172,15 +212,26 @@ export async function deepDive(articles, apiKey = null) {
 
     if (apiKey) {
         console.log('Attempting to deep dive with Gemini...');
-        return summarizeWithGemini(prompt, apiKey);
+        const result = await summarizeWithGemini(prompt, apiKey);
+        // Cache the result
+        await setCachedAIResult(contentHash, 'deepdive', result);
+        return result;
     }
 
     throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
 }
 
 export async function checkBias(text, apiKey = null) {
-    const chromeAvailable = await isChromeAIAvailable();
     const prompt = `Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why. Format the response in Markdown.\n\n${text}`;
+
+    // Check cache
+    const contentHash = hashContent(text);
+    const cached = await getCachedAIResult(contentHash, 'bias');
+    if (cached) {
+        return cached;
+    }
+
+    const chromeAvailable = await isChromeAIAvailable();
 
     if (chromeAvailable) {
         try {
@@ -199,6 +250,9 @@ export async function checkBias(text, apiKey = null) {
             });
             const result = await session.prompt(prompt);
             session.destroy();
+
+            // Cache the result
+            await setCachedAIResult(contentHash, 'bias', result);
             return result;
         } catch (e) {
             console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
@@ -207,7 +261,10 @@ export async function checkBias(text, apiKey = null) {
 
     if (apiKey) {
         console.log('Attempting to check bias with Gemini...');
-        return summarizeWithGemini(prompt, apiKey);
+        const result = await summarizeWithGemini(prompt, apiKey);
+        // Cache the result
+        await setCachedAIResult(contentHash, 'bias', result);
+        return result;
     }
 
     throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');

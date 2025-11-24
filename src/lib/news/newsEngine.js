@@ -1,7 +1,8 @@
 
 import { sourceService } from './sourceService';
+import { getCachedFeed, setCachedFeed } from '../cache/feedCache';
 
-export async function fetchNewsForTopics(topics) {
+export async function fetchNewsForTopics(topics, forceRefresh = false) {
     const allArticles = [];
     const allSources = await sourceService.getAllSources();
 
@@ -9,7 +10,7 @@ export async function fetchNewsForTopics(topics) {
         const feeds = allSources[topic] || [];
         for (const feedUrl of feeds) {
             try {
-                const articles = await fetchRSS(feedUrl);
+                const articles = await fetchRSS(feedUrl, forceRefresh);
                 allArticles.push(...articles.map(a => ({ ...a, topic })));
             } catch (e) {
                 console.error(`Failed to fetch ${feedUrl}`, e);
@@ -51,13 +52,23 @@ function extractImageFromItem(item) {
     return null;
 }
 
-async function fetchRSS(url) {
+async function fetchRSS(url, forceRefresh = false) {
+    // Try cache first unless force refresh
+    if (!forceRefresh) {
+        const cached = await getCachedFeed(url);
+        if (cached) {
+            return cached;
+        }
+    }
+
+    // Cache miss or force refresh - fetch from network
+    console.log(`Fetching fresh data for ${url}`);
     const response = await fetch(url);
     const text = await response.text();
     const parser = new DOMParser();
     const xml = parser.parseFromString(text, 'text/xml');
     const items = Array.from(xml.querySelectorAll('item'));
-    return items.map(item => ({
+    const articles = items.map(item => ({
         title: item.querySelector('title')?.textContent,
         link: item.querySelector('link')?.textContent,
         description: item.querySelector('description')?.textContent,
@@ -66,12 +77,17 @@ async function fetchRSS(url) {
         guid: item.querySelector('guid')?.textContent || item.querySelector('link')?.textContent,
         image: extractImageFromItem(item)
     }));
+
+    // Cache the results
+    await setCachedFeed(url, articles);
+
+    return articles;
 }
 
-export async function fetchTrendingNews() {
+export async function fetchTrendingNews(forceRefresh = false) {
     const url = 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en';
     try {
-        const articles = await fetchRSS(url);
+        const articles = await fetchRSS(url, forceRefresh);
         return articles.map(a => ({ ...a, topic: 'Trending' }));
     } catch (e) {
         console.error("Failed to fetch trending news", e);
