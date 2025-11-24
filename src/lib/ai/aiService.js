@@ -55,7 +55,7 @@ export async function summarize(text, apiKey = null) {
             const session = await LanguageModel.create({
                 initialPrompts: [{
                     role: 'system',
-                    content: 'You are a helpful news assistant. Summarize the following article concisely.',
+                    content: 'You are a helpful news assistant. Summarize the following article concisely in Markdown format.',
                 }],
                 expectedInputs: [
                     { type: "text", languages: ["en"] }
@@ -89,7 +89,7 @@ async function summarizeWithGemini(text, apiKey) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{
-                parts: [{ text: `Summarize this news article:\n\n${text}` }]
+                parts: [{ text: `Summarize this news article in Markdown format:\n\n${text}` }]
             }]
         })
     });
@@ -109,7 +109,7 @@ async function summarizeWithGemini(text, apiKey) {
 export async function generateScript(articles, apiKey = null) {
     const chromeAvailable = await isChromeAIAvailable();
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
-    const prompt = `Create a YouTube video script covering these stories. Include an engaging hook, transition between topics, and a call to action.\n\n${combinedText}`;
+    const prompt = `Create a YouTube video script covering these stories in Markdown format. Include an engaging hook, transition between topics, and a call to action.\n\n${combinedText}`;
 
     if (chromeAvailable) {
         try {
@@ -145,7 +145,7 @@ export async function generateScript(articles, apiKey = null) {
 export async function deepDive(articles, apiKey = null) {
     const chromeAvailable = await isChromeAIAvailable();
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
-    const prompt = `Analyze these articles. Identify common themes, contradictions, and causal relationships.\n\n${combinedText}`;
+    const prompt = `Analyze these articles in Markdown format. Identify common themes, contradictions, and causal relationships.\n\n${combinedText}`;
 
     if (chromeAvailable) {
         try {
@@ -180,7 +180,7 @@ export async function deepDive(articles, apiKey = null) {
 
 export async function checkBias(text, apiKey = null) {
     const chromeAvailable = await isChromeAIAvailable();
-    const prompt = `Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why.\n\n${text}`;
+    const prompt = `Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why. Format the response in Markdown.\n\n${text}`;
 
     if (chromeAvailable) {
         try {

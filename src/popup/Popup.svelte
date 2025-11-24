@@ -220,6 +220,48 @@
     }
   }
 
+  async function doGenerateScript() {
+    if (!selectedArticle) return;
+    if (!$userSubscription.isPro) {
+      upgradeMessage = "Video Script is a Pro feature. Upgrade to unlock!";
+      showUpgradeModal = true;
+      return;
+    }
+
+    scriptLoading = true;
+    analysisTitle = "Video Script";
+    view = "analysis";
+
+    try {
+      analysisResult = await generateScript([selectedArticle]);
+    } catch (e) {
+      analysisResult = "Error generating script: " + e.message;
+    } finally {
+      scriptLoading = false;
+    }
+  }
+
+  async function doDeepDive() {
+    if (!selectedArticle) return;
+    if (!$userSubscription.isPro) {
+      upgradeMessage = "Deep Dive is a Pro feature. Upgrade to unlock!";
+      showUpgradeModal = true;
+      return;
+    }
+
+    scriptLoading = true;
+    analysisTitle = "Deep Dive Analysis";
+    view = "analysis";
+
+    try {
+      analysisResult = await deepDive([selectedArticle]);
+    } catch (e) {
+      analysisResult = "Error performing deep dive: " + e.message;
+    } finally {
+      scriptLoading = false;
+    }
+  }
+
   let showToast = $state(false);
 
   async function exportToMarkdown() {
@@ -245,6 +287,19 @@ ${getTextContent(selectedArticle.description)}
 
     try {
       await navigator.clipboard.writeText(md);
+      showToast = true;
+      setTimeout(() => {
+        showToast = false;
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy: ", err);
+    }
+  }
+
+  async function copyToClipboard(text) {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
       showToast = true;
       setTimeout(() => {
         showToast = false;
@@ -350,7 +405,7 @@ ${getTextContent(selectedArticle.description)}
         {/if}
       </div>
       <div class="header-actions">
-        {#if $userSubscription.isPro}
+        {#if $userSubscription.isPro && view !== "article" && view !== "analysis"}
           <button
             class="icon-btn select-btn"
             class:active={selectionMode}
@@ -380,7 +435,7 @@ ${getTextContent(selectedArticle.description)}
         </div>
         <button
           class="read-more"
-          onclick={() => navigator.clipboard.writeText(analysisResult)}
+          onclick={() => copyToClipboard(analysisResult)}
         >
           Copy Result
         </button>
@@ -403,36 +458,93 @@ ${getTextContent(selectedArticle.description)}
       </div>
 
       <div class="ai-section">
-        <div class="ai-header">
-          <h3>AI Analysis</h3>
-          <div class="ai-actions">
-            {#if !summary && !summaryLoading}
-              <button class="ai-btn" onclick={doSummarize}>✨ Summarize</button>
-            {/if}
-            {#if !biasResult && !biasLoading}
-              <button class="ai-btn bias-btn" onclick={doBiasCheck}
-                >⚖️ Bias Check</button
-              >
-            {/if}
-          </div>
+        <div class="ai-toolbar">
+          <button
+            class="ai-chip"
+            class:active={summary}
+            onclick={doSummarize}
+            disabled={summaryLoading}
+            title="Generate Summary"
+          >
+            ✨ Summarize
+          </button>
+          <button
+            class="ai-chip"
+            class:active={biasResult}
+            onclick={doBiasCheck}
+            disabled={biasLoading}
+            title="Check for Bias"
+          >
+            ⚖️ Bias
+          </button>
+          <button
+            class="ai-chip"
+            onclick={doGenerateScript}
+            title="Generate Video Script"
+          >
+            🎬 Script
+          </button>
+          <button
+            class="ai-chip"
+            onclick={doDeepDive}
+            title="Deep Dive Analysis"
+          >
+            🧠 Deep Dive
+          </button>
         </div>
 
-        {#if summary}
-          <div class="summary-box">
-            <h4>Summary</h4>
-            <p>{summary}</p>
+        {#if summary || summaryLoading}
+          <div class="ai-result-card" class:loading={summaryLoading}>
+            <div class="result-header">
+              <h4>Summary</h4>
+              <div class="result-actions">
+                {#if summary && !summaryLoading}
+                  <button
+                    class="copy-icon-btn"
+                    onclick={() => copyToClipboard(summary)}
+                    title="Copy to clipboard">📋</button
+                  >
+                  <button class="close-btn" onclick={() => (summary = "")}
+                    >×</button
+                  >
+                {/if}
+              </div>
+            </div>
+            {#if summaryLoading}
+              <div class="loading-pulse">Generating summary...</div>
+            {:else}
+              <div class="markdown-content">
+                <pre>{summary}</pre>
+              </div>
+            {/if}
           </div>
-        {:else if summaryLoading}
-          <div class="loading">Generating summary...</div>
         {/if}
 
-        {#if biasResult}
-          <div class="summary-box bias-box">
-            <h4>Bias Check</h4>
-            <p>{biasResult}</p>
+        {#if biasResult || biasLoading}
+          <div class="ai-result-card bias-card" class:loading={biasLoading}>
+            <div class="result-header">
+              <h4>Bias Check</h4>
+              <div class="result-actions">
+                {#if biasResult && !biasLoading}
+                  <button
+                    class="copy-icon-btn"
+                    onclick={() => copyToClipboard(biasResult)}
+                    title="Copy to clipboard">📋</button
+                  >
+                  <button class="close-btn" onclick={() => (biasResult = "")}
+                    >×</button
+                  >
+                {/if}
+              </div>
+            </div>
+            {#if biasLoading}
+              <div class="loading-pulse">Checking bias...</div>
+            {:else}
+              <div class="markdown-content">
+                <pre>{biasResult}</pre>
+              </div>
+            {/if}
           </div>
-        {:else if biasLoading}
-          <div class="loading">Checking bias...</div>
         {/if}
       </div>
 
@@ -789,48 +901,133 @@ ${getTextContent(selectedArticle.description)}
     color: var(--accent-primary);
   }
   .ai-section {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .ai-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+    scrollbar-width: none; /* Firefox */
+  }
+  .ai-toolbar::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+  .ai-chip {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    border-radius: 20px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
   }
-  .ai-header {
+  .ai-chip:hover:not(:disabled) {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+    transform: translateY(-1px);
+  }
+  .ai-chip.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+  }
+  .ai-chip:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .ai-result-card {
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    animation: slideDown 0.3s ease-out;
+  }
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .result-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
   }
-  .ai-header h3 {
-    margin: 0;
-    font-size: 1rem;
+  .result-actions {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--text-primary);
   }
-  .ai-btn {
-    background: var(--accent-primary);
-    color: var(--text-inverse);
+  .result-header h4 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .copy-icon-btn {
+    background: none;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
     cursor: pointer;
-    font-weight: 600;
-    font-size: 0.8rem;
-    transition: background 0.2s;
+    font-size: 1rem;
+    padding: 0;
+    opacity: 0.7;
+    transition: opacity 0.2s;
   }
-  .ai-btn:hover {
-    background: var(--accent-hover);
+  .copy-icon-btn:hover {
+    opacity: 1;
   }
-  .summary-box {
-    background: var(--bg-card);
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    font-size: 0.95rem;
-    line-height: 1.6;
+  .close-btn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+  .close-btn:hover {
     color: var(--text-primary);
+  }
+  .markdown-content pre {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    font-family: inherit;
+  }
+  .loading-pulse {
+    color: var(--text-tertiary);
+    font-style: italic;
+    font-size: 0.9rem;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.6;
+    }
   }
   .read-more {
     display: block;
