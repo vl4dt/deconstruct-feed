@@ -3,6 +3,7 @@
   import { fetchNewsForTopics } from "../lib/news/newsEngine";
   import { summarize } from "../lib/ai/aiService";
   import { sourceService } from "../lib/news/sourceService";
+  import { userSubscription } from "../lib/stores/subscription";
   import { theme } from "../lib/stores/theme";
   import Settings from "../components/Settings.svelte";
 
@@ -43,6 +44,7 @@
 
   onMount(async () => {
     await theme.init();
+    await userSubscription.init();
     await loadTopics();
     if (topics.length > 0) {
       loadNews();
@@ -87,6 +89,38 @@
     }
   }
 
+  let showToast = $state(false);
+
+  async function exportToMarkdown() {
+    if (!selectedArticle) return;
+
+    if (!$userSubscription.isPro) {
+      alert("Export to Markdown is a Pro feature. Upgrade in Settings!");
+      return;
+    }
+
+    const md = `# ${selectedArticle.title}
+**Source:** ${selectedArticle.source || selectedArticle.topic} | **Date:** ${new Date(selectedArticle.pubDate).toLocaleDateString()}
+[Read Original](${selectedArticle.link})
+
+## Summary
+${summary || "No summary generated."}
+
+## Description
+${getTextContent(selectedArticle.description)}
+`;
+
+    try {
+      await navigator.clipboard.writeText(md);
+      showToast = true;
+      setTimeout(() => {
+        showToast = false;
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy: ", err);
+    }
+  }
+
   function backToFeed() {
     selectedArticle = null;
     summary = "";
@@ -108,6 +142,12 @@
     tmp.innerHTML = html;
     let text = tmp.textContent || tmp.innerText || "";
     return text.length > 100 ? text.substring(0, 100) + "..." : text;
+  }
+
+  function getTextContent(html) {
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
   }
 
   function toggleTopic(topic) {
@@ -132,6 +172,10 @@
 </script>
 
 <main>
+  {#if showToast}
+    <div class="toast">Copied to clipboard!</div>
+  {/if}
+
   {#if view !== "settings"}
     <header>
       <h1>News Curator</h1>
@@ -143,7 +187,12 @@
     <Settings on:back={closeSettings} />
   {:else if view === "article" && selectedArticle}
     <div class="article-view">
-      <button class="back-btn" onclick={backToFeed}>&larr; Back</button>
+      <div class="article-nav">
+        <button class="back-btn" onclick={backToFeed}>&larr; Back</button>
+        <button class="export-btn" onclick={exportToMarkdown}
+          >📋 Export MD</button
+        >
+      </div>
       <h2>{selectedArticle.title}</h2>
       <p class="meta">
         {new Date(selectedArticle.pubDate).toLocaleDateString()} • {selectedArticle.topic}
@@ -536,5 +585,50 @@
   }
   .view-more-btn:hover {
     text-decoration: underline;
+  }
+  .article-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .export-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+  }
+  .export-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+  }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+    animation: fadeIn 0.3s ease-out;
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 10px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
   }
 </style>

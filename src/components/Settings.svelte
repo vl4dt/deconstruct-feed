@@ -1,6 +1,7 @@
 <script>
     import { onMount, createEventDispatcher } from "svelte";
     import { sourceService } from "../lib/news/sourceService";
+    import { userSubscription } from "../lib/stores/subscription";
     import { theme } from "../lib/stores/theme";
 
     const dispatch = createEventDispatcher();
@@ -12,6 +13,7 @@
     let selectedTopic = $state(null);
 
     onMount(async () => {
+        await userSubscription.init();
         await loadData();
     });
 
@@ -21,6 +23,12 @@
     }
 
     async function addTopic() {
+        if (!$userSubscription.isPro && topics.length >= 3) {
+            alert(
+                "Free tier is limited to 3 topics. Upgrade to Pro for unlimited topics!",
+            );
+            return;
+        }
         if (newTopic) {
             await sourceService.addTopic(newTopic);
             newTopic = "";
@@ -72,12 +80,30 @@
             await sourceService.updateTopics(newTopics);
         }
     }
+
+    function togglePro() {
+        if ($userSubscription.isPro) {
+            userSubscription.downgrade();
+        } else {
+            userSubscription.upgrade();
+        }
+    }
 </script>
 
 <div class="settings-container">
     <header>
         <button class="back-btn" onclick={goBack}>&larr;</button>
         <h2>{selectedTopic ? selectedTopic : "Settings"}</h2>
+        {#if !$userSubscription.loading}
+            <button
+                class="pro-badge"
+                class:is-pro={$userSubscription.isPro}
+                onclick={togglePro}
+                title="Click to toggle subscription (Dev Mode)"
+            >
+                {$userSubscription.isPro ? "PRO" : "FREE"}
+            </button>
+        {/if}
     </header>
 
     {#if selectedTopic}
@@ -114,14 +140,33 @@
                     {$theme === "light" ? "☀️ Light" : "🌙 Dark"}
                 </button>
             </div>
+
+            {#if !$userSubscription.isPro}
+                <div class="upgrade-banner">
+                    <p>Free Tier: {topics.length} / 3 Topics</p>
+                    <button
+                        class="upgrade-btn"
+                        onclick={() => userSubscription.upgrade()}
+                        >Upgrade to Pro</button
+                    >
+                </div>
+            {/if}
+
             <h3>Topics</h3>
             <div class="input-group">
                 <input
                     type="text"
                     bind:value={newTopic}
-                    placeholder="New topic..."
+                    placeholder={$userSubscription.isPro || topics.length < 3
+                        ? "New topic..."
+                        : "Limit reached"}
+                    disabled={!$userSubscription.isPro && topics.length >= 3}
                 />
-                <button onclick={addTopic}>Add</button>
+                <button
+                    onclick={addTopic}
+                    disabled={!$userSubscription.isPro && topics.length >= 3}
+                    >Add</button
+                >
             </div>
             <ul class="list">
                 {#each topics as topic, i}
@@ -339,5 +384,45 @@
     .toggle-btn:hover {
         background: var(--bg-secondary);
         border-color: var(--accent-primary);
+    }
+    .pro-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-weight: 700;
+    }
+    .pro-badge.is-pro {
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+        color: #000;
+        border: none;
+    }
+    .upgrade-banner {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--accent-primary);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    .upgrade-banner p {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+    }
+    .upgrade-btn {
+        background: linear-gradient(135deg, #4a90e2, #357abd);
+        width: 100%;
+    }
+    .upgrade-btn:hover {
+        opacity: 0.9;
+    }
+    input:disabled,
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 </style>
