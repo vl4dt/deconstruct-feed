@@ -2,11 +2,14 @@
 import { sourceService } from './sourceService';
 import { getCachedFeed, setCachedFeed } from '../cache/feedCache';
 
-export async function fetchNewsForTopics(topics, forceRefresh = false) {
+export async function fetchNewsForTopics(topics, forceRefresh = false, onProgress = null) {
     const allArticles = [];
     const allSources = await sourceService.getAllSources();
 
     for (const topic of topics) {
+        if (onProgress) {
+            onProgress(`Fetching ${topic}...`);
+        }
         const feeds = allSources[topic] || [];
         for (const feedUrl of feeds) {
             try {
@@ -14,6 +17,28 @@ export async function fetchNewsForTopics(topics, forceRefresh = false) {
                 allArticles.push(...articles.map(a => ({ ...a, topic })));
             } catch (e) {
                 console.error(`Failed to fetch ${feedUrl}`, e);
+            }
+        }
+    }
+    // Sort by date descending
+    return allArticles.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+}
+
+export async function fetchCachedNewsForTopics(topics) {
+    const allArticles = [];
+    const allSources = await sourceService.getAllSources();
+
+    for (const topic of topics) {
+        const feeds = allSources[topic] || [];
+        for (const feedUrl of feeds) {
+            try {
+                // Get cached data ignoring TTL (pass Infinity)
+                const cached = await getCachedFeed(feedUrl, Infinity);
+                if (cached) {
+                    allArticles.push(...cached.map(a => ({ ...a, topic })));
+                }
+            } catch (e) {
+                console.error(`Failed to fetch cached data for ${feedUrl}`, e);
             }
         }
     }

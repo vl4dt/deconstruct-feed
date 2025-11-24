@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import {
     fetchNewsForTopics,
+    fetchCachedNewsForTopics,
     fetchTrendingNews,
   } from "../lib/news/newsEngine";
   import {
@@ -16,12 +17,16 @@
   import Settings from "../components/Settings.svelte";
   import UpgradeModal from "../components/UpgradeModal.svelte";
   import MarkdownRenderer from "../components/MarkdownRenderer.svelte";
+  import SkeletonLoader from "../components/SkeletonLoader.svelte";
+  import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import { userSubscription } from "../lib/stores/subscription";
   import { theme } from "../lib/stores/theme";
   import { settings } from "../lib/stores/settings";
 
   let articles = $state([]);
   let loading = $state(false);
+  let isRefreshing = $state(false);
+  let loadingMessage = $state("Loading...");
   let selectedArticle = $state(null);
   let summary = $state("");
   let summaryLoading = $state(false);
@@ -78,13 +83,31 @@
   });
 
   onMount(async () => {
-    await theme.init();
-    await userSubscription.init();
-    await settings.init();
-    await loadTopics();
-    chromeAIAvailable = await isChromeAIAvailable();
-    if (topics.length > 0) {
-      loadNews();
+    loading = true;
+    try {
+      loadingMessage = "Initializing theme...";
+      await theme.init();
+
+      loadingMessage = "Checking subscription...";
+      await userSubscription.init();
+
+      loadingMessage = "Loading settings...";
+      await settings.init();
+
+      loadingMessage = "Loading topics...";
+      await loadTopics();
+
+      loadingMessage = "Checking AI availability...";
+      chromeAIAvailable = await isChromeAIAvailable();
+
+      if (topics.length > 0) {
+        loadingMessage = "Fetching news...";
+        await loadNews();
+      }
+    } catch (e) {
+      console.error("Initialization error:", e);
+    } finally {
+      loading = false;
     }
   });
 
@@ -97,13 +120,44 @@
   }
 
   async function loadNews(forceRefresh = false) {
-    loading = true;
+    // 1. Try to load from cache first if not forcing refresh
+    if (!forceRefresh) {
+      try {
+        const cachedArticles = await fetchCachedNewsForTopics(topics);
+        if (cachedArticles && cachedArticles.length > 0) {
+          articles = cachedArticles;
+          // Don't set loading=true if we have cached content
+        } else {
+          loading = true;
+        }
+      } catch (e) {
+        console.error("Failed to load cached news", e);
+        loading = true;
+      }
+    } else {
+      loading = true;
+    }
+
+    // 2. Fetch fresh data in background (or foreground if no cache)
+    if (articles.length > 0) {
+      isRefreshing = true;
+    }
+
+    loadingMessage = "Fetching news...";
     try {
-      articles = await fetchNewsForTopics(topics, forceRefresh);
+      const freshArticles = await fetchNewsForTopics(
+        topics,
+        forceRefresh,
+        (msg) => {
+          loadingMessage = msg;
+        },
+      );
+      articles = freshArticles;
     } catch (e) {
       console.error(e);
     } finally {
       loading = false;
+      isRefreshing = false;
     }
   }
 
@@ -115,6 +169,7 @@
     }
     view = "trending";
     loading = true;
+    loadingMessage = "Loading trending topics...";
     try {
       trendingArticles = await fetchTrendingNews(forceRefresh);
     } catch (e) {
@@ -462,7 +517,7 @@ ${getTextContent(selectedArticle.description)}
           <button
             class="icon-btn fire-btn"
             class:active={view === "trending"}
-            onclick={loadTrending}
+            onclick={() => loadTrending()}
             title="Trending Topics"
           >
             🔥
@@ -488,6 +543,12 @@ ${getTextContent(selectedArticle.description)}
         >
           🔄
         </button>
+        {#if isRefreshing}
+          <div class="refresh-indicator" title={loadingMessage}>
+            <div class="spinner-small"></div>
+            <span class="refresh-text">Updating...</span>
+          </div>
+        {/if}
         {#if $userSubscription.isPro && view !== "article" && view !== "analysis"}
           <button
             class="icon-btn select-btn"
@@ -513,7 +574,7 @@ ${getTextContent(selectedArticle.description)}
       <h2>{analysisTitle}</h2>
 
       {#if scriptLoading}
-        <div class="loading">Analyzing with AI...</div>
+        <LoadingSpinner text="Analyzing with AI..." />
       {:else}
         <div class="script-content">
           <MarkdownRenderer content={analysisResult} />
@@ -619,7 +680,10 @@ ${getTextContent(selectedArticle.description)}
               </div>
             </div>
             {#if summaryLoading}
-              <div class="loading-pulse">Generating summary...</div>
+              <div class="loading-pulse">
+                <p class="loading-text">Generating Summary...</p>
+                <SkeletonLoader lines={3} />
+              </div>
             {:else}
               <div class="markdown-content">
                 <MarkdownRenderer content={summary} />
@@ -646,7 +710,9 @@ ${getTextContent(selectedArticle.description)}
               </div>
             </div>
             {#if biasLoading}
-              <div class="loading-pulse">Checking bias...</div>
+              <div class="loading-pulse">
+                <SkeletonLoader lines={2} />
+              </div>
             {:else}
               <div class="markdown-content">
                 <MarkdownRenderer content={biasResult} />
@@ -664,7 +730,7 @@ ${getTextContent(selectedArticle.description)}
     <div class="feed" class:selection-mode={selectionMode}>
       <h2 class="section-title">🔥 Trending Now</h2>
       {#if loading}
-        <div class="loading">Loading trending news...</div>
+        <LoadingSpinner text={loadingMessage} />
       {:else if trendingArticles.length > 0}
         {#each trendingArticles as article}
           <div
@@ -721,7 +787,7 @@ ${getTextContent(selectedArticle.description)}
   {:else}
     <div class="feed" class:selection-mode={selectionMode}>
       {#if loading}
-        <div class="loading">Loading news...</div>
+        <LoadingSpinner text={loadingMessage} />
       {:else if topics.length > 0}
         {#each topics as topic}
           <div class="topic-group">
@@ -970,28 +1036,7 @@ ${getTextContent(selectedArticle.description)}
     color: var(--text-tertiary);
     margin-top: 0.3rem;
   }
-  .action-btn {
-    background: none;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.2s;
-  }
-  .action-btn:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    border-color: var(--accent-primary);
-  }
-  .youtube-btn:hover {
-    color: #ff0000; /* YouTube Red */
-    border-color: #ff0000;
-  }
+
   .article-view {
     padding: 1rem;
   }
@@ -1011,6 +1056,35 @@ ${getTextContent(selectedArticle.description)}
     margin: 0 0 0.5rem 0;
     font-size: 1.4rem;
     color: var(--text-primary);
+  }
+  .loading-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0 0 0.5rem 0;
+    font-style: normal;
+  }
+  .refresh-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-tertiary);
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    animation: fadeIn 0.3s ease-out;
+  }
+  .spinner-small {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--text-tertiary);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  .refresh-text {
+    white-space: nowrap;
   }
   .meta {
     color: var(--text-tertiary);
@@ -1134,14 +1208,7 @@ ${getTextContent(selectedArticle.description)}
   .close-btn:hover {
     color: var(--text-primary);
   }
-  .markdown-content pre {
-    margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    color: var(--text-primary);
-    white-space: pre-wrap;
-    font-family: inherit;
-  }
+
   .loading-pulse {
     color: var(--text-tertiary);
     font-style: italic;
@@ -1240,11 +1307,7 @@ ${getTextContent(selectedArticle.description)}
   .back-btn:hover {
     background: var(--bg-secondary);
   }
-  .export-btn {
-    background: var(--accent-primary);
-    color: white;
-    border-color: var(--accent-primary);
-  }
+
   .toast {
     position: fixed;
     bottom: 20px;
@@ -1378,13 +1441,7 @@ ${getTextContent(selectedArticle.description)}
     margin-bottom: 1.5rem;
     overflow-x: auto;
   }
-  .script-content pre {
-    white-space: pre-wrap;
-    font-family: inherit;
-    margin: 0;
-    line-height: 1.6;
-    color: var(--text-primary);
-  }
+
   .header-left {
     display: flex;
     align-items: center;
@@ -1410,28 +1467,7 @@ ${getTextContent(selectedArticle.description)}
     align-items: center;
     gap: 0.5rem;
   }
-  .ai-actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-  .bias-btn {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-  }
-  .bias-btn:hover {
-    background: var(--bg-secondary);
-    border-color: var(--accent-primary);
-  }
-  .bias-box {
-    margin-top: 1rem;
-    border-left: 4px solid #ff9800;
-  }
-  .summary-box h4 {
-    margin: 0 0 0.5rem 0;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-  }
+
   .deep-dive-btn {
     background: #9c27b0;
   }
