@@ -33,7 +33,8 @@
   let summary = $state("");
   let summaryLoading = $state(false);
   let topics = $state([]);
-  let view = $state("feed"); // 'feed', 'article', 'settings', 'script', 'trending', 'analysis'
+  let view = $state("feed"); // feed, settings, article, trending, analysis
+  let previousView = $state("feed");
   let expandedTopics = $state(new Set());
   let collapsedTopics = $state(new Set());
 
@@ -271,6 +272,7 @@
       selectedArticle = article;
       summary = "";
       biasResult = "";
+      previousView = view; // Save current view (feed or trending)
       view = "article";
 
       // Reset translation state for new article
@@ -568,19 +570,23 @@ ${getTextContent(selectedArticle.description)}
     }
   }
 
-  function backToFeed() {
-    selectedArticle = null;
-    summary = "";
-    view = "feed";
-    selectionMode = false;
-    selectedArticleIds = new Set();
-  }
-
-  function backFromAnalysis() {
-    if (selectedArticle) {
+  function handleBack() {
+    if (view === "analysis") {
       view = "article";
+    } else if (view === "article") {
+      // Return to previous view (feed or trending)
+      view = previousView;
+      selectedArticle = null;
+      summary = "";
+      // Only clear selection mode if we're going back to feed and it wasn't active there?
+      // For now, let's keep selection mode state as is or reset it if desired.
+      // Resetting selection mode might be annoying if user wants to select more.
+      // Let's just clear the article specific state.
     } else {
-      backToFeed();
+      // Default fallback
+      view = "feed";
+      selectedArticle = null;
+      summary = "";
     }
   }
 
@@ -855,7 +861,7 @@ ${getTextContent(selectedArticle.description)}
   {:else if view === "analysis"}
     <div class="article-view">
       <div class="article-nav">
-        <button class="back-btn" onclick={backFromAnalysis}
+        <button class="back-btn" onclick={handleBack}
           >&larr; {$t("back")}</button
         >
       </div>
@@ -878,7 +884,7 @@ ${getTextContent(selectedArticle.description)}
   {:else if view === "article" && selectedArticle}
     <div class="article-view">
       <div class="article-nav">
-        <button class="back-btn" onclick={backToFeed}
+        <button class="back-btn" onclick={handleBack}
           >&larr; {$t("back")}</button
         >
       </div>
