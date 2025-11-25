@@ -45,6 +45,10 @@
   let analysisResult = $state("");
   let analysisTitle = $state("");
 
+  // Search State
+  let showSearch = $state(false);
+  let searchQuery = $state("");
+
   // Trending State
   let trendingArticles = $state([]);
 
@@ -99,6 +103,12 @@
       loadingMessage = $t("initializingTheme");
       await theme.init();
 
+      // Detect if running as popup
+      const views = chrome.extension.getViews({ type: "popup" });
+      if (views.includes(window)) {
+        document.body.classList.add("is-popup");
+      }
+
       loadingMessage = $t("checkingSubscription");
       await userSubscription.init();
 
@@ -115,12 +125,65 @@
         loadingMessage = $t("fetchingNews");
         await loadNews();
       }
+
+      // Check for context menu query
+      await checkContextMenuQuery();
     } catch (e) {
       console.error("Initialization error:", e);
     } finally {
       loading = false;
+      // Ensure view starts at the top
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        const feedEl = document.querySelector(".feed");
+        if (feedEl) feedEl.scrollTop = 0;
+      }, 100);
     }
   });
+
+  // Check for context menu search query
+  async function checkContextMenuQuery() {
+    try {
+      // Small delay to ensure storage write completes
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const result = await chrome.storage.session.get("contextMenuQuery");
+      if (result.contextMenuQuery) {
+        console.log("Context menu search detected:", result.contextMenuQuery);
+
+        // Switch to trending view and search
+        view = "trending";
+        await performContextMenuSearch(result.contextMenuQuery);
+
+        // Clear the query
+        await chrome.storage.session.remove("contextMenuQuery");
+      } else {
+        console.log("No context menu query found");
+      }
+    } catch (error) {
+      console.error("Error checking context menu query:", error);
+    }
+  }
+
+  // Perform search from context menu
+  async function performContextMenuSearch(query) {
+    try {
+      loading = true;
+      loadingMessage = `Searching for "${query}"...`;
+
+      // Fetch news with the search query as a keyword
+      const results = await fetchTrendingNews([query], true);
+
+      console.log(`Found ${results.length} articles for "${query}"`);
+
+      // Update articles
+      trendingArticles = results;
+    } catch (error) {
+      console.error("Context menu search failed:", error);
+    } finally {
+      loading = false;
+    }
+  }
 
   async function loadTopics() {
     try {
@@ -471,7 +534,7 @@
     if (!selectedArticle) return;
 
     const md = `# ${selectedArticle.title}
-**Source:** ${selectedArticle.source || selectedArticle.topic} | **Date:** ${new Date(selectedArticle.pubDate).toLocaleDateString()}
+**Source:** [${selectedArticle.source || selectedArticle.topic}](${selectedArticle.link}) | **Date:** ${new Date(selectedArticle.pubDate).toLocaleDateString()}
 [Read Original](${selectedArticle.link})
 
 ## Summary
@@ -658,6 +721,34 @@ ${getTextContent(selectedArticle.description)}
     }
     collapsedTopics = newSet;
   }
+
+  function toggleSearch() {
+    showSearch = !showSearch;
+    if (showSearch) {
+      setTimeout(() => {
+        document.getElementById("search-input")?.focus();
+      }, 100);
+    }
+  }
+
+  async function handleSearch() {
+    if (!searchQuery.trim()) return;
+
+    view = "trending";
+    loading = true;
+    loadingMessage = `Searching for "${searchQuery}"...`;
+
+    try {
+      const results = await fetchTrendingNews([searchQuery], true);
+      trendingArticles = results;
+      showSearch = false;
+      searchQuery = "";
+    } catch (e) {
+      console.error(e);
+    } finally {
+      loading = false;
+    }
+  }
 </script>
 
 <main>
@@ -706,6 +797,31 @@ ${getTextContent(selectedArticle.description)}
         {/if}
       </div>
       <div class="header-actions">
+        {#if showSearch}
+          <div class="search-bar">
+            <input
+              id="search-input"
+              type="text"
+              placeholder={$t("search") + "..."}
+              bind:value={searchQuery}
+              onkeydown={(e) => e.key === "Enter" && handleSearch()}
+              onblur={() => {
+                // Small delay to allow click on search button
+                setTimeout(() => {
+                  if (!searchQuery) showSearch = false;
+                }, 200);
+              }}
+            />
+          </div>
+        {/if}
+        <button
+          class="icon-btn search-btn"
+          class:active={showSearch}
+          onclick={toggleSearch}
+          title={$t("search")}
+        >
+          🔍
+        </button>
         <button
           class="icon-btn refresh-btn"
           onclick={refreshNews}
@@ -1070,18 +1186,44 @@ ${getTextContent(selectedArticle.description)}
 <style>
   :global(body) {
     margin: 0;
-    font-family: "Inter", system-ui, sans-serif;
-    background: var(--bg-secondary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+      Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    background: var(--bg-primary);
     color: var(--text-primary);
+    box-sizing: border-box;
+    /* Default to responsive (Side Panel) */
+    width: 100%;
+    height: 100vh;
     overflow: hidden;
   }
-  main {
-    width: 800px;
+
+  :global(body.is-popup) {
+    /* Fixed size for Popup */
+    width: 780px;
     height: 600px;
+  }
+
+  /* Side panel mode detection: wider than 850px means side panel */
+  @media (min-width: 850px) {
+    :global(body) {
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+  }
+
+  :global(*) {
+    box-sizing: border-box;
+  }
+
+  main {
+    width: 100%;
+    height: 100%;
     background: var(--bg-primary);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative;
   }
   header {
     padding: 1rem;
@@ -1112,6 +1254,36 @@ ${getTextContent(selectedArticle.description)}
     border-radius: 50%;
     color: var(--text-secondary);
   }
+  .search-bar {
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+    animation: slideLeft 0.2s ease-out;
+  }
+  @keyframes slideLeft {
+    from {
+      opacity: 0;
+      transform: translateX(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  .search-bar input {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    width: 140px;
+    outline: none;
+  }
+  .search-bar input:focus {
+    border-color: var(--accent-primary);
+    background: var(--bg-primary);
+  }
   .icon-btn:hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
@@ -1122,7 +1294,25 @@ ${getTextContent(selectedArticle.description)}
     flex-direction: column;
     gap: 1.5rem;
     overflow-y: auto;
+    overflow-y: auto;
+    overflow-x: auto;
     flex: 1;
+    min-height: 0; /* Allow flex item to shrink for scrolling */
+    /* Ensure scroll starts at top */
+    scroll-behavior: smooth;
+  }
+  .feed::-webkit-scrollbar {
+    width: 8px;
+  }
+  .feed::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+  .feed::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+  }
+  .feed::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
   }
   .topic-group {
     display: flex;
@@ -1173,6 +1363,29 @@ ${getTextContent(selectedArticle.description)}
     gap: 1rem;
     align-items: flex-start;
   }
+
+  /* Responsive adjustments for narrow screens (e.g. side panel) */
+  @media (max-width: 450px) {
+    .card {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .card-image {
+      width: 100%;
+      height: 140px;
+    }
+    .card-content {
+      width: 100%;
+    }
+    .header-left h1 {
+      font-size: 1rem;
+    }
+    .icon-btn {
+      font-size: 1rem;
+      padding: 0.2rem;
+    }
+  }
+
   .card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
@@ -1227,6 +1440,14 @@ ${getTextContent(selectedArticle.description)}
 
   .article-view {
     padding: 1rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0; /* Allow flex item to shrink for scrolling */
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
   }
   .back-btn {
     background: none;
@@ -1283,6 +1504,20 @@ ${getTextContent(selectedArticle.description)}
     line-height: 1.6;
     color: var(--text-primary);
     margin-bottom: 2rem;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
+  }
+  .content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+  .content :global(pre),
+  .content :global(code) {
+    white-space: pre-wrap;
+    overflow-x: auto;
+    max-width: 100%;
   }
   .content :global(a) {
     color: var(--accent-primary);

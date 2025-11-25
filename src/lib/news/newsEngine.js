@@ -20,8 +20,11 @@ export async function fetchNewsForTopics(topics, forceRefresh = false, onProgres
             }
         }
     }
+    // Deduplicate
+    const uniqueArticles = deduplicateArticles(allArticles);
+
     // Sort by date descending
-    return allArticles.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+    return uniqueArticles.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
 }
 
 export async function fetchCachedNewsForTopics(topics) {
@@ -42,8 +45,11 @@ export async function fetchCachedNewsForTopics(topics) {
             }
         }
     }
+    // Deduplicate
+    const uniqueArticles = deduplicateArticles(allArticles);
+
     // Sort by date descending
-    return allArticles.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+    return uniqueArticles.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
 }
 
 function extractImageFromItem(item) {

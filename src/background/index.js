@@ -76,4 +76,36 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.runtime.onInstalled.addListener(() => {
     console.log('News Curator Extension Installed');
     updateLastUsed();
+
+    // Create context menu item for selected text
+    chrome.contextMenus.create({
+        id: 'searchNewsLensAI',
+        title: 'Search with NewsLens AI',
+        contexts: ['selection']
+    });
+    console.log('Context menu created');
+});
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === 'searchNewsLensAI') {
+        const selectedText = info.selectionText;
+        console.log('Context menu search triggered for:', selectedText);
+
+        // Open side panel first to preserve user gesture
+        chrome.sidePanel.open({ windowId: tab.windowId })
+            .then(() => {
+                console.log('Side panel opened successfully');
+                return chrome.storage.session.set({
+                    contextMenuQuery: selectedText,
+                    timestamp: Date.now()
+                });
+            })
+            .then(() => {
+                console.log('Query stored in session:', selectedText);
+            })
+            .catch((error) => {
+                console.error('Failed to open side panel:', error);
+            });
+    }
 });
