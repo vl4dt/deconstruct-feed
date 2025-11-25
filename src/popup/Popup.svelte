@@ -5,6 +5,7 @@
     fetchCachedNewsForTopics,
     fetchTrendingNews,
   } from "../lib/news/newsEngine";
+  import { getPageContent } from "../lib/pageContent";
   import {
     summarize,
     generateScript,
@@ -33,7 +34,7 @@
   let summary = $state("");
   let summaryLoading = $state(false);
   let topics = $state([]);
-  let view = $state("feed"); // feed, settings, article, trending, analysis
+  let view = $state("feed"); // feed, settings, article, trending, analysis, current-page
   let previousView = $state("feed");
   let expandedTopics = $state(new Set());
   let collapsedTopics = $state(new Set());
@@ -72,6 +73,12 @@
   let originalSummary = $state("");
   let originalBiasResult = $state("");
   let originalAnalysisResult = $state("");
+
+  // Current Page State
+  let currentPage = $state(null);
+  let pageLoading = $state(false);
+  let pageError = $state("");
+  let analysisSource = $state("article");
 
   // Derived state for grouped articles
   let groupedArticles = $derived.by(() => {
@@ -442,6 +449,7 @@
     scriptLoading = true;
     analysisTitle = "Video Script";
     view = "analysis";
+    analysisSource = "article";
 
     try {
       const result = await generateScript([selectedArticle]);
@@ -475,6 +483,7 @@
     scriptLoading = true;
     analysisTitle = $t("podcastScript");
     view = "analysis";
+    analysisSource = "article";
 
     try {
       const result = await generatePodcastScript([selectedArticle]);
@@ -508,6 +517,7 @@
     scriptLoading = true;
     analysisTitle = $t("deepDiveAnalysis");
     view = "analysis";
+    analysisSource = "article";
 
     try {
       const result = await deepDive([selectedArticle]);
@@ -572,7 +582,7 @@ ${getTextContent(selectedArticle.description)}
 
   function handleBack() {
     if (view === "analysis") {
-      view = "article";
+      view = analysisSource === "page" ? "current-page" : "article";
     } else if (view === "article") {
       // Return to previous view (feed or trending)
       view = previousView;
@@ -755,6 +765,89 @@ ${getTextContent(selectedArticle.description)}
       loading = false;
     }
   }
+
+  async function loadCurrentPage() {
+    view = "current-page";
+    pageLoading = true;
+    pageError = "";
+    currentPage = null;
+    // Reset AI states
+    summary = "";
+    biasResult = "";
+    analysisResult = "";
+
+    try {
+      currentPage = await getPageContent();
+    } catch (e) {
+      pageError = e.message;
+    } finally {
+      pageLoading = false;
+    }
+  }
+
+  async function doPageSummarize() {
+    if (!currentPage) return;
+    if (summary) {
+      summary = "";
+      return;
+    }
+
+    summaryLoading = true;
+    try {
+      summary = await summarize(currentPage.content);
+    } catch (e) {
+      summary = "Error: " + e.message;
+    } finally {
+      summaryLoading = false;
+    }
+  }
+
+  async function doPageBias() {
+    if (!currentPage) return;
+    if (biasResult) {
+      biasResult = "";
+      return;
+    }
+
+    biasLoading = true;
+    try {
+      biasResult = await checkBias(currentPage.content);
+    } catch (e) {
+      biasResult = "Error: " + e.message;
+    } finally {
+      biasLoading = false;
+    }
+  }
+
+  async function doPageDeepDive() {
+    if (!currentPage) return;
+    if (!$userSubscription.isPro) {
+      upgradeMessage = "Deep Dive is a Pro feature. Upgrade to unlock!";
+      showUpgradeModal = true;
+      return;
+    }
+
+    scriptLoading = true;
+    analysisTitle = "Page Deep Dive";
+    view = "analysis";
+    analysisSource = "page";
+
+    try {
+      // Create a mock article object for deepDive
+      const mockArticle = {
+        title: currentPage.title,
+        description: currentPage.content,
+        link: currentPage.url,
+        pubDate: new Date().toISOString(),
+        source: "Current Page",
+      };
+      analysisResult = await deepDive([mockArticle]);
+    } catch (e) {
+      analysisResult = "Error: " + e.message;
+    } finally {
+      scriptLoading = false;
+    }
+  }
 </script>
 
 <main>
@@ -799,6 +892,14 @@ ${getTextContent(selectedArticle.description)}
             title={$t("myFeed")}
           >
             🏠
+          </button>
+          <button
+            class="icon-btn page-btn"
+            class:active={view === "current-page"}
+            onclick={loadCurrentPage}
+            title="Analyze Current Page"
+          >
+            📄
           </button>
         {/if}
       </div>
@@ -858,6 +959,116 @@ ${getTextContent(selectedArticle.description)}
 
   {#if view === "settings"}
     <Settings on:back={closeSettings} />
+  {:else if view === "current-page"}
+    <div class="article-view">
+      <div class="article-nav">
+        <button class="back-btn" onclick={() => (view = "feed")}
+          >&larr; {$t("back")}</button
+        >
+      </div>
+      {#if pageLoading}
+        <LoadingSpinner text="Analyzing page..." />
+      {:else if pageError}
+        <div class="error-state">
+          <p>{pageError}</p>
+          <button onclick={loadCurrentPage}>Retry</button>
+        </div>
+      {:else if currentPage}
+        <h2>{currentPage.title}</h2>
+        <p class="meta">
+          <a href={currentPage.url} target="_blank">{currentPage.url}</a>
+        </p>
+
+        <div class="ai-section">
+          <div class="ai-toolbar">
+            <button
+              class="ai-chip"
+              class:active={summary}
+              onclick={doPageSummarize}
+              disabled={summaryLoading}
+              title={$t("summarize")}
+            >
+              ✨ {$t("summarize")}
+            </button>
+            <button
+              class="ai-chip"
+              class:active={biasResult}
+              onclick={doPageBias}
+              disabled={biasLoading}
+              title={$t("biasCheck")}
+            >
+              ⚖️ {$t("bias")}
+            </button>
+            <button
+              class="ai-chip"
+              onclick={doPageDeepDive}
+              title={$t("deepDiveAnalysis")}
+            >
+              🧠 {$t("deepDive")} &rarr;
+            </button>
+          </div>
+
+          {#if summary || summaryLoading}
+            <div class="ai-result-card" class:loading={summaryLoading}>
+              <div class="result-header">
+                <h4>{$t("summary")}</h4>
+                <div class="result-actions">
+                  {#if summary && !summaryLoading}
+                    <button
+                      class="copy-icon-btn"
+                      onclick={() => copyToClipboard(summary)}
+                      title="Copy to clipboard">📋</button
+                    >
+                    <button class="close-btn" onclick={() => (summary = "")}
+                      >×</button
+                    >
+                  {/if}
+                </div>
+              </div>
+              {#if summaryLoading}
+                <div class="loading-pulse">
+                  <p class="loading-text">{$t("generatingSummary")}</p>
+                  <SkeletonLoader lines={3} />
+                </div>
+              {:else}
+                <div class="markdown-content">
+                  <MarkdownRenderer content={summary} />
+                </div>
+              {/if}
+            </div>
+          {/if}
+
+          {#if biasResult || biasLoading}
+            <div class="ai-result-card bias-card" class:loading={biasLoading}>
+              <div class="result-header">
+                <h4>{$t("biasCheck")}</h4>
+                <div class="result-actions">
+                  {#if biasResult && !biasLoading}
+                    <button
+                      class="copy-icon-btn"
+                      onclick={() => copyToClipboard(biasResult)}
+                      title="Copy to clipboard">📋</button
+                    >
+                    <button class="close-btn" onclick={() => (biasResult = "")}
+                      >×</button
+                    >
+                  {/if}
+                </div>
+              </div>
+              {#if biasLoading}
+                <div class="loading-pulse">
+                  <SkeletonLoader lines={2} />
+                </div>
+              {:else}
+                <div class="markdown-content">
+                  <MarkdownRenderer content={biasResult} />
+                </div>
+              {/if}
+            </div>
+          {/if}
+        </div>
+      {/if}
+    </div>
   {:else if view === "analysis"}
     <div class="article-view">
       <div class="article-nav">
