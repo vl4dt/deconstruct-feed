@@ -75,6 +75,8 @@ export default {
     showOriginal: "Show Original",
     translationFailed: "Translation failed",
     autoTranslateAI: "Auto-translate AI content",
+    translateToSpanish: "Translate to Spanish",
+    translateToEnglish: "Translate to English",
     trendingKeywords: "Trending Keywords",
     addTrendingKeyword: "Add trending keyword",
     trendingKeywordsDesc: "Customize your trending news with specific keywords (e.g., AI, SpaceX, Gaming)",

@@ -547,7 +547,8 @@ ${getTextContent(selectedArticle.description)}
         originalDescription = selectedArticle.description;
       }
 
-      const targetLang = $locale === "es" ? "Spanish" : "English"; // Simple mapping for now
+      // Smart toggle: if UI is English, translate to Spanish; if Spanish, translate to English
+      const targetLang = $locale === "es" ? "English" : "Spanish";
 
       // Translate article content
       const [translatedTitle, translatedDesc] = await Promise.all([
@@ -815,17 +816,18 @@ ${getTextContent(selectedArticle.description)}
             🧠 {$t("deepDive")} &rarr;
           </button>
           <button
-            class="ai-chip"
-            class:active={isTranslated}
+            class="icon-btn translate-btn"
             onclick={toggleTranslation}
             disabled={translating}
-            title={$t("translate")}
-          >
-            🌐 {translating
+            title={translating
               ? $t("translating")
               : isTranslated
                 ? $t("showOriginal")
-                : $t("translate")}
+                : $locale === "en"
+                  ? $t("translateToSpanish")
+                  : $t("translateToEnglish")}
+          >
+            {translating ? "⏳" : "🌐"}
           </button>
           <button
             class="ai-chip"
