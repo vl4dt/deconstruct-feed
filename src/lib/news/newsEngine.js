@@ -109,11 +109,22 @@ async function fetchRSS(url, forceRefresh = false) {
     return articles;
 }
 
-export async function fetchTrendingNews(forceRefresh = false) {
+export async function fetchTrendingNews(keywords = [], forceRefresh = false) {
     const url = 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en';
     try {
-        const articles = await fetchRSS(url, forceRefresh);
-        return articles.map(a => ({ ...a, topic: 'Trending' }));
+        let articles = await fetchRSS(url, forceRefresh);
+        articles = articles.map(a => ({ ...a, topic: 'Trending' }));
+
+        // Filter by keywords if provided
+        if (keywords && keywords.length > 0) {
+            const lowerKeywords = keywords.map(k => k.toLowerCase());
+            articles = articles.filter(article => {
+                const searchText = `${article.title} ${article.description}`.toLowerCase();
+                return lowerKeywords.some(keyword => searchText.includes(keyword));
+            });
+        }
+
+        return articles;
     } catch (e) {
         console.error("Failed to fetch trending news", e);
         return [];

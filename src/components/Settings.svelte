@@ -14,6 +14,7 @@
     let sources = $state({});
     let newTopic = $state("");
     let newSource = $state("");
+    let newTrendingKeyword = $state("");
     let selectedTopic = $state(null);
 
     // Modal State
@@ -122,6 +123,17 @@
         ) {
             await userSubscription.deactivateLicense();
         }
+    }
+
+    async function addTrendingKeyword() {
+        if (newTrendingKeyword.trim()) {
+            await settings.addTrendingKeyword(newTrendingKeyword.trim());
+            newTrendingKeyword = "";
+        }
+    }
+
+    async function removeTrendingKeyword(keyword) {
+        await settings.removeTrendingKeyword(keyword);
     }
 </script>
 
@@ -379,6 +391,29 @@
                     </li>
                 {/each}
             </ul>
+
+            <!-- Trending Keywords Section -->
+            <h3>{$t("trendingKeywords")}</h3>
+            <p class="section-description">{$t("trendingKeywordsDesc")}</p>
+            <div class="input-group">
+                <input
+                    type="text"
+                    bind:value={newTrendingKeyword}
+                    placeholder={$t("addTrendingKeyword") + "..."}
+                />
+                <button onclick={addTrendingKeyword}>{$t("add")}</button>
+            </div>
+            <ul class="list">
+                {#each $settings.trendingKeywords as keyword}
+                    <li>
+                        <span>{keyword}</span>
+                        <button onclick={() => removeTrendingKeyword(keyword)}>
+                            {$t("remove")}
+                        </button>
+                    </li>
+                {/each}
+            </ul>
+
             <div class="actions">
                 <button class="done-btn" onclick={goBack}>Done</button>
             </div>

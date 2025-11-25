@@ -7,7 +7,8 @@ function createSettingsStore() {
         preloadScript: false,
         preloadPodcast: false,
         preloadDeepDive: false,
-        autoTranslateAI: false
+        autoTranslateAI: false,
+        trendingKeywords: []
     });
 
     return {
@@ -21,6 +22,23 @@ function createSettingsStore() {
         toggle: async (setting) => {
             update(s => {
                 const newSettings = { ...s, [setting]: !s[setting] };
+                chrome.storage.local.set({ userSettings: newSettings });
+                return newSettings;
+            });
+        },
+        addTrendingKeyword: async (keyword) => {
+            update(s => {
+                if (!s.trendingKeywords.includes(keyword)) {
+                    const newSettings = { ...s, trendingKeywords: [...s.trendingKeywords, keyword] };
+                    chrome.storage.local.set({ userSettings: newSettings });
+                    return newSettings;
+                }
+                return s;
+            });
+        },
+        removeTrendingKeyword: async (keyword) => {
+            update(s => {
+                const newSettings = { ...s, trendingKeywords: s.trendingKeywords.filter(k => k !== keyword) };
                 chrome.storage.local.set({ userSettings: newSettings });
                 return newSettings;
             });

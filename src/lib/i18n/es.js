@@ -75,4 +75,7 @@ export default {
     showOriginal: "Mostrar Original",
     translationFailed: "Error en la traducción",
     autoTranslateAI: "Traducir automáticamente contenido IA",
+    trendingKeywords: "Palabras Clave de Tendencias",
+    addTrendingKeyword: "Añadir palabra clave",
+    trendingKeywordsDesc: "Personaliza tus noticias en tendencia con palabras clave específicas (ej: IA, SpaceX, Gaming)",
 };

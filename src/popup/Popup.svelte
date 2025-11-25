@@ -182,7 +182,10 @@
     loading = true;
     loadingMessage = $t("loadingTrending");
     try {
-      trendingArticles = await fetchTrendingNews(forceRefresh);
+      trendingArticles = await fetchTrendingNews(
+        $settings.trendingKeywords,
+        forceRefresh,
+      );
     } catch (e) {
       console.error(e);
     } finally {
