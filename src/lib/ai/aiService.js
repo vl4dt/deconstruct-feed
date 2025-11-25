@@ -319,3 +319,52 @@ export async function checkBias(text, apiKey = null) {
 
     throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
 }
+
+export async function translate(text, targetLanguage, apiKey = null) {
+    const prompt = `Translate the following text to ${targetLanguage}. Maintain the original tone and formatting. Return ONLY the translated text.\n\n${text}`;
+
+    // Check cache
+    const contentHash = hashContent(prompt);
+    const cached = await getCachedAIResult(contentHash, 'translate');
+    if (cached) {
+        return cached;
+    }
+
+    const chromeAvailable = await isChromeAIAvailable();
+
+    if (chromeAvailable) {
+        try {
+            console.log(`Attempting to translate to ${targetLanguage} with Chrome AI...`);
+            const session = await LanguageModel.create({
+                initialPrompts: [{
+                    role: 'system',
+                    content: `You are a professional translator. Translate text to ${targetLanguage}.`,
+                }],
+                expectedInputs: [
+                    { type: "text", languages: ["en"] }
+                ],
+                expectedOutputs: [
+                    { type: "text", languages: ["en"] } // Chrome AI currently mostly supports EN I/O, but can generate other langs
+                ]
+            });
+            const result = await session.prompt(prompt);
+            session.destroy();
+
+            // Cache the result
+            await setCachedAIResult(contentHash, 'translate', result);
+            return result;
+        } catch (e) {
+            console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
+        }
+    }
+
+    if (apiKey) {
+        console.log(`Attempting to translate to ${targetLanguage} with Gemini...`);
+        const result = await summarizeWithGemini(prompt, apiKey);
+        // Cache the result
+        await setCachedAIResult(contentHash, 'translate', result);
+        return result;
+    }
+
+    throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
+}

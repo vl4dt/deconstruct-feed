@@ -21,6 +21,20 @@ function createSubscriptionStore() {
 
     async function validateLicense(licenseKey, forceValidate = false) {
         try {
+            // Dev mode bypass
+            if (licenseKey === 'DEV_MODE_LICENSE') {
+                const devLicenseData = {
+                    isPro: true,
+                    licenseKey: 'DEV_MODE_LICENSE',
+                    tier: 'Pro',
+                    expiresAt: null,
+                    email: 'dev@example.com',
+                    error: null
+                };
+                update(s => ({ ...s, ...devLicenseData, loading: false }));
+                return devLicenseData;
+            }
+
             // Check if we need to validate
             const cached = await chrome.storage.local.get(['lastValidated', 'cachedLicenseData']);
 
@@ -117,10 +131,13 @@ function createSubscriptionStore() {
         subscribe,
 
         init: async () => {
-            const result = await chrome.storage.local.get(['licenseKey']);
+            const result = await chrome.storage.local.get(['licenseKey', 'cachedLicenseData']);
 
             if (result.licenseKey) {
                 await validateLicense(result.licenseKey);
+            } else if (result.cachedLicenseData) {
+                // Dev mode: use cached Pro status if exists
+                update(s => ({ ...s, ...result.cachedLicenseData, loading: false }));
             } else {
                 update(s => ({ ...s, isPro: false, loading: false }));
             }
@@ -165,12 +182,36 @@ function createSubscriptionStore() {
 
         // Dev mode helpers (remove in production)
         upgrade: async () => {
-            await chrome.storage.local.set({ isPro: true });
-            update(s => ({ ...s, isPro: true }));
+            const licenseData = {
+                isPro: true,
+                licenseKey: 'DEV_MODE_LICENSE',
+                tier: 'Pro',
+                expiresAt: null,
+                email: 'dev@example.com',
+                error: null
+            };
+
+            // Save to storage so it persists across reloads
+            await chrome.storage.local.set({
+                licenseKey: 'DEV_MODE_LICENSE',
+                cachedLicenseData: licenseData,
+                lastValidated: Date.now()
+            });
+
+            update(s => ({ ...s, ...licenseData, loading: false }));
         },
         downgrade: async () => {
-            await chrome.storage.local.set({ isPro: false });
-            update(s => ({ ...s, isPro: false }));
+            await chrome.storage.local.remove(['licenseKey', 'lastValidated', 'cachedLicenseData']);
+            update(s => ({
+                ...s,
+                isPro: false,
+                licenseKey: null,
+                tier: null,
+                expiresAt: null,
+                email: null,
+                error: null,
+                loading: false
+            }));
         }
     };
 }

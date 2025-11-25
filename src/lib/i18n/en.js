@@ -70,4 +70,9 @@ export default {
     enable: "Enable",
     disable: "Disable",
     version: "Version",
+    translate: "Translate",
+    translating: "Translating...",
+    showOriginal: "Show Original",
+    translationFailed: "Translation failed",
+    autoTranslateAI: "Auto-translate AI content",
 };

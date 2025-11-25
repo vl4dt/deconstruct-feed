@@ -11,6 +11,7 @@
     generatePodcastScript,
     deepDive,
     checkBias,
+    translate,
     isChromeAIAvailable,
   } from "../lib/ai/aiService";
   import { sourceService } from "../lib/news/sourceService";
@@ -22,7 +23,7 @@
   import { userSubscription } from "../lib/stores/subscription";
   import { theme } from "../lib/stores/theme";
   import { settings } from "../lib/stores/settings";
-  import { t } from "../lib/stores/i18n";
+  import { t, locale } from "../lib/stores/i18n";
 
   let articles = $state([]);
   let loading = $state(false);
@@ -57,6 +58,15 @@
 
   // Chrome AI State
   let chromeAIAvailable = $state(true);
+
+  // Translation State
+  let translating = $state(false);
+  let isTranslated = $state(false);
+  let originalTitle = $state("");
+  let originalDescription = $state("");
+  let originalSummary = $state("");
+  let originalBiasResult = $state("");
+  let originalAnalysisResult = $state("");
 
   // Derived state for grouped articles
   let groupedArticles = $derived.by(() => {
@@ -197,6 +207,11 @@
       biasResult = "";
       view = "article";
 
+      // Reset translation state for new article
+      isTranslated = false;
+      originalTitle = "";
+      originalDescription = "";
+
       // Auto-Analysis Logic
       if ($settings.autoSummarize) {
         doSummarize();
@@ -209,7 +224,7 @@
       if ($userSubscription.isPro) {
         if ($settings.preloadScript) generateScript([article]);
         if ($settings.preloadPodcast) generatePodcastScript([article]);
-        if ($settings.preloadDeepDive) deepDive([article]);
+        // Note: deepDive preloading removed as it would change view
       }
     }
   }
@@ -279,6 +294,7 @@
     // Toggle logic: If result exists, clear it (hide)
     if (biasResult) {
       biasResult = "";
+      originalBiasResult = "";
       return;
     }
 
@@ -290,9 +306,21 @@
     biasLoading = true;
     try {
       const text = `${selectedArticle.title}\n\n${selectedArticle.description}`;
-      biasResult = await checkBias(text);
+      const result = await checkBias(text);
+
+      // Store original
+      originalBiasResult = result;
+
+      // Auto-translate if setting enabled and language is not English
+      if ($settings.autoTranslateAI && $locale !== "en") {
+        const targetLang = $locale === "es" ? "Spanish" : "English";
+        biasResult = await translate(result, targetLang);
+      } else {
+        biasResult = result;
+      }
     } catch (e) {
       biasResult = "Error: " + e.message;
+      originalBiasResult = "";
     } finally {
       biasLoading = false;
     }
@@ -308,15 +336,28 @@
     // Toggle logic: If summary exists, clear it (hide)
     if (summary) {
       summary = "";
+      originalSummary = "";
       return;
     }
 
     summaryLoading = true;
     try {
       const text = `${selectedArticle.title}\n\n${selectedArticle.description}`;
-      summary = await summarize(text);
+      const result = await summarize(text);
+
+      // Store original
+      originalSummary = result;
+
+      // Auto-translate if setting enabled and language is not English
+      if ($settings.autoTranslateAI && $locale !== "en") {
+        const targetLang = $locale === "es" ? "Spanish" : "English";
+        summary = await translate(result, targetLang);
+      } else {
+        summary = result;
+      }
     } catch (e) {
       summary = "Error: " + e.message;
+      originalSummary = "";
     } finally {
       summaryLoading = false;
     }
@@ -335,9 +376,21 @@
     view = "analysis";
 
     try {
-      analysisResult = await generateScript([selectedArticle]);
+      const result = await generateScript([selectedArticle]);
+
+      // Store original
+      originalAnalysisResult = result;
+
+      // Auto-translate if setting enabled and language is not English
+      if ($settings.autoTranslateAI && $locale !== "en") {
+        const targetLang = $locale === "es" ? "Spanish" : "English";
+        analysisResult = await translate(result, targetLang);
+      } else {
+        analysisResult = result;
+      }
     } catch (e) {
       analysisResult = "Error generating script: " + e.message;
+      originalAnalysisResult = "";
     } finally {
       scriptLoading = false;
     }
@@ -356,9 +409,21 @@
     view = "analysis";
 
     try {
-      analysisResult = await generatePodcastScript([selectedArticle]);
+      const result = await generatePodcastScript([selectedArticle]);
+
+      // Store original
+      originalAnalysisResult = result;
+
+      // Auto-translate if setting enabled and language is not English
+      if ($settings.autoTranslateAI && $locale !== "en") {
+        const targetLang = $locale === "es" ? "Spanish" : "English";
+        analysisResult = await translate(result, targetLang);
+      } else {
+        analysisResult = result;
+      }
     } catch (e) {
       analysisResult = "Error generating podcast script: " + e.message;
+      originalAnalysisResult = "";
     } finally {
       scriptLoading = false;
     }
@@ -373,13 +438,25 @@
     }
 
     scriptLoading = true;
-    analysisTitle = "Deep Dive Analysis";
+    analysisTitle = $t("deepDiveAnalysis");
     view = "analysis";
 
     try {
-      analysisResult = await deepDive([selectedArticle]);
+      const result = await deepDive([selectedArticle]);
+
+      // Store original
+      originalAnalysisResult = result;
+
+      // Auto-translate if setting enabled and language is not English
+      if ($settings.autoTranslateAI && $locale !== "en") {
+        const targetLang = $locale === "es" ? "Spanish" : "English";
+        analysisResult = await translate(result, targetLang);
+      } else {
+        analysisResult = result;
+      }
     } catch (e) {
-      analysisResult = "Error performing deep dive: " + e.message;
+      analysisResult = `Error: ${e.message}`;
+      originalAnalysisResult = "";
     } finally {
       scriptLoading = false;
     }
@@ -438,6 +515,95 @@ ${getTextContent(selectedArticle.description)}
       view = "article";
     } else {
       backToFeed();
+    }
+  }
+
+  async function toggleTranslation() {
+    if (!selectedArticle) return;
+
+    if (isTranslated) {
+      // Revert to original
+      selectedArticle.title = originalTitle;
+      selectedArticle.description = originalDescription;
+
+      // Revert AI content if exists
+      if (originalSummary) summary = originalSummary;
+      if (originalBiasResult) biasResult = originalBiasResult;
+      if (originalAnalysisResult) analysisResult = originalAnalysisResult;
+
+      isTranslated = false;
+      return;
+    }
+
+    // Translate
+    translating = true;
+    try {
+      // Save original if not saved yet
+      if (!originalTitle) {
+        originalTitle = selectedArticle.title;
+        originalDescription = selectedArticle.description;
+      }
+
+      const targetLang = $locale === "es" ? "Spanish" : "English"; // Simple mapping for now
+
+      // Translate article content
+      const [translatedTitle, translatedDesc] = await Promise.all([
+        translate(selectedArticle.title, targetLang),
+        translate(selectedArticle.description, targetLang),
+      ]);
+
+      selectedArticle.title = translatedTitle;
+      selectedArticle.description = translatedDesc;
+
+      // Translate AI content if exists
+      const promises = [];
+      if (summary && !originalSummary) {
+        originalSummary = summary;
+        promises.push(
+          translate(summary, targetLang).then((t) => (summary = t)),
+        );
+      } else if (summary && originalSummary) {
+        promises.push(
+          translate(originalSummary, targetLang).then((t) => (summary = t)),
+        );
+      }
+
+      if (biasResult && !originalBiasResult) {
+        originalBiasResult = biasResult;
+        promises.push(
+          translate(biasResult, targetLang).then((t) => (biasResult = t)),
+        );
+      } else if (biasResult && originalBiasResult) {
+        promises.push(
+          translate(originalBiasResult, targetLang).then(
+            (t) => (biasResult = t),
+          ),
+        );
+      }
+
+      if (analysisResult && !originalAnalysisResult) {
+        originalAnalysisResult = analysisResult;
+        promises.push(
+          translate(analysisResult, targetLang).then(
+            (t) => (analysisResult = t),
+          ),
+        );
+      } else if (analysisResult && originalAnalysisResult) {
+        promises.push(
+          translate(originalAnalysisResult, targetLang).then(
+            (t) => (analysisResult = t),
+          ),
+        );
+      }
+
+      await Promise.all(promises);
+
+      isTranslated = true;
+    } catch (e) {
+      console.error("Translation failed:", e);
+      // Optional: show toast or error
+    } finally {
+      translating = false;
     }
   }
 
@@ -644,6 +810,19 @@ ${getTextContent(selectedArticle.description)}
             title={$t("deepDiveAnalysis")}
           >
             🧠 {$t("deepDive")} &rarr;
+          </button>
+          <button
+            class="ai-chip"
+            class:active={isTranslated}
+            onclick={toggleTranslation}
+            disabled={translating}
+            title={$t("translate")}
+          >
+            🌐 {translating
+              ? $t("translating")
+              : isTranslated
+                ? $t("showOriginal")
+                : $t("translate")}
           </button>
           <button
             class="ai-chip"

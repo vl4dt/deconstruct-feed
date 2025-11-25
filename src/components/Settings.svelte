@@ -243,6 +243,16 @@
                     </button>
                 </div>
                 <div class="pref-row">
+                    <span>{$t("autoTranslateAI")}</span>
+                    <button
+                        class="toggle-switch"
+                        class:active={$settings.autoTranslateAI}
+                        onclick={() => settings.toggle("autoTranslateAI")}
+                        title="Toggle Auto-translate AI content"
+                    >
+                    </button>
+                </div>
+                <div class="pref-row">
                     <span>{$t("preloadDeepDive")} ({$t("proFeatures")})</span>
                     <button
                         class="toggle-switch"

@@ -6,7 +6,8 @@ function createSettingsStore() {
         autoBias: false,
         preloadScript: false,
         preloadPodcast: false,
-        preloadDeepDive: false
+        preloadDeepDive: false,
+        autoTranslateAI: false
     });
 
     return {
