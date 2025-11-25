@@ -16,7 +16,17 @@ function createSettingsStore() {
         init: async () => {
             const result = await chrome.storage.local.get('userSettings');
             if (result.userSettings) {
-                set(result.userSettings);
+                // Merge saved settings with defaults to ensure all properties exist
+                set({
+                    autoSummarize: true,
+                    autoBias: false,
+                    preloadScript: false,
+                    preloadPodcast: false,
+                    preloadDeepDive: false,
+                    autoTranslateAI: false,
+                    trendingKeywords: [],
+                    ...result.userSettings
+                });
             }
         },
         toggle: async (setting) => {
@@ -28,8 +38,10 @@ function createSettingsStore() {
         },
         addTrendingKeyword: async (keyword) => {
             update(s => {
-                if (!s.trendingKeywords.includes(keyword)) {
-                    const newSettings = { ...s, trendingKeywords: [...s.trendingKeywords, keyword] };
+                // Ensure trendingKeywords array exists
+                const keywords = s.trendingKeywords || [];
+                if (!keywords.includes(keyword)) {
+                    const newSettings = { ...s, trendingKeywords: [...keywords, keyword] };
                     chrome.storage.local.set({ userSettings: newSettings });
                     return newSettings;
                 }
@@ -38,7 +50,9 @@ function createSettingsStore() {
         },
         removeTrendingKeyword: async (keyword) => {
             update(s => {
-                const newSettings = { ...s, trendingKeywords: s.trendingKeywords.filter(k => k !== keyword) };
+                // Ensure trendingKeywords array exists
+                const keywords = s.trendingKeywords || [];
+                const newSettings = { ...s, trendingKeywords: keywords.filter(k => k !== keyword) };
                 chrome.storage.local.set({ userSettings: newSettings });
                 return newSettings;
             });

@@ -547,8 +547,8 @@ ${getTextContent(selectedArticle.description)}
         originalDescription = selectedArticle.description;
       }
 
-      // Smart toggle: if UI is English, translate to Spanish; if Spanish, translate to English
-      const targetLang = $locale === "es" ? "English" : "Spanish";
+      // Smart toggle: if UI is not English, translate to English; otherwise stay in current language
+      const targetLang = $locale === "en" ? "es" : "en";
 
       // Translate article content
       const [translatedTitle, translatedDesc] = await Promise.all([

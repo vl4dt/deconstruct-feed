@@ -1,5 +1,6 @@
 
 import { getCachedAIResult, setCachedAIResult, hashContent } from '../cache/aiCache';
+import { getLanguageName } from '../i18n/languageMap';
 
 async function initDefaults() {
     const defaults = await LanguageModel.params();
@@ -320,7 +321,9 @@ export async function checkBias(text, apiKey = null) {
     throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
 }
 
-export async function translate(text, targetLanguage, apiKey = null) {
+export async function translate(text, targetLangCode, apiKey = null) {
+    // Convert language code to full name (e.g., 'fr' -> 'French')
+    const targetLanguage = getLanguageName(targetLangCode);
     const prompt = `Translate the following text to ${targetLanguage}. Maintain the original tone and formatting. Return ONLY the translated text.\n\n${text}`;
 
     // Check cache
