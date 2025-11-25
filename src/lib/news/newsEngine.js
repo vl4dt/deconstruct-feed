@@ -109,25 +109,86 @@ async function fetchRSS(url, forceRefresh = false) {
     return articles;
 }
 
+// Deduplicate articles by title (case-insensitive)
+function deduplicateArticles(articles) {
+    const seen = new Set();
+    return articles.filter(article => {
+        const key = article.title?.toLowerCase().trim();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+
 export async function fetchTrendingNews(keywords = [], forceRefresh = false) {
-    const url = 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en';
-    try {
-        let articles = await fetchRSS(url, forceRefresh);
-        articles = articles.map(a => ({ ...a, topic: 'Trending' }));
+    const sources = [];
 
-        // Filter by keywords if provided
-        if (keywords && keywords.length > 0) {
-            const lowerKeywords = keywords.map(k => k.toLowerCase());
-            articles = articles.filter(article => {
-                const searchText = `${article.title} ${article.description}`.toLowerCase();
-                return lowerKeywords.some(keyword => searchText.includes(keyword));
+    // 1. Google News RSS (general trending)
+    sources.push({
+        url: 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
+        name: 'Google News'
+    });
+
+    // 2. Yahoo News RSS (general trending)
+    sources.push({
+        url: 'https://news.yahoo.com/rss/',
+        name: 'Yahoo News'
+    });
+
+    // 3. Bing News RSS for each keyword (keyword-specific)
+    if (keywords && keywords.length > 0) {
+        keywords.forEach(keyword => {
+            sources.push({
+                url: `https://www.bing.com/news/search?q=${encodeURIComponent(keyword)}&format=rss`,
+                name: `Bing News (${keyword})`
             });
-        }
-
-        return articles;
-    } catch (e) {
-        console.error("Failed to fetch trending news", e);
-        return [];
+        });
     }
+
+    console.log(`Fetching trending news from ${sources.length} sources...`);
+
+    // Fetch from all sources in parallel (graceful error handling)
+    const results = await Promise.allSettled(
+        sources.map(async ({ url, name }) => {
+            try {
+                const articles = await fetchRSS(url, forceRefresh);
+                console.log(`✓ Fetched ${articles.length} articles from ${name}`);
+                return articles;
+            } catch (error) {
+                console.warn(`✗ Failed to fetch from ${name}:`, error.message);
+                return [];
+            }
+        })
+    );
+
+    // Combine all successful results
+    let articles = results
+        .filter(result => result.status === 'fulfilled')
+        .flatMap(result => result.value);
+
+    // Tag all as 'Trending'
+    articles = articles.map(a => ({ ...a, topic: 'Trending' }));
+
+    // Deduplicate by title
+    articles = deduplicateArticles(articles);
+
+    // Filter by keywords if provided (additional filtering for Google/Yahoo articles)
+    if (keywords && keywords.length > 0) {
+        const lowerKeywords = keywords.map(k => k.toLowerCase());
+        articles = articles.filter(article => {
+            const searchText = `${article.title} ${article.description}`.toLowerCase();
+            return lowerKeywords.some(keyword => searchText.includes(keyword));
+        });
+    }
+
+    // Sort by date (newest first)
+    articles.sort((a, b) => {
+        const dateA = new Date(a.pubDate || 0);
+        const dateB = new Date(b.pubDate || 0);
+        return dateB - dateA;
+    });
+
+    console.log(`✓ Returning ${articles.length} deduplicated trending articles`);
+    return articles;
 }
 
