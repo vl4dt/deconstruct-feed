@@ -24,6 +24,7 @@
   import { userSubscription } from "../lib/stores/subscription";
   import { theme } from "../lib/stores/theme";
   import { settings } from "../lib/stores/settings";
+  import { savedItems } from "../lib/stores/savedItems";
   import { t, locale } from "../lib/stores/i18n";
 
   let articles = $state([]);
@@ -80,6 +81,18 @@
   let pageError = $state("");
   let analysisSource = $state("article");
 
+  // Collections State
+  let activeCollection = $state("all");
+  let showCreateCollection = $state(false);
+  let newCollectionName = $state("");
+  let movingArticleLink = $state(null); // Article link being moved
+
+  let filteredItems = $derived(
+    activeCollection === "all"
+      ? $savedItems.items
+      : $savedItems.items.filter((i) => i.collectionId === activeCollection),
+  );
+
   // Derived state for grouped articles
   let groupedArticles = $derived.by(() => {
     const groups = {};
@@ -122,6 +135,7 @@
 
       loadingMessage = $t("loadingSettings");
       await settings.init();
+      await savedItems.init();
 
       loadingMessage = $t("loadingTopics");
       await loadTopics();
@@ -848,6 +862,43 @@ ${getTextContent(selectedArticle.description)}
       scriptLoading = false;
     }
   }
+
+  async function toggleSave(article, e) {
+    e.stopPropagation();
+    const isSaved = $savedItems.items.some((i) => i.link === article.link);
+
+    if (isSaved) {
+      await savedItems.removeItem(article.link);
+    } else {
+      const result = await savedItems.saveItem(article);
+      if (!result.success) {
+        upgradeMessage = result.error;
+        showUpgradeModal = true;
+      }
+    }
+  }
+
+  function createCollection() {
+    if (!$userSubscription.isPro) {
+      upgradeMessage = "Collections are a Pro feature.";
+      showUpgradeModal = true;
+      return;
+    }
+    showCreateCollection = true;
+  }
+
+  async function confirmCreateCollection() {
+    if (!newCollectionName.trim()) return;
+    await savedItems.createCollection(newCollectionName);
+    showCreateCollection = false;
+    newCollectionName = "";
+  }
+
+  async function moveArticleTo(collectionId) {
+    if (!movingArticleLink) return;
+    await savedItems.moveItem(movingArticleLink, collectionId);
+    movingArticleLink = null;
+  }
 </script>
 
 <main>
@@ -902,6 +953,16 @@ ${getTextContent(selectedArticle.description)}
             📄
           </button>
         {/if}
+        <button
+          class="icon-btn saved-btn"
+          class:active={view === "saved"}
+          onclick={() => {
+            view = "saved";
+          }}
+          title="Saved Items"
+        >
+          🔖
+        </button>
       </div>
       <div class="header-actions">
         {#if showSearch}
@@ -1281,6 +1342,20 @@ ${getTextContent(selectedArticle.description)}
               <h3>{article.title}</h3>
               <p class="snippet">{getSnippet(article.description)}</p>
             </div>
+            <div class="card-actions">
+              <button
+                class="icon-btn save-btn"
+                class:active={$savedItems.items.some(
+                  (i) => i.link === article.link,
+                )}
+                onclick={(e) => toggleSave(article, e)}
+                title={$savedItems.items.some((i) => i.link === article.link)
+                  ? "Remove from saved"
+                  : "Save for later"}
+              >
+                🔖
+              </button>
+            </div>
             <div class="card-footer">
               <span class="date"
                 >{new Date(article.pubDate).toLocaleDateString()}</span
@@ -1305,6 +1380,201 @@ ${getTextContent(selectedArticle.description)}
         </button>
       </div>
     {/if}
+  {:else if view === "saved"}
+    <div class="feed">
+      <div class="saved-header">
+        <h2 class="section-title">
+          🔖 Saved Items ({$savedItems.items.length})
+        </h2>
+        {#if $userSubscription.isPro}
+          <button
+            class="icon-btn add-btn"
+            onclick={createCollection}
+            title="New Collection">➕</button
+          >
+        {/if}
+      </div>
+
+      {#if showCreateCollection}
+        <div class="create-collection-row">
+          <input bind:value={newCollectionName} placeholder="Collection Name" />
+          <button class="primary-btn" onclick={confirmCreateCollection}
+            >Create</button
+          >
+          <button
+            class="cancel-btn"
+            onclick={() => (showCreateCollection = false)}>Cancel</button
+          >
+        </div>
+      {/if}
+
+      {#if $userSubscription.isPro}
+        <div class="saved-content-wrapper">
+          <div class="collection-sidebar">
+            <button
+              class="collection-tab"
+              class:active={activeCollection === "all"}
+              onclick={() => (activeCollection = "all")}>All</button
+            >
+            {#each $savedItems.collections as collection}
+              <button
+                class="collection-tab"
+                class:active={activeCollection === collection.id}
+                onclick={() => (activeCollection = collection.id)}
+              >
+                {collection.name}
+              </button>
+            {/each}
+          </div>
+          <div class="saved-items-list">
+            {#if filteredItems.length === 0}
+              <p>No saved items yet.</p>
+              <p class="sub-text">Bookmark articles to read them later.</p>
+            {:else}
+              {#each filteredItems as article}
+                <div
+                  class="card"
+                  class:selected={selectedArticleIds.has(article.link)}
+                  class:moving={movingArticleLink === article.link}
+                  role="button"
+                  tabindex="0"
+                  onclick={() => selectArticle(article)}
+                  onkeydown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      selectArticle(article);
+                    }
+                  }}
+                >
+                  {#if selectionMode}
+                    <div class="checkbox">
+                      {#if selectedArticleIds.has(article.link)}✓{/if}
+                    </div>
+                  {/if}
+                  {#if article.image}
+                    <div class="card-image">
+                      <img
+                        src={article.image}
+                        alt={article.title}
+                        loading="lazy"
+                      />
+                    </div>
+                  {/if}
+                  <div class="card-content">
+                    <h3>{article.title}</h3>
+                    <p class="snippet">{getSnippet(article.description)}</p>
+                  </div>
+                  <div class="card-actions">
+                    {#if $userSubscription.isPro}
+                      <div class="move-dropdown-container">
+                        <button
+                          class="icon-btn move-btn"
+                          onclick={(e) => {
+                            e.stopPropagation();
+                            console.log("Move clicked", article.title);
+                            movingArticleLink =
+                              movingArticleLink === article.link
+                                ? null
+                                : article.link;
+                          }}
+                          title="Move to collection"
+                        >
+                          📂
+                        </button>
+                        {#if movingArticleLink === article.link}
+                          <div class="move-dropdown">
+                            <button
+                              onclick={(e) => {
+                                e.stopPropagation();
+                                moveArticleTo("all");
+                              }}>All (Default)</button
+                            >
+                            {#each $savedItems.collections as col}
+                              <button
+                                onclick={(e) => {
+                                  e.stopPropagation();
+                                  moveArticleTo(col.id);
+                                }}>{col.name}</button
+                              >
+                            {/each}
+                          </div>
+                        {/if}
+                      </div>
+                    {/if}
+                    <button
+                      class="icon-btn save-btn active"
+                      onclick={(e) => toggleSave(article, e)}
+                      title="Remove from saved"
+                    >
+                      🔖
+                    </button>
+                  </div>
+                  <div class="card-footer">
+                    <span class="date"
+                      >{new Date(article.pubDate).toLocaleDateString()}</span
+                    >
+                  </div>
+                </div>
+              {/each}
+            {/if}
+          </div>
+        </div>
+      {:else}
+        <!-- Free tier: simple list without sidebar -->
+        {#if filteredItems.length === 0}
+          <div class="empty-state">
+            <p>No saved items yet.</p>
+            <p class="sub-text">Bookmark articles to read them later.</p>
+          </div>
+        {:else}
+          {#each filteredItems as article}
+            <div
+              class="card"
+              class:selected={selectedArticleIds.has(article.link)}
+              class:moving={movingArticleLink === article.link}
+              role="button"
+              tabindex="0"
+              onclick={() => selectArticle(article)}
+              onkeydown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  selectArticle(article);
+                }
+              }}
+            >
+              {#if selectionMode}
+                <div class="checkbox">
+                  {#if selectedArticleIds.has(article.link)}✓{/if}
+                </div>
+              {/if}
+              {#if article.image}
+                <div class="card-image">
+                  <img src={article.image} alt={article.title} loading="lazy" />
+                </div>
+              {/if}
+              <div class="card-content">
+                <h3>{article.title}</h3>
+                <p class="snippet">{getSnippet(article.description)}</p>
+              </div>
+              <div class="card-actions">
+                <button
+                  class="icon-btn save-btn active"
+                  onclick={(e) => toggleSave(article, e)}
+                  title="Remove from saved"
+                >
+                  🔖
+                </button>
+              </div>
+              <div class="card-footer">
+                <span class="date"
+                  >{new Date(article.pubDate).toLocaleDateString()}</span
+                >
+              </div>
+            </div>
+          {/each}
+        {/if}
+      {/if}
+    </div>
   {:else}
     <div class="feed" class:selection-mode={selectionMode}>
       {#if loading}
@@ -1354,6 +1624,22 @@ ${getTextContent(selectedArticle.description)}
                     <div class="card-content">
                       <h3>{article.title}</h3>
                       <p class="snippet">{getSnippet(article.description)}</p>
+                    </div>
+                    <div class="card-actions">
+                      <button
+                        class="icon-btn save-btn"
+                        class:active={$savedItems.items.some(
+                          (i) => i.link === article.link,
+                        )}
+                        onclick={(e) => toggleSave(article, e)}
+                        title={$savedItems.items.some(
+                          (i) => i.link === article.link,
+                        )
+                          ? "Remove from saved"
+                          : "Save for later"}
+                      >
+                        🔖
+                      </button>
                     </div>
                     <div class="card-footer">
                       <span class="date"
@@ -1579,6 +1865,173 @@ ${getTextContent(selectedArticle.description)}
     flex-direction: row;
     gap: 1rem;
     align-items: flex-start;
+  }
+
+  .card.moving {
+    z-index: 1000;
+    position: relative;
+  }
+
+  .card-actions {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .save-btn {
+    opacity: 0.3;
+    transition:
+      opacity 0.2s,
+      transform 0.2s;
+    font-size: 1.2rem;
+    padding: 0.2rem;
+  }
+
+  .save-btn:hover {
+    opacity: 0.7;
+    transform: scale(1.1);
+    background: none;
+  }
+
+  .save-btn.active {
+    opacity: 1;
+    color: var(--accent-primary);
+  }
+
+  .saved-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .add-btn {
+    font-size: 1rem;
+    background: var(--bg-tertiary);
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .create-collection-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+  }
+
+  .create-collection-row input {
+    flex: 1;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  .primary-btn,
+  .cancel-btn {
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .primary-btn {
+    background: var(--accent-primary);
+    color: white;
+  }
+
+  .cancel-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  .saved-content-wrapper {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .collection-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 120px;
+    flex-shrink: 0;
+  }
+
+  .saved-items-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .collection-tab {
+    background: var(--bg-secondary);
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: left;
+    transition: all 0.2s;
+  }
+
+  .collection-tab:hover {
+    background: var(--bg-tertiary);
+  }
+
+  .collection-tab.active {
+    background: var(--accent-primary);
+    color: white;
+    font-weight: 600;
+  }
+
+  .move-dropdown-container {
+    position: relative;
+  }
+
+  .move-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    min-width: 150px;
+    overflow: hidden;
+  }
+
+  .move-dropdown button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+
+  .move-dropdown button:hover {
+    background: var(--bg-tertiary);
+  }
+
+  .collection-tabs button.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
   }
 
   /* Responsive adjustments for narrow screens (e.g. side panel) */
