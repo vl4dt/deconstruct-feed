@@ -87,7 +87,7 @@
             aria-modal="true"
         >
             <div class="modal-header">
-                <h3>🔑 Activate License</h3>
+                <h3>Activate License</h3>
                 <button class="close-btn" onclick={close}>&times;</button>
             </div>
             <div class="modal-body">

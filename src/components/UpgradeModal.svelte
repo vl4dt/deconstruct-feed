@@ -103,7 +103,6 @@
         >
             <div class="modal-header">
                 <div class="header-content">
-                    <div class="sparkle">✨</div>
                     <div>
                         <h3>{$t("upgradeToPro")}</h3>
                         <p class="header-subtitle">
@@ -226,7 +225,6 @@
 
             <div class="modal-footer">
                 <button class="upgrade-btn" onclick={openCheckout}>
-                    <span class="btn-icon">🚀</span>
                     Continue to Checkout
                 </button>
                 <button class="license-link" onclick={showLicenseActivation}>

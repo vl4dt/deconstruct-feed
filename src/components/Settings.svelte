@@ -198,9 +198,7 @@
             <div class="theme-toggle">
                 <h3>{$t("theme")}</h3>
                 <button class="toggle-btn" onclick={theme.toggle}>
-                    {$theme === "light"
-                        ? "☀️ " + $t("light")
-                        : "🌙 " + $t("dark")}
+                    {$theme === "light" ? "☀️ " + $t("light") : "Dark"}
                 </button>
             </div>
 

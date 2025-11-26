@@ -926,42 +926,49 @@ ${getTextContent(selectedArticle.description)}
         <h1>{$t("appTitle")}</h1>
         {#if $userSubscription.isPro}
           <button
-            class="icon-btn fire-btn"
+            class="nav-btn"
             class:active={view === "trending"}
-            onclick={() => loadTrending()}
-            title={$t("trendingTopics")}
-          >
-            🔥
-          </button>
-          <button
-            class="icon-btn home-btn"
-            class:active={view === "feed"}
             onclick={() => {
-              view = "feed";
-              loadNews();
+              view = "trending";
+              loadTrending();
             }}
-            title={$t("myFeed")}
+            title={$t("trending")}
           >
-            🏠
+            Trending
           </button>
+
           <button
-            class="icon-btn page-btn"
+            class="nav-btn"
             class:active={view === "current-page"}
-            onclick={loadCurrentPage}
-            title="Analyze Current Page"
+            onclick={() => {
+              view = "current-page";
+              loadCurrentPage();
+            }}
+            title="Current Page"
           >
-            📄
+            Page
           </button>
         {/if}
+
         <button
-          class="icon-btn saved-btn"
+          class="nav-btn"
+          class:active={view === "feed"}
+          onclick={() => {
+            view = "feed";
+          }}
+          title={$t("myFeed")}
+        >
+          Feed
+        </button>
+        <button
+          class="nav-btn"
           class:active={view === "saved"}
           onclick={() => {
             view = "saved";
           }}
           title="Saved Items"
         >
-          🔖
+          Saved
         </button>
       </div>
       <div class="header-actions">
@@ -983,19 +990,15 @@ ${getTextContent(selectedArticle.description)}
           </div>
         {/if}
         <button
-          class="icon-btn search-btn"
+          class="icon-btn"
           class:active={showSearch}
           onclick={toggleSearch}
           title={$t("search")}
         >
-          🔍
+          Search
         </button>
-        <button
-          class="icon-btn refresh-btn"
-          onclick={refreshNews}
-          title={$t("refreshNews")}
-        >
-          🔄
+        <button class="icon-btn" onclick={loadNews} title={$t("refresh")}>
+          Refresh
         </button>
         {#if isRefreshing}
           <div class="refresh-indicator" title={loadingMessage}>
@@ -1177,7 +1180,17 @@ ${getTextContent(selectedArticle.description)}
             disabled={summaryLoading}
             title={$t("summarize")}
           >
-            ✨ {$t("summarize")}
+            <svg
+              class="btn-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
           </button>
           <button
             class="ai-chip"
@@ -1186,28 +1199,68 @@ ${getTextContent(selectedArticle.description)}
             disabled={biasLoading}
             title={$t("biasCheck")}
           >
-            ⚖️ {$t("bias")}
+            <svg
+              class="btn-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+              />
+            </svg>
           </button>
           <button
             class="ai-chip"
             onclick={doGenerateScript}
             title={$t("videoScript")}
           >
-            🎬 {$t("script")} &rarr;
+            <svg
+              class="btn-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
           </button>
           <button
             class="ai-chip"
             onclick={doGeneratePodcastScript}
             title={$t("podcastScript")}
           >
-            🎙️ {$t("podcast")} &rarr;
+            <svg
+              class="btn-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+              />
+            </svg>
           </button>
           <button
             class="ai-chip"
             onclick={doDeepDive}
             title={$t("deepDiveAnalysis")}
           >
-            🧠 {$t("deepDive")} &rarr;
+            <svg
+              class="btn-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
+            </svg>
           </button>
           <button
             class="icon-btn translate-btn"
@@ -1221,18 +1274,39 @@ ${getTextContent(selectedArticle.description)}
                   ? $t("translateToSpanish")
                   : $t("translateToEnglish")}
           >
-            {translating ? "⏳" : "🌐"}
+            <svg
+              class="btn-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
+              />
+            </svg>
           </button>
+          <div class="divider"></div>
           <button
-            class="ai-chip"
+            class="generate-btn"
             onclick={() =>
               window.open(
                 `https://www.youtube.com/results?search_query=${encodeURIComponent(selectedArticle.title)}`,
                 "_blank",
               )}
-            title={$t("searchYT")}
           >
-            📺 {$t("searchYT")} &rarr;
+            <svg
+              class="btn-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+              />
+              <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </button>
           <div class="divider"></div>
           <button
@@ -1240,7 +1314,17 @@ ${getTextContent(selectedArticle.description)}
             onclick={exportToMarkdown}
             title={$t("export")}
           >
-            📋 {$t("export")}
+            <svg
+              class="btn-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
           </button>
         </div>
 
@@ -1253,7 +1337,7 @@ ${getTextContent(selectedArticle.description)}
                   <button
                     class="copy-icon-btn"
                     onclick={() => copyToClipboard(summary)}
-                    title="Copy to clipboard">📋</button
+                    title="Copy to clipboard">Copy</button
                   >
                   <button class="close-btn" onclick={() => (summary = "")}
                     >×</button
@@ -1283,7 +1367,7 @@ ${getTextContent(selectedArticle.description)}
                   <button
                     class="copy-icon-btn"
                     onclick={() => copyToClipboard(biasResult)}
-                    title="Copy to clipboard">📋</button
+                    title="Copy to clipboard">Copy</button
                   >
                   <button class="close-btn" onclick={() => (biasResult = "")}
                     >×</button
@@ -1310,7 +1394,7 @@ ${getTextContent(selectedArticle.description)}
     </div>
   {:else if view === "trending"}
     <div class="feed" class:selection-mode={selectionMode}>
-      <h2 class="section-title">🔥 {$t("trendingNow")}</h2>
+      <h2 class="section-title">Trending Now</h2>
       {#if loading}
         <LoadingSpinner text={loadingMessage} />
       {:else if trendingArticles.length > 0}
@@ -1353,7 +1437,9 @@ ${getTextContent(selectedArticle.description)}
                   ? "Remove from saved"
                   : "Save for later"}
               >
-                🔖
+                {$savedItems.items.some((i) => i.link === article.link)
+                  ? "Saved"
+                  : "Save"}
               </button>
             </div>
             <div class="card-footer">
@@ -1384,13 +1470,13 @@ ${getTextContent(selectedArticle.description)}
     <div class="feed">
       <div class="saved-header">
         <h2 class="section-title">
-          🔖 Saved Items ({$savedItems.items.length})
+          Saved Items ({$savedItems.items.length})
         </h2>
         {#if $userSubscription.isPro}
           <button
             class="icon-btn add-btn"
             onclick={createCollection}
-            title="New Collection">➕</button
+            title="New Collection">New</button
           >
         {/if}
       </div>
@@ -1479,7 +1565,7 @@ ${getTextContent(selectedArticle.description)}
                           }}
                           title="Move to collection"
                         >
-                          📂
+                          Move
                         </button>
                         {#if movingArticleLink === article.link}
                           <div class="move-dropdown">
@@ -1506,7 +1592,7 @@ ${getTextContent(selectedArticle.description)}
                       onclick={(e) => toggleSave(article, e)}
                       title="Remove from saved"
                     >
-                      🔖
+                      Saved
                     </button>
                   </div>
                   <div class="card-footer">
@@ -1562,7 +1648,7 @@ ${getTextContent(selectedArticle.description)}
                   onclick={(e) => toggleSave(article, e)}
                   title="Remove from saved"
                 >
-                  🔖
+                  Saved
                 </button>
               </div>
               <div class="card-footer">
@@ -1638,7 +1724,9 @@ ${getTextContent(selectedArticle.description)}
                           ? "Remove from saved"
                           : "Save for later"}
                       >
-                        🔖
+                        {$savedItems.items.some((i) => i.link === article.link)
+                          ? "Saved"
+                          : "Save"}
                       </button>
                     </div>
                     <div class="card-footer">
@@ -1878,23 +1966,26 @@ ${getTextContent(selectedArticle.description)}
   }
 
   .save-btn {
-    opacity: 0.3;
-    transition:
-      opacity 0.2s,
-      transform 0.2s;
-    font-size: 1.2rem;
-    padding: 0.2rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    transition: all 0.2s;
   }
 
   .save-btn:hover {
-    opacity: 0.7;
-    transform: scale(1.1);
-    background: none;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
   }
 
   .save-btn.active {
-    opacity: 1;
-    color: var(--accent-primary);
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
   }
 
   .saved-header {
@@ -1905,13 +1996,20 @@ ${getTextContent(selectedArticle.description)}
   }
 
   .add-btn {
-    font-size: 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
     background: var(--bg-tertiary);
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    color: var(--text-primary);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+  }
+
+  .add-btn:hover {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
   }
 
   .create-collection-row {
@@ -1994,6 +2092,22 @@ ${getTextContent(selectedArticle.description)}
     background: var(--accent-primary);
     color: white;
     font-weight: 600;
+  }
+
+  .move-btn {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+  }
+
+  .move-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent-primary);
   }
 
   .move-dropdown-container {
@@ -2533,6 +2647,100 @@ ${getTextContent(selectedArticle.description)}
     border: 1px solid var(--border-color);
     margin-bottom: 1.5rem;
     overflow-x: auto;
+  }
+
+  .ai-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .ai-chip {
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .ai-chip:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent-primary);
+  }
+  .ai-chip.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+  }
+  .ai-chip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .export-chip {
+    margin-left: auto;
+  }
+  .translate-btn {
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+  }
+
+  .btn-icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+  }
+
+  .ai-chip {
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    min-width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-btn {
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .nav-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+
+  .nav-btn.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+    font-weight: 600;
   }
 
   .header-left {
