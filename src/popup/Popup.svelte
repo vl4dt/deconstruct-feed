@@ -49,7 +49,7 @@
   let analysisTitle = $state("");
 
   // Search State
-  let showSearch = $state(false);
+
   let searchQuery = $state("");
 
   // Trending State
@@ -752,15 +752,6 @@ ${getTextContent(selectedArticle.description)}
     collapsedTopics = newSet;
   }
 
-  function toggleSearch() {
-    showSearch = !showSearch;
-    if (showSearch) {
-      setTimeout(() => {
-        document.getElementById("search-input")?.focus();
-      }, 100);
-    }
-  }
-
   async function handleSearch() {
     if (!searchQuery.trim()) return;
 
@@ -771,8 +762,8 @@ ${getTextContent(selectedArticle.description)}
     try {
       const results = await fetchTrendingNews([searchQuery], true);
       trendingArticles = results;
-      showSearch = false;
-      searchQuery = "";
+      // showSearch = false;
+      // searchQuery = "";
     } catch (e) {
       console.error(e);
     } finally {
@@ -972,31 +963,6 @@ ${getTextContent(selectedArticle.description)}
         </button>
       </div>
       <div class="header-actions">
-        {#if showSearch}
-          <div class="search-bar">
-            <input
-              id="search-input"
-              type="text"
-              placeholder={$t("search") + "..."}
-              bind:value={searchQuery}
-              onkeydown={(e) => e.key === "Enter" && handleSearch()}
-              onblur={() => {
-                // Small delay to allow click on search button
-                setTimeout(() => {
-                  if (!searchQuery) showSearch = false;
-                }, 200);
-              }}
-            />
-          </div>
-        {/if}
-        <button
-          class="icon-btn"
-          class:active={showSearch}
-          onclick={toggleSearch}
-          title={$t("search")}
-        >
-          Search
-        </button>
         <button class="icon-btn" onclick={loadNews} title={$t("refresh")}>
           Refresh
         </button>
@@ -1019,6 +985,37 @@ ${getTextContent(selectedArticle.description)}
         <button class="icon-btn" onclick={openSettings}>⚙️</button>
       </div>
     </header>
+  {/if}
+
+  {#if view === "feed" || view === "trending"}
+    <div class="main-search-container">
+      <div class="search-input-wrapper">
+        <svg
+          class="search-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          placeholder={$t("search") + "..."}
+          bind:value={searchQuery}
+          onkeydown={(e) => e.key === "Enter" && handleSearch()}
+        />
+        {#if searchQuery}
+          <button
+            class="clear-search-btn"
+            onclick={() => {
+              searchQuery = "";
+              if (view === "trending") loadTrending();
+            }}>×</button
+          >
+        {/if}
+      </div>
+    </div>
   {/if}
 
   {#if view === "settings"}
@@ -1876,6 +1873,72 @@ ${getTextContent(selectedArticle.description)}
     background: var(--bg-primary);
   }
   .icon-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  .main-search-container {
+    padding: 1rem 1rem 0 1rem;
+    background: var(--bg-primary);
+    position: sticky;
+    top: 0;
+    z-index: 9;
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    width: 18px;
+    height: 18px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+  }
+
+  .main-search-container input {
+    width: 100%;
+    padding: 0.8rem 1rem 0.8rem 2.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.2s;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .main-search-container input:focus {
+    background: var(--bg-primary);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.1);
+  }
+
+  .clear-search-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .clear-search-btn:hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
   }
