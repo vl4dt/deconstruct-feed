@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "NewsLens AI",
   "version": "1.0.0",
-  "description": "AI-powered news curation with smart analysis, summaries, and multi-topic tracking.",
+  "description": "Curate news, analyze bias, summarize articles, and create content scripts with local Chrome AI & Gemini.",
   "permissions": [
     "storage",
     "activeTab",
