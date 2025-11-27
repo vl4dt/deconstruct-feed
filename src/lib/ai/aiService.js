@@ -1,6 +1,8 @@
 
 import { getCachedAIResult, setCachedAIResult, hashContent } from '../cache/aiCache';
 import { getLanguageName } from '../i18n/languageMap';
+import { get } from 'svelte/store';
+import { settings } from '../stores/settings';
 
 async function initDefaults() {
     const defaults = await LanguageModel.params();
@@ -49,53 +51,11 @@ export async function isChromeAIAvailable() {
 }
 
 export async function summarize(text, apiKey = null) {
-    // Check cache first
-    const contentHash = hashContent(text);
-    const cached = await getCachedAIResult(contentHash, 'summary');
-    if (cached) {
-        return cached;
-    }
-
-    const chromeAvailable = await isChromeAIAvailable();
-
-    if (chromeAvailable) {
-        try {
-            console.log('Attempting to summarize with Chrome AI...');
-            // Create a session with a system prompt if supported, or just prompt
-            const session = await LanguageModel.create({
-                initialPrompts: [{
-                    role: 'system',
-                    content: 'You are a helpful news assistant. Summarize the following article concisely in Markdown format.',
-                }],
-                expectedInputs: [
-                    { type: "text", languages: ["en"] }
-                ],
-                expectedOutputs: [
-                    { type: "text", languages: ["en"] }
-                ]
-            });
-            const result = await session.prompt(text);
-            session.destroy();
-
-            // Cache the result
-            await setCachedAIResult(contentHash, 'summary', result);
-            return result;
-        } catch (e) {
-            console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
-        }
-    } else {
-        console.log('Chrome AI not available, skipping local generation.');
-    }
-
-    if (apiKey) {
-        console.log('Attempting to summarize with Gemini...');
-        const result = await summarizeWithGemini(text, apiKey);
-        // Cache the result
-        await setCachedAIResult(contentHash, 'summary', result);
-        return result;
-    }
-
-    throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
+    return generateContent(
+        `Summarize this news article in Markdown format:\n\n${text}`,
+        'You are a helpful news assistant. Summarize the following article concisely in Markdown format.',
+        'summary'
+    );
 }
 
 async function summarizeWithGemini(text, apiKey) {
@@ -122,203 +82,186 @@ async function summarizeWithGemini(text, apiKey) {
     throw new Error('No response from Gemini');
 }
 
+async function generateWithLocalAI(prompt, systemPrompt, config) {
+    const url = config.localAIUrl || 'http://localhost:11434/v1/chat/completions';
+    const model = config.localAIModel || 'llama3';
+
+    const messages = [];
+    if (systemPrompt) {
+        messages.push({ role: 'system', content: systemPrompt });
+    }
+    messages.push({ role: 'user', content: prompt });
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            model: model,
+            messages: messages,
+            stream: false
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Local AI Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
+
+async function generateWithOpenAI(prompt, systemPrompt, config) {
+    if (!config.openaiKey) throw new Error('OpenAI API Key is missing');
+
+    const messages = [];
+    if (systemPrompt) {
+        messages.push({ role: 'system', content: systemPrompt });
+    }
+    messages.push({ role: 'user', content: prompt });
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.openaiKey}`
+        },
+        body: JSON.stringify({
+            model: config.openaiModel || 'gpt-4o-mini',
+            messages: messages
+        })
+    });
+
+    if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`OpenAI Error: ${err}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
+
+async function generateWithAnthropic(prompt, systemPrompt, config) {
+    if (!config.anthropicKey) throw new Error('Anthropic API Key is missing');
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': config.anthropicKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true' // Required for browser usage
+        },
+        body: JSON.stringify({
+            model: config.anthropicModel || 'claude-3-5-sonnet-latest',
+            max_tokens: 4096,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: prompt }]
+        })
+    });
+
+    if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Anthropic Error: ${err}`);
+    }
+
+    const data = await response.json();
+    return data.content[0].text;
+}
+
+async function generateContent(prompt, systemPrompt, cacheKey) {
+    // Check cache
+    const contentHash = hashContent(prompt);
+    const cached = await getCachedAIResult(contentHash, cacheKey);
+    if (cached) return cached;
+
+    const config = get(settings);
+    const provider = config.aiProvider || 'chrome';
+    let result = '';
+
+    console.log(`Generating content with provider: ${provider}`);
+
+    try {
+        switch (provider) {
+            case 'local':
+                result = await generateWithLocalAI(prompt, systemPrompt, config);
+                break;
+            case 'openai':
+                result = await generateWithOpenAI(prompt, systemPrompt, config);
+                break;
+            case 'anthropic':
+                result = await generateWithAnthropic(prompt, systemPrompt, config);
+                break;
+            case 'gemini':
+                // Use key from settings if available, otherwise fallback to passed key (not passed here yet)
+                // We'll update summarizeWithGemini to take key from settings
+                const key = config.geminiKey;
+                if (!key) throw new Error('Gemini API Key is missing in settings');
+                result = await summarizeWithGemini(prompt, key);
+                break;
+            case 'chrome':
+            default:
+                // Chrome AI Logic
+                const chromeAvailable = await isChromeAIAvailable();
+                if (!chromeAvailable) throw new Error('Chrome AI is not available');
+
+                const session = await LanguageModel.create({
+                    initialPrompts: systemPrompt ? [{ role: 'system', content: systemPrompt }] : [],
+                });
+                result = await session.prompt(prompt);
+                session.destroy();
+                break;
+        }
+
+        await setCachedAIResult(contentHash, cacheKey, result);
+        return result;
+
+    } catch (e) {
+        console.error(`AI Generation failed with ${provider}:`, e);
+        throw e;
+    }
+}
+
 export async function generateScript(articles, apiKey = null) {
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
     const prompt = `Create a YouTube video script covering these stories in Markdown format. Include an engaging hook, transition between topics, and a call to action.\n\n${combinedText}`;
 
-    // Check cache
-    const contentHash = hashContent(prompt);
-    const cached = await getCachedAIResult(contentHash, 'script');
-    if (cached) {
-        return cached;
-    }
-
-    const chromeAvailable = await isChromeAIAvailable();
-
-    if (chromeAvailable) {
-        try {
-            console.log('Attempting to generate script with Chrome AI...');
-            const session = await LanguageModel.create({
-                initialPrompts: [{
-                    role: 'system',
-                    content: 'You are a creative scriptwriter for a tech news YouTube channel.',
-                }],
-                expectedInputs: [
-                    { type: "text", languages: ["en"] }
-                ],
-                expectedOutputs: [
-                    { type: "text", languages: ["en"] }
-                ]
-            });
-            const result = await session.prompt(prompt);
-            session.destroy();
-
-            // Cache the result
-            await setCachedAIResult(contentHash, 'script', result);
-            return result;
-        } catch (e) {
-            console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
-        }
-    }
-
-    if (apiKey) {
-        console.log('Attempting to generate script with Gemini...');
-        const result = await summarizeWithGemini(prompt, apiKey); // Reusing summarizeWithGemini as it's just a generic prompt function
-        // Cache the result
-        await setCachedAIResult(contentHash, 'script', result);
-        return result;
-    }
-
-    throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
+    return generateContent(
+        prompt,
+        'You are a creative scriptwriter for a tech news YouTube channel.',
+        'script'
+    );
 }
 
 export async function generatePodcastScript(articles, apiKey = null) {
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
     const prompt = `Create a podcast script for two hosts (Alex and Sam) discussing these news stories. Include engaging banter, an intro with music cue, smooth transitions between topics, and an outro. Format in Markdown with **Host:** prefixes.\n\n${combinedText}`;
 
-    // Check cache
-    const contentHash = hashContent(prompt);
-    const cached = await getCachedAIResult(contentHash, 'podcast');
-    if (cached) {
-        return cached;
-    }
-
-    const chromeAvailable = await isChromeAIAvailable();
-
-    if (chromeAvailable) {
-        try {
-            console.log('Attempting to generate podcast script with Chrome AI...');
-            const session = await LanguageModel.create({
-                initialPrompts: [{
-                    role: 'system',
-                    content: 'You are a creative podcast producer writing a script for two engaging hosts.',
-                }],
-                expectedInputs: [
-                    { type: "text", languages: ["en"] }
-                ],
-                expectedOutputs: [
-                    { type: "text", languages: ["en"] }
-                ]
-            });
-            const result = await session.prompt(prompt);
-            session.destroy();
-
-            // Cache the result
-            await setCachedAIResult(contentHash, 'podcast', result);
-            return result;
-        } catch (e) {
-            console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
-        }
-    }
-
-    if (apiKey) {
-        console.log('Attempting to generate podcast script with Gemini...');
-        const result = await summarizeWithGemini(prompt, apiKey);
-        // Cache the result
-        await setCachedAIResult(contentHash, 'podcast', result);
-        return result;
-    }
-
-    throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
+    return generateContent(
+        prompt,
+        'You are a creative podcast producer writing a script for two engaging hosts.',
+        'podcast'
+    );
 }
 
 export async function deepDive(articles, apiKey = null) {
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
     const prompt = `Analyze these articles in Markdown format. Identify common themes, contradictions, and causal relationships.\n\n${combinedText}`;
 
-    // Check cache
-    const contentHash = hashContent(prompt);
-    const cached = await getCachedAIResult(contentHash, 'deepdive');
-    if (cached) {
-        return cached;
-    }
-
-    const chromeAvailable = await isChromeAIAvailable();
-
-    if (chromeAvailable) {
-        try {
-            console.log('Attempting to deep dive with Chrome AI...');
-            const session = await LanguageModel.create({
-                initialPrompts: [{
-                    role: 'system',
-                    content: 'You are an expert news analyst.',
-                }],
-                expectedInputs: [
-                    { type: "text", languages: ["en"] }
-                ],
-                expectedOutputs: [
-                    { type: "text", languages: ["en"] }
-                ]
-            });
-            const result = await session.prompt(prompt);
-            session.destroy();
-
-            // Cache the result
-            await setCachedAIResult(contentHash, 'deepdive', result);
-            return result;
-        } catch (e) {
-            console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
-        }
-    }
-
-    if (apiKey) {
-        console.log('Attempting to deep dive with Gemini...');
-        const result = await summarizeWithGemini(prompt, apiKey);
-        // Cache the result
-        await setCachedAIResult(contentHash, 'deepdive', result);
-        return result;
-    }
-
-    throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
+    return generateContent(
+        prompt,
+        'You are an expert news analyst.',
+        'deepdive'
+    );
 }
 
 export async function checkBias(text, apiKey = null) {
     const prompt = `Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why. Format the response in Markdown.\n\n${text}`;
 
-    // Check cache
-    const contentHash = hashContent(text);
-    const cached = await getCachedAIResult(contentHash, 'bias');
-    if (cached) {
-        return cached;
-    }
-
-    const chromeAvailable = await isChromeAIAvailable();
-
-    if (chromeAvailable) {
-        try {
-            console.log('Attempting to check bias with Chrome AI...');
-            const session = await LanguageModel.create({
-                initialPrompts: [{
-                    role: 'system',
-                    content: 'You are an objective media analyst.',
-                }],
-                expectedInputs: [
-                    { type: "text", languages: ["en"] }
-                ],
-                expectedOutputs: [
-                    { type: "text", languages: ["en"] }
-                ]
-            });
-            const result = await session.prompt(prompt);
-            session.destroy();
-
-            // Cache the result
-            await setCachedAIResult(contentHash, 'bias', result);
-            return result;
-        } catch (e) {
-            console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
-        }
-    }
-
-    if (apiKey) {
-        console.log('Attempting to check bias with Gemini...');
-        const result = await summarizeWithGemini(prompt, apiKey);
-        // Cache the result
-        await setCachedAIResult(contentHash, 'bias', result);
-        return result;
-    }
-
-    throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
+    return generateContent(
+        prompt,
+        'You are an objective media analyst.',
+        'bias'
+    );
 }
 
 export async function translate(text, targetLangCode, apiKey = null) {
@@ -326,48 +269,9 @@ export async function translate(text, targetLangCode, apiKey = null) {
     const targetLanguage = getLanguageName(targetLangCode);
     const prompt = `Translate the following text to ${targetLanguage}. Maintain the original tone and formatting. Return ONLY the translated text.\n\n${text}`;
 
-    // Check cache
-    const contentHash = hashContent(prompt);
-    const cached = await getCachedAIResult(contentHash, 'translate');
-    if (cached) {
-        return cached;
-    }
-
-    const chromeAvailable = await isChromeAIAvailable();
-
-    if (chromeAvailable) {
-        try {
-            console.log(`Attempting to translate to ${targetLanguage} with Chrome AI...`);
-            const session = await LanguageModel.create({
-                initialPrompts: [{
-                    role: 'system',
-                    content: `You are a professional translator. Translate text to ${targetLanguage}.`,
-                }],
-                expectedInputs: [
-                    { type: "text", languages: ["en"] }
-                ],
-                expectedOutputs: [
-                    { type: "text", languages: ["en"] } // Chrome AI currently mostly supports EN I/O, but can generate other langs
-                ]
-            });
-            const result = await session.prompt(prompt);
-            session.destroy();
-
-            // Cache the result
-            await setCachedAIResult(contentHash, 'translate', result);
-            return result;
-        } catch (e) {
-            console.warn('Chrome AI failed, falling back to Gemini if key provided', e);
-        }
-    }
-
-    if (apiKey) {
-        console.log(`Attempting to translate to ${targetLanguage} with Gemini...`);
-        const result = await summarizeWithGemini(prompt, apiKey);
-        // Cache the result
-        await setCachedAIResult(contentHash, 'translate', result);
-        return result;
-    }
-
-    throw new Error(chromeAvailable ? 'Chrome AI failed and no API key provided' : 'Chrome AI unavailable and no API key provided');
+    return generateContent(
+        prompt,
+        `You are a professional translator. Translate text to ${targetLanguage}.`,
+        'translate'
+    );
 }

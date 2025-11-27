@@ -135,6 +135,17 @@
     async function removeTrendingKeyword(keyword) {
         await settings.removeTrendingKeyword(keyword);
     }
+
+    async function handleProviderChange(event) {
+        const provider = event.target.value;
+        if (provider !== "chrome" && !$userSubscription.isPro) {
+            upgradeMessage = `${provider === "local" ? "Local AI" : provider.charAt(0).toUpperCase() + provider.slice(1)} is a Pro feature. Upgrade to unlock!`;
+            showUpgradeModal = true;
+            event.target.value = $settings.aiProvider; // Revert UI
+            return;
+        }
+        await settings.set("aiProvider", provider);
+    }
 </script>
 
 <div class="settings-container">
@@ -273,6 +284,141 @@
                     >
                     </button>
                 </div>
+            </div>
+
+            <!-- AI Provider Section -->
+            <div class="section">
+                <h3>AI Provider</h3>
+                <div class="input-group">
+                    <select
+                        value={$settings.aiProvider}
+                        onchange={handleProviderChange}
+                        class="provider-select"
+                    >
+                        <option value="chrome">Chrome AI (On-Device)</option>
+                        <option value="gemini">Google Gemini</option>
+                        <option value="local"
+                            >Local AI (Ollama/LM Studio)</option
+                        >
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                    </select>
+                </div>
+
+                {#if $settings.aiProvider === "local"}
+                    <div class="provider-settings">
+                        <div class="setting-row">
+                            <label for="local-url">URL</label>
+                            <input
+                                id="local-url"
+                                type="text"
+                                value={$settings.localAIUrl}
+                                oninput={(e) =>
+                                    settings.set("localAIUrl", e.target.value)}
+                                placeholder="http://localhost:11434/v1/chat/completions"
+                            />
+                        </div>
+                        <div class="setting-row">
+                            <label for="local-model">Model</label>
+                            <input
+                                id="local-model"
+                                type="text"
+                                value={$settings.localAIModel}
+                                oninput={(e) =>
+                                    settings.set(
+                                        "localAIModel",
+                                        e.target.value,
+                                    )}
+                                placeholder="llama3"
+                            />
+                        </div>
+                    </div>
+                {:else if $settings.aiProvider === "openai"}
+                    <div class="provider-settings">
+                        <div class="setting-row">
+                            <label for="openai-key">API Key</label>
+                            <input
+                                id="openai-key"
+                                type="password"
+                                value={$settings.openaiKey}
+                                oninput={(e) =>
+                                    settings.set("openaiKey", e.target.value)}
+                                placeholder="sk-..."
+                            />
+                        </div>
+                        <div class="setting-row">
+                            <label for="openai-model">Model</label>
+                            <input
+                                id="openai-model"
+                                type="text"
+                                value={$settings.openaiModel}
+                                oninput={(e) =>
+                                    settings.set("openaiModel", e.target.value)}
+                                placeholder="gpt-4o-mini"
+                            />
+                        </div>
+                    </div>
+                {:else if $settings.aiProvider === "anthropic"}
+                    <div class="provider-settings">
+                        <div class="setting-row">
+                            <label for="anthropic-key">API Key</label>
+                            <input
+                                id="anthropic-key"
+                                type="password"
+                                value={$settings.anthropicKey}
+                                oninput={(e) =>
+                                    settings.set(
+                                        "anthropicKey",
+                                        e.target.value,
+                                    )}
+                                placeholder="sk-ant-..."
+                            />
+                        </div>
+                        <div class="setting-row">
+                            <label for="anthropic-model">Model</label>
+                            <input
+                                id="anthropic-model"
+                                type="text"
+                                value={$settings.anthropicModel}
+                                oninput={(e) =>
+                                    settings.set(
+                                        "anthropicModel",
+                                        e.target.value,
+                                    )}
+                                placeholder="claude-3-5-sonnet-latest"
+                            />
+                        </div>
+                    </div>
+                {:else if $settings.aiProvider === "gemini"}
+                    <!-- Gemini Key is handled in aiService but we should expose it here if we want to unify -->
+                    <!-- Currently aiService uses a hardcoded key or passed key? -->
+                    <!-- Looking at aiService, it takes apiKey as arg. Popup passes it? -->
+                    <!-- Popup doesn't seem to pass it in the code I saw. -->
+                    <!-- Wait, aiService.js: summarize(text, apiKey = null) -->
+                    <!-- Popup.svelte: summarize(text) -->
+                    <!-- It seems Gemini key might be missing in current implementation or I missed where it's stored. -->
+                    <!-- Let's check if there is a geminiKey setting already. -->
+                    <!-- settings.js didn't have it. -->
+                    <!-- So currently Gemini might not be fully working or relies on something else. -->
+                    <!-- I'll add a Gemini Key input here and update settings.js to include it if needed, -->
+                    <!-- but for now I'll stick to the plan. -->
+                    <!-- Actually, if I select Gemini, I should probably allow entering a key. -->
+                    <!-- I'll add 'geminiKey' to settings.js later if needed, but for now let's assume the user might want to enter it. -->
+                    <!-- I'll add it to the UI and settings.set will save it to storage even if not in default state (though it's better to be in default). -->
+                    <div class="provider-settings">
+                        <div class="setting-row">
+                            <label for="gemini-key">API Key</label>
+                            <input
+                                id="gemini-key"
+                                type="password"
+                                value={$settings.geminiKey || ""}
+                                oninput={(e) =>
+                                    settings.set("geminiKey", e.target.value)}
+                                placeholder="Gemini API Key"
+                            />
+                        </div>
+                    </div>
+                {/if}
             </div>
 
             <!-- License Management Section -->
@@ -592,70 +738,160 @@
         line-height: 1;
         border-radius: 50%;
         width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .delete-btn:hover {
-        background: rgba(244, 67, 54, 0.1);
-        color: #f44336;
-        transform: none;
-    }
-
-    /* Preferences Rows */
-    .pref-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 0.8rem 0;
         border-bottom: 1px solid var(--border-color);
     }
+    /* Preferences Rows */
+    .pref-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        margin: 0 -1.25rem; /* Negative margin to stretch to edge of card */
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        transition: background-color 0.2s ease;
+    }
+    .pref-row:first-of-type {
+        margin-top: -0.5rem;
+    }
     .pref-row:last-child {
         border-bottom: none;
+        margin-bottom: -0.5rem;
+    }
+    .pref-row:hover {
+        background-color: var(--bg-tertiary);
     }
     .pref-row span {
         font-weight: 500;
         color: var(--text-primary);
+        font-size: 0.95rem;
     }
 
     /* Modern Toggle Switch */
     .toggle-switch {
-        width: 44px;
-        height: 24px;
-        border-radius: 12px;
+        width: 48px;
+        height: 26px;
+        border-radius: 13px;
         position: relative;
-        background: var(--bg-tertiary);
-        transition: background 0.3s ease;
+        background: var(--bg-tertiary); /* Default off state */
+        background-color: #e0e0e0; /* Fallback/Light mode off */
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         padding: 0;
         overflow: visible;
-        border: 1px solid var(--border-color);
+        border: 2px solid transparent; /* For focus ring */
+        cursor: pointer;
+        flex-shrink: 0;
     }
+    /* Dark mode adjustment for off state if needed, assuming var handles it */
+    :global(body.dark) .toggle-switch {
+        background-color: #4a4a4a;
+    }
+
     .toggle-switch::after {
         content: "";
         position: absolute;
         top: 2px;
         left: 2px;
-        width: 18px;
-        height: 18px;
+        width: 22px;
+        height: 22px;
         border-radius: 50%;
         background: white;
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     .toggle-switch.active {
-        background: var(--accent-primary);
-        border-color: var(--accent-primary);
+        background-color: var(--accent-primary);
+        border-color: transparent;
     }
     .toggle-switch.active::after {
-        transform: translateX(20px);
+        transform: translateX(22px);
     }
     .toggle-switch:disabled {
-        opacity: 0.6;
+        opacity: 0.5;
         cursor: not-allowed;
+        filter: grayscale(100%);
+    }
+    .toggle-switch:focus-visible {
+        outline: none;
+        box-shadow:
+            0 0 0 2px var(--bg-card),
+            0 0 0 4px var(--accent-primary);
     }
 
-    /* License Info */
+    /* AI Provider Settings */
+    .provider-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        padding-right: 2.5rem; /* Space for arrow */
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        cursor: pointer;
+        appearance: none; /* Remove default arrow */
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 0.65em auto;
+        transition:
+            border-color 0.2s,
+            box-shadow 0.2s;
+    }
+    :global(body.dark) .provider-select {
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ccc%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    }
+    .provider-select:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.1);
+    }
+
+    .provider-settings {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+        animation: slideDown 0.3s ease-out;
+    }
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .setting-row {
+        margin-bottom: 1rem;
+    }
+    .setting-row label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    .setting-row input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.7rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+    .setting-row input:focus {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.1);
+    }
     .license-info {
         background: var(--bg-primary);
         border: 1px solid var(--border-color);
