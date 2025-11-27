@@ -83,11 +83,15 @@ function extractImageFromItem(item) {
     return null;
 }
 
-async function fetchRSS(url, forceRefresh = false) {
+async function fetchRSS(url, forceRefresh = false, sourceNameOverride = null) {
     // Try cache first unless force refresh
     if (!forceRefresh) {
         const cached = await getCachedFeed(url);
         if (cached) {
+            // If we have an override, update the cached items source (in case it was cached without it)
+            if (sourceNameOverride) {
+                return cached.map(item => ({ ...item, source: sourceNameOverride }));
+            }
             return cached;
         }
     }
@@ -98,13 +102,48 @@ async function fetchRSS(url, forceRefresh = false) {
     const text = await response.text();
     const parser = new DOMParser();
     const xml = parser.parseFromString(text, 'text/xml');
+
+    // Extract channel title for source name and link for source URL
+    let sourceName = sourceNameOverride;
+    let sourceLink = null;
+
+    if (!sourceName) {
+        const channelTitle = xml.querySelector('channel > title')?.textContent;
+        if (channelTitle) {
+            sourceName = channelTitle.trim();
+        } else {
+            // Fallback to domain
+            try {
+                const urlObj = new URL(url);
+                sourceName = urlObj.hostname.replace('www.', '');
+            } catch (e) {
+                sourceName = 'Unknown Source';
+            }
+        }
+    }
+
+    // Extract source link
+    const channelLink = xml.querySelector('channel > link')?.textContent;
+    if (channelLink) {
+        sourceLink = channelLink.trim();
+    } else {
+        // Fallback to origin of feed URL
+        try {
+            const urlObj = new URL(url);
+            sourceLink = urlObj.origin;
+        } catch (e) {
+            sourceLink = '#';
+        }
+    }
+
     const items = Array.from(xml.querySelectorAll('item'));
     const articles = items.map(item => ({
         title: item.querySelector('title')?.textContent,
         link: item.querySelector('link')?.textContent,
         description: item.querySelector('description')?.textContent,
         pubDate: item.querySelector('pubDate')?.textContent,
-        source: url,
+        source: sourceName,
+        sourceLink: sourceLink,
         guid: item.querySelector('guid')?.textContent || item.querySelector('link')?.textContent,
         image: extractImageFromItem(item)
     }));
@@ -157,7 +196,7 @@ export async function fetchTrendingNews(keywords = [], forceRefresh = false) {
     const results = await Promise.allSettled(
         sources.map(async ({ url, name }) => {
             try {
-                const articles = await fetchRSS(url, forceRefresh);
+                const articles = await fetchRSS(url, forceRefresh, name);
                 console.log(`✓ Fetched ${articles.length} articles from ${name}`);
                 return articles;
             } catch (error) {

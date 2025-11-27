@@ -1414,11 +1414,11 @@ ${getTextContent(selectedArticle.description)}
                 {#if selectedArticleIds.has(article.link)}✓{/if}
               </div>
             {/if}
-            {#if article.image}
-              <div class="card-image">
+            <div class="card-image">
+              {#if article.image}
                 <img src={article.image} alt={article.title} loading="lazy" />
-              </div>
-            {/if}
+              {/if}
+            </div>
             <div class="card-content">
               <h3>{article.title}</h3>
               <p class="snippet">{getSnippet(article.description)}</p>
@@ -1440,6 +1440,15 @@ ${getTextContent(selectedArticle.description)}
               </button>
             </div>
             <div class="card-footer">
+              <a
+                href={article.sourceLink || "#"}
+                target="_blank"
+                class="source source-link"
+                onclick={(e) => e.stopPropagation()}
+              >
+                {article.source || "Unknown Source"}
+              </a>
+              <span class="separator">•</span>
               <span class="date"
                 >{new Date(article.pubDate).toLocaleDateString()}</span
               >
@@ -1534,15 +1543,15 @@ ${getTextContent(selectedArticle.description)}
                       {#if selectedArticleIds.has(article.link)}✓{/if}
                     </div>
                   {/if}
-                  {#if article.image}
-                    <div class="card-image">
+                  <div class="card-image">
+                    {#if article.image}
                       <img
                         src={article.image}
                         alt={article.title}
                         loading="lazy"
                       />
-                    </div>
-                  {/if}
+                    {/if}
+                  </div>
                   <div class="card-content">
                     <h3>{article.title}</h3>
                     <p class="snippet">{getSnippet(article.description)}</p>
@@ -1593,6 +1602,10 @@ ${getTextContent(selectedArticle.description)}
                     </button>
                   </div>
                   <div class="card-footer">
+                    <span class="source"
+                      >{article.source || "Unknown Source"}</span
+                    >
+                    <span class="separator">•</span>
                     <span class="date"
                       >{new Date(article.pubDate).toLocaleDateString()}</span
                     >
@@ -1630,11 +1643,11 @@ ${getTextContent(selectedArticle.description)}
                   {#if selectedArticleIds.has(article.link)}✓{/if}
                 </div>
               {/if}
-              {#if article.image}
-                <div class="card-image">
+              <div class="card-image">
+                {#if article.image}
                   <img src={article.image} alt={article.title} loading="lazy" />
-                </div>
-              {/if}
+                {/if}
+              </div>
               <div class="card-content">
                 <h3>{article.title}</h3>
                 <p class="snippet">{getSnippet(article.description)}</p>
@@ -1649,6 +1662,15 @@ ${getTextContent(selectedArticle.description)}
                 </button>
               </div>
               <div class="card-footer">
+                <a
+                  href={article.sourceLink || "#"}
+                  target="_blank"
+                  class="source source-link"
+                  onclick={(e) => e.stopPropagation()}
+                >
+                  {article.source || "Unknown Source"}
+                </a>
+                <span class="separator">•</span>
                 <span class="date"
                   >{new Date(article.pubDate).toLocaleDateString()}</span
                 >
@@ -1695,15 +1717,15 @@ ${getTextContent(selectedArticle.description)}
                         {#if selectedArticleIds.has(article.link)}✓{/if}
                       </div>
                     {/if}
-                    {#if article.image}
-                      <div class="card-image">
+                    <div class="card-image">
+                      {#if article.image}
                         <img
                           src={article.image}
                           alt={article.title}
                           loading="lazy"
                         />
-                      </div>
-                    {/if}
+                      {/if}
+                    </div>
                     <div class="card-content">
                       <h3>{article.title}</h3>
                       <p class="snippet">{getSnippet(article.description)}</p>
@@ -1727,6 +1749,15 @@ ${getTextContent(selectedArticle.description)}
                       </button>
                     </div>
                     <div class="card-footer">
+                      <a
+                        href={article.sourceLink || "#"}
+                        target="_blank"
+                        class="source source-link"
+                        onclick={(e) => e.stopPropagation()}
+                      >
+                        {article.source || "Unknown Source"}
+                      </a>
+                      <span class="separator">•</span>
                       <span class="date"
                         >{new Date(article.pubDate).toLocaleDateString()}</span
                       >
@@ -2241,6 +2272,8 @@ ${getTextContent(selectedArticle.description)}
   .card-image {
     width: 120px;
     height: 90px;
+    min-width: 120px;
+    min-height: 90px;
     flex-shrink: 0;
     overflow: hidden;
     border-radius: 8px;
@@ -2264,6 +2297,12 @@ ${getTextContent(selectedArticle.description)}
     font-size: 1rem;
     line-height: 1.4;
     color: var(--text-primary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.8em;
+    max-height: 2.8em;
   }
   .snippet {
     margin: 0;
@@ -2271,18 +2310,34 @@ ${getTextContent(selectedArticle.description)}
     color: var(--text-secondary);
     line-height: 1.5;
     display: -webkit-box;
-    line-clamp: 2;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    min-height: 2.55em;
+    max-height: 2.55em;
   }
   .card-footer {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     font-size: 0.75rem;
     color: var(--text-tertiary);
     margin-top: 0.3rem;
+  }
+  .card-footer .source {
+    font-weight: 600;
+    color: var(--accent-primary);
+  }
+  .card-footer .source-link {
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .card-footer .source-link:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+  }
+  .card-footer .separator {
+    margin: 0 0.3rem;
+    color: var(--text-tertiary);
   }
 
   .article-view {
