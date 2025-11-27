@@ -347,6 +347,7 @@
     );
     scriptLoading = true;
     analysisTitle = "Video Script";
+    analysisSource = null; // Multi-select, go back to list view
     view = "analysis";
 
     try {
@@ -366,6 +367,7 @@
     );
     scriptLoading = true;
     analysisTitle = "Deep Dive Analysis";
+    analysisSource = null; // Multi-select, go back to list view
     view = "analysis";
 
     try {
@@ -596,16 +598,26 @@ ${getTextContent(selectedArticle.description)}
 
   function handleBack() {
     if (view === "analysis") {
-      view = analysisSource === "page" ? "current-page" : "article";
+      // If we came from page analysis, go back to current-page
+      if (analysisSource === "page") {
+        view = "current-page";
+      }
+      // If we came from article analysis, go back to article
+      else if (analysisSource === "article") {
+        view = "article";
+      }
+      // If we came from multi-select (Script or Deep Dive), go back to the list view
+      else {
+        view = previousView || "feed";
+        // Keep selection mode and selected articles intact
+      }
     } else if (view === "article") {
       // Return to previous view (feed or trending)
-      view = previousView;
+      view = previousView || "feed";
       selectedArticle = null;
       summary = "";
-      // Only clear selection mode if we're going back to feed and it wasn't active there?
-      // For now, let's keep selection mode state as is or reset it if desired.
-      // Resetting selection mode might be annoying if user wants to select more.
-      // Let's just clear the article specific state.
+      biasResult = "";
+      // Keep selection mode state intact when going back
     } else {
       // Default fallback
       view = "feed";
