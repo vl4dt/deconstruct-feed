@@ -103,50 +103,59 @@ async function fetchRSS(url, forceRefresh = false, sourceNameOverride = null) {
     const parser = new DOMParser();
     const xml = parser.parseFromString(text, 'text/xml');
 
-    // Extract channel title for source name and link for source URL
-    let sourceName = sourceNameOverride;
-    let sourceLink = null;
-
-    if (!sourceName) {
-        const channelTitle = xml.querySelector('channel > title')?.textContent;
-        if (channelTitle) {
-            sourceName = channelTitle.trim();
-        } else {
-            // Fallback to domain
-            try {
-                const urlObj = new URL(url);
-                sourceName = urlObj.hostname.replace('www.', '');
-            } catch (e) {
-                sourceName = 'Unknown Source';
-            }
-        }
-    }
-
-    // Extract source link
-    const channelLink = xml.querySelector('channel > link')?.textContent;
-    if (channelLink) {
-        sourceLink = channelLink.trim();
-    } else {
-        // Fallback to origin of feed URL
-        try {
-            const urlObj = new URL(url);
-            sourceLink = urlObj.origin;
-        } catch (e) {
-            sourceLink = '#';
-        }
-    }
+    // Extract channel-level defaults
+    const channelTitle = xml.querySelector('channel > title')?.textContent?.trim();
+    const channelLink = xml.querySelector('channel > link')?.textContent?.trim();
 
     const items = Array.from(xml.querySelectorAll('item'));
-    const articles = items.map(item => ({
-        title: item.querySelector('title')?.textContent,
-        link: item.querySelector('link')?.textContent,
-        description: item.querySelector('description')?.textContent,
-        pubDate: item.querySelector('pubDate')?.textContent,
-        source: sourceName,
-        sourceLink: sourceLink,
-        guid: item.querySelector('guid')?.textContent || item.querySelector('link')?.textContent,
-        image: extractImageFromItem(item)
-    }));
+    const articles = items.map(item => {
+        // Extract article link first
+        const articleLink = item.querySelector('link')?.textContent?.trim();
+
+        // Try to extract source from the item itself (for aggregators like Google News, Bing)
+        let itemSource = null;
+
+        // Method 1: Check for <source> tag (Google News uses this)
+        const sourceTag = item.querySelector('source');
+        if (sourceTag) {
+            itemSource = sourceTag.textContent?.trim();
+        }
+
+        // Method 2: Extract from article link domain (most reliable for actual source)
+        if (articleLink && !itemSource) {
+            try {
+                const linkUrl = new URL(articleLink);
+                // Extract clean domain name
+                const hostname = linkUrl.hostname.replace('www.', '');
+                // Convert domain to readable name
+                const domainParts = hostname.split('.');
+                if (domainParts.length >= 2) {
+                    // Get the main domain part (e.g., "cnn" from "cnn.com")
+                    const mainDomain = domainParts[0];
+                    // Capitalize it nicely
+                    itemSource = mainDomain.charAt(0).toUpperCase() + mainDomain.slice(1);
+                }
+            } catch (e) {
+                // Invalid URL, will fall back
+            }
+        }
+
+        // Fallback to channel-level or override
+        const finalSource = sourceNameOverride || itemSource || channelTitle || 'Unknown Source';
+        // Use the article link as the source link (same as "Read Full Article")
+        const finalSourceLink = articleLink || channelLink || '#';
+
+        return {
+            title: item.querySelector('title')?.textContent,
+            link: articleLink,
+            description: item.querySelector('description')?.textContent,
+            pubDate: item.querySelector('pubDate')?.textContent,
+            source: finalSource,
+            sourceLink: finalSourceLink,
+            guid: item.querySelector('guid')?.textContent || articleLink,
+            image: extractImageFromItem(item)
+        };
+    });
 
     // Cache the results
     await setCachedFeed(url, articles);
@@ -196,7 +205,8 @@ export async function fetchTrendingNews(keywords = [], forceRefresh = false) {
     const results = await Promise.allSettled(
         sources.map(async ({ url, name }) => {
             try {
-                const articles = await fetchRSS(url, forceRefresh, name);
+                // Don't override source name - let fetchRSS extract the actual source from the feed
+                const articles = await fetchRSS(url, forceRefresh);
                 console.log(`✓ Fetched ${articles.length} articles from ${name}`);
                 return articles;
             } catch (error) {
@@ -230,7 +240,7 @@ export async function fetchTrendingNews(keywords = [], forceRefresh = false) {
     articles.sort((a, b) => {
         const dateA = new Date(a.pubDate || 0);
         const dateB = new Date(b.pubDate || 0);
-        return dateB - dateA;
+        return dateB.getTime() - dateA.getTime();
     });
 
     console.log(`✓ Returning ${articles.length} deduplicated trending articles`);
