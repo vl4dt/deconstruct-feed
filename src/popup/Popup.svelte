@@ -914,7 +914,10 @@ ${getTextContent(selectedArticle.description)}
   {#if view !== "settings"}
     <header>
       <div class="header-left">
-        <h1>{$t("appTitle")}</h1>
+        <div class="brand">
+          <img src="/icons/logo.svg" alt="NewsLens AI" class="brand-logo" />
+          <h1>{$t("appTitle")}</h1>
+        </div>
         {#if $userSubscription.isPro}
           <button
             class="nav-btn"
@@ -1846,6 +1849,19 @@ ${getTextContent(selectedArticle.description)}
   {/if}
 </main>
 
+<svelte:head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin="anonymous"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+</svelte:head>
+
 <style>
   :global(body) {
     margin: 0;
@@ -1901,12 +1917,29 @@ ${getTextContent(selectedArticle.description)}
   }
   h1 {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: 700;
+    font-family:
+      "Inter",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+    letter-spacing: -0.02em;
     background: var(--accent-gradient);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .brand-logo {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
   }
   .icon-btn {
     background: none;
