@@ -47,6 +47,7 @@
   let scriptLoading = $state(false);
   let analysisResult = $state("");
   let analysisTitle = $state("");
+  let analysisType = $state(""); // script, podcast, deepdive
 
   // Search State
 
@@ -339,7 +340,7 @@
     selectedArticleIds = new Set();
   }
 
-  async function generateVideoScript() {
+  async function generateVideoScript(forceRefresh = false) {
     if (selectedArticleIds.size === 0) return;
 
     const selectedArticles = getAllArticles().filter((a) =>
@@ -348,10 +349,15 @@
     scriptLoading = true;
     analysisTitle = "Video Script";
     analysisSource = null; // Multi-select, go back to list view
+    analysisType = "script";
     view = "analysis";
 
     try {
-      analysisResult = await generateScript(selectedArticles);
+      analysisResult = await generateScript(
+        selectedArticles,
+        null,
+        forceRefresh,
+      );
     } catch (e) {
       analysisResult = "Error generating script: " + e.message;
     } finally {
@@ -359,7 +365,7 @@
     }
   }
 
-  async function performDeepDive() {
+  async function performDeepDive(forceRefresh = false) {
     if (selectedArticleIds.size === 0) return;
 
     const selectedArticles = getAllArticles().filter((a) =>
@@ -368,10 +374,11 @@
     scriptLoading = true;
     analysisTitle = "Deep Dive Analysis";
     analysisSource = null; // Multi-select, go back to list view
+    analysisType = "deepdive";
     view = "analysis";
 
     try {
-      analysisResult = await deepDive(selectedArticles);
+      analysisResult = await deepDive(selectedArticles, null, forceRefresh);
     } catch (e) {
       analysisResult = "Error performing deep dive: " + e.message;
     } finally {
@@ -379,11 +386,11 @@
     }
   }
 
-  async function doBiasCheck() {
+  async function doBiasCheck(forceRefresh = false) {
     if (!selectedArticle) return;
 
-    // Toggle logic: If result exists, clear it (hide)
-    if (biasResult) {
+    // Toggle logic: If result exists and not forcing refresh, clear it (hide)
+    if (biasResult && !forceRefresh) {
       biasResult = "";
       originalBiasResult = "";
       return;
@@ -397,7 +404,7 @@
     biasLoading = true;
     try {
       const text = `${selectedArticle.title}\n\n${selectedArticle.description}`;
-      const result = await checkBias(text);
+      const result = await checkBias(text, null, forceRefresh);
 
       // Store original
       originalBiasResult = result;
@@ -421,11 +428,11 @@
     return view === "trending" ? trendingArticles : articles;
   }
 
-  async function doSummarize() {
+  async function doSummarize(forceRefresh = false) {
     if (!selectedArticle) return;
 
-    // Toggle logic: If summary exists, clear it (hide)
-    if (summary) {
+    // Toggle logic: If summary exists and not forcing refresh, clear it (hide)
+    if (summary && !forceRefresh) {
       summary = "";
       originalSummary = "";
       return;
@@ -434,12 +441,9 @@
     summaryLoading = true;
     try {
       const text = `${selectedArticle.title}\n\n${selectedArticle.description}`;
-      const result = await summarize(text);
-
-      // Store original
+      const result = await summarize(text, null, forceRefresh);
       originalSummary = result;
 
-      // Auto-translate if setting enabled and language is not English
       if ($settings.autoTranslateAI && $locale !== "en") {
         const targetLang = $locale === "es" ? "Spanish" : "English";
         summary = await translate(result, targetLang);
@@ -448,13 +452,40 @@
       }
     } catch (e) {
       summary = "Error: " + e.message;
-      originalSummary = "";
     } finally {
       summaryLoading = false;
     }
   }
 
-  async function doGenerateScript() {
+  async function doPageBias(forceRefresh = false) {
+    if (!currentPage) return;
+
+    // Toggle logic
+    if (biasResult && !forceRefresh) {
+      biasResult = "";
+      originalBiasResult = "";
+      return;
+    }
+
+    biasLoading = true;
+    try {
+      const result = await checkBias(currentPage.content, null, forceRefresh);
+      originalBiasResult = result;
+
+      if ($settings.autoTranslateAI && $locale !== "en") {
+        const targetLang = $locale === "es" ? "Spanish" : "English";
+        biasResult = await translate(result, targetLang);
+      } else {
+        biasResult = result;
+      }
+    } catch (e) {
+      biasResult = "Error: " + e.message;
+    } finally {
+      biasLoading = false;
+    }
+  }
+
+  async function doGenerateScript(forceRefresh = false) {
     if (!selectedArticle) return;
     if (!$userSubscription.isPro) {
       upgradeMessage = "Video Script is a Pro feature. Upgrade to unlock!";
@@ -466,9 +497,14 @@
     analysisTitle = "Video Script";
     view = "analysis";
     analysisSource = "article";
+    analysisType = "script";
 
     try {
-      const result = await generateScript([selectedArticle]);
+      const result = await generateScript(
+        [selectedArticle],
+        null,
+        forceRefresh,
+      );
 
       // Store original
       originalAnalysisResult = result;
@@ -488,7 +524,7 @@
     }
   }
 
-  async function doGeneratePodcastScript() {
+  async function doGeneratePodcastScript(forceRefresh = false) {
     if (!selectedArticle) return;
     if (!$userSubscription.isPro) {
       upgradeMessage = "Podcast Script is a Pro feature. Upgrade to unlock!";
@@ -500,9 +536,14 @@
     analysisTitle = $t("podcastScript");
     view = "analysis";
     analysisSource = "article";
+    analysisType = "podcast";
 
     try {
-      const result = await generatePodcastScript([selectedArticle]);
+      const result = await generatePodcastScript(
+        [selectedArticle],
+        null,
+        forceRefresh,
+      );
 
       // Store original
       originalAnalysisResult = result;
@@ -522,7 +563,7 @@
     }
   }
 
-  async function doDeepDive() {
+  async function doDeepDive(forceRefresh = false) {
     if (!selectedArticle) return;
     if (!$userSubscription.isPro) {
       upgradeMessage = "Deep Dive is a Pro feature. Upgrade to unlock!";
@@ -534,9 +575,10 @@
     analysisTitle = $t("deepDiveAnalysis");
     view = "analysis";
     analysisSource = "article";
+    analysisType = "deepdive";
 
     try {
-      const result = await deepDive([selectedArticle]);
+      const result = await deepDive([selectedArticle], null, forceRefresh);
 
       // Store original
       originalAnalysisResult = result;
@@ -551,6 +593,42 @@
     } catch (e) {
       analysisResult = `Error: ${e.message}`;
       originalAnalysisResult = "";
+    } finally {
+      scriptLoading = false;
+    }
+  }
+
+  async function doPageDeepDive(forceRefresh = false) {
+    if (!currentPage) return;
+    if (!$userSubscription.isPro) {
+      upgradeMessage = "Deep Dive is a Pro feature. Upgrade to unlock!";
+      showUpgradeModal = true;
+      return;
+    }
+
+    scriptLoading = true;
+    analysisTitle = "Deep Dive Analysis";
+    view = "analysis";
+    analysisSource = "page";
+    analysisType = "deepdive";
+
+    try {
+      // Mock article structure for deepDive
+      const mockArticle = {
+        title: "Current Page",
+        description: currentPage.content,
+      };
+      const result = await deepDive([mockArticle], null, forceRefresh);
+      originalAnalysisResult = result;
+
+      if ($settings.autoTranslateAI && $locale !== "en") {
+        const targetLang = $locale === "es" ? "Spanish" : "English";
+        analysisResult = await translate(result, targetLang);
+      } else {
+        analysisResult = result;
+      }
+    } catch (e) {
+      analysisResult = "Error: " + e.message;
     } finally {
       scriptLoading = false;
     }
@@ -802,70 +880,6 @@ ${getTextContent(selectedArticle.description)}
     }
   }
 
-  async function doPageSummarize() {
-    if (!currentPage) return;
-    if (summary) {
-      summary = "";
-      return;
-    }
-
-    summaryLoading = true;
-    try {
-      summary = await summarize(currentPage.content);
-    } catch (e) {
-      summary = "Error: " + e.message;
-    } finally {
-      summaryLoading = false;
-    }
-  }
-
-  async function doPageBias() {
-    if (!currentPage) return;
-    if (biasResult) {
-      biasResult = "";
-      return;
-    }
-
-    biasLoading = true;
-    try {
-      biasResult = await checkBias(currentPage.content);
-    } catch (e) {
-      biasResult = "Error: " + e.message;
-    } finally {
-      biasLoading = false;
-    }
-  }
-
-  async function doPageDeepDive() {
-    if (!currentPage) return;
-    if (!$userSubscription.isPro) {
-      upgradeMessage = "Deep Dive is a Pro feature. Upgrade to unlock!";
-      showUpgradeModal = true;
-      return;
-    }
-
-    scriptLoading = true;
-    analysisTitle = "Page Deep Dive";
-    view = "analysis";
-    analysisSource = "page";
-
-    try {
-      // Create a mock article object for deepDive
-      const mockArticle = {
-        title: currentPage.title,
-        description: currentPage.content,
-        link: currentPage.url,
-        pubDate: new Date().toISOString(),
-        source: "Current Page",
-      };
-      analysisResult = await deepDive([mockArticle]);
-    } catch (e) {
-      analysisResult = "Error: " + e.message;
-    } finally {
-      scriptLoading = false;
-    }
-  }
-
   async function toggleSave(article, e) {
     e.stopPropagation();
     const isSaved = $savedItems.items.some((i) => i.link === article.link);
@@ -895,6 +909,29 @@ ${getTextContent(selectedArticle.description)}
     await savedItems.createCollection(newCollectionName);
     showCreateCollection = false;
     newCollectionName = "";
+  }
+
+  async function regenerateAnalysis() {
+    if (view === "analysis") {
+      if (analysisType === "script") {
+        // Check if single article or multi-select
+        if (analysisSource === "article") {
+          await doGenerateScript(true);
+        } else {
+          await generateVideoScript(true);
+        }
+      } else if (analysisType === "podcast") {
+        await doGeneratePodcastScript(true);
+      } else if (analysisType === "deepdive") {
+        if (analysisSource === "page") {
+          await doPageDeepDive(true);
+        } else if (analysisSource === "article") {
+          await doDeepDive(true);
+        } else {
+          await performDeepDive(true);
+        }
+      }
+    }
   }
 
   async function moveArticleTo(collectionId) {
@@ -978,7 +1015,11 @@ ${getTextContent(selectedArticle.description)}
         </button>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" onclick={loadNews} title={$t("refresh")}>
+        <button
+          class="icon-btn"
+          onclick={() => loadNews()}
+          title={$t("refresh")}
+        >
           <svg
             class="btn-icon"
             viewBox="0 0 24 24"
@@ -1135,6 +1176,12 @@ ${getTextContent(selectedArticle.description)}
                       onclick={() => copyToClipboard(summary)}
                       title="Copy to clipboard">📋</button
                     >
+                    <button
+                      class="copy-icon-btn"
+                      onclick={() => doPageSummarize(true)}
+                      title="Regenerate">↻</button
+                    >
+                    >
                     <button class="close-btn" onclick={() => (summary = "")}
                       >×</button
                     >
@@ -1164,6 +1211,11 @@ ${getTextContent(selectedArticle.description)}
                       class="copy-icon-btn"
                       onclick={() => copyToClipboard(biasResult)}
                       title="Copy to clipboard">📋</button
+                    >
+                    <button
+                      class="copy-icon-btn"
+                      onclick={() => doPageBias(true)}
+                      title="Regenerate">↻</button
                     >
                     <button class="close-btn" onclick={() => (biasResult = "")}
                       >×</button
@@ -1205,6 +1257,9 @@ ${getTextContent(selectedArticle.description)}
           onclick={() => copyToClipboard(analysisResult)}
         >
           {$t("copyResult")}
+        </button>
+        <button class="read-more" onclick={regenerateAnalysis}>
+          Regenerate
         </button>
       {/if}
     </div>
@@ -1405,6 +1460,11 @@ ${getTextContent(selectedArticle.description)}
                     onclick={() => copyToClipboard(summary)}
                     title="Copy to clipboard">Copy</button
                   >
+                  <button
+                    class="copy-icon-btn"
+                    onclick={() => doSummarize(true)}
+                    title="Regenerate">↻</button
+                  >
                   <button class="close-btn" onclick={() => (summary = "")}
                     >×</button
                   >
@@ -1434,6 +1494,11 @@ ${getTextContent(selectedArticle.description)}
                     class="copy-icon-btn"
                     onclick={() => copyToClipboard(biasResult)}
                     title="Copy to clipboard">Copy</button
+                  >
+                  <button
+                    class="copy-icon-btn"
+                    onclick={() => doBiasCheck(true)}
+                    title="Regenerate">↻</button
                   >
                   <button class="close-btn" onclick={() => (biasResult = "")}
                     >×</button

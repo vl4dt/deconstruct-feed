@@ -50,11 +50,12 @@ export async function isChromeAIAvailable() {
     }
 }
 
-export async function summarize(text, apiKey = null) {
+export async function summarize(text, apiKey = null, forceRefresh = false) {
     return generateContent(
         `Summarize this news article in Markdown format:\n\n${text}`,
         'You are a helpful news assistant. Summarize the following article concisely in Markdown format.',
-        'summary'
+        'summary',
+        forceRefresh
     );
 }
 
@@ -168,11 +169,13 @@ async function generateWithAnthropic(prompt, systemPrompt, config) {
     return data.content[0].text;
 }
 
-async function generateContent(prompt, systemPrompt, cacheKey) {
+async function generateContent(prompt, systemPrompt, cacheKey, forceRefresh = false) {
     // Check cache
     const contentHash = hashContent(prompt);
-    const cached = await getCachedAIResult(contentHash, cacheKey);
-    if (cached) return cached;
+    if (!forceRefresh) {
+        const cached = await getCachedAIResult(contentHash, cacheKey);
+        if (cached) return cached;
+    }
 
     const config = get(settings);
     const provider = config.aiProvider || 'chrome';
@@ -222,50 +225,54 @@ async function generateContent(prompt, systemPrompt, cacheKey) {
     }
 }
 
-export async function generateScript(articles, apiKey = null) {
+export async function generateScript(articles, apiKey = null, forceRefresh = false) {
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
     const prompt = `Create a YouTube video script covering these stories in Markdown format. Include an engaging hook, transition between topics, and a call to action.\n\n${combinedText}`;
 
     return generateContent(
         prompt,
         'You are a creative scriptwriter for a tech news YouTube channel.',
-        'script'
+        'script',
+        forceRefresh
     );
 }
 
-export async function generatePodcastScript(articles, apiKey = null) {
+export async function generatePodcastScript(articles, apiKey = null, forceRefresh = false) {
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
     const prompt = `Create a podcast script for two hosts (Alex and Sam) discussing these news stories. Include engaging banter, an intro with music cue, smooth transitions between topics, and an outro. Format in Markdown with **Host:** prefixes.\n\n${combinedText}`;
 
     return generateContent(
         prompt,
         'You are a creative podcast producer writing a script for two engaging hosts.',
-        'podcast'
+        'podcast',
+        forceRefresh
     );
 }
 
-export async function deepDive(articles, apiKey = null) {
+export async function deepDive(articles, apiKey = null, forceRefresh = false) {
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
     const prompt = `Analyze these articles in Markdown format. Identify common themes, contradictions, and causal relationships.\n\n${combinedText}`;
 
     return generateContent(
         prompt,
         'You are an expert news analyst.',
-        'deepdive'
+        'deepdive',
+        forceRefresh
     );
 }
 
-export async function checkBias(text, apiKey = null) {
+export async function checkBias(text, apiKey = null, forceRefresh = false) {
     const prompt = `Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why. Format the response in Markdown.\n\n${text}`;
 
     return generateContent(
         prompt,
         'You are an objective media analyst.',
-        'bias'
+        'bias',
+        forceRefresh
     );
 }
 
-export async function translate(text, targetLangCode, apiKey = null) {
+export async function translate(text, targetLangCode, apiKey = null, forceRefresh = false) {
     // Convert language code to full name (e.g., 'fr' -> 'French')
     const targetLanguage = getLanguageName(targetLangCode);
     const prompt = `Translate the following text to ${targetLanguage}. Maintain the original tone and formatting. Return ONLY the translated text.\n\n${text}`;
@@ -273,6 +280,7 @@ export async function translate(text, targetLangCode, apiKey = null) {
     return generateContent(
         prompt,
         `You are a professional translator. Translate text to ${targetLanguage}.`,
-        'translate'
+        'translate',
+        forceRefresh
     );
 }
