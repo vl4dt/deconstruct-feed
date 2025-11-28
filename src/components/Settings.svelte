@@ -297,11 +297,11 @@
                     >
                         <option value="chrome">Chrome AI (On-Device)</option>
                         <option value="gemini">Google Gemini</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="openai">OpenAI</option>
                         <option value="local"
                             >Local AI (Ollama/LM Studio)</option
                         >
-                        <option value="openai">OpenAI</option>
-                        <option value="anthropic">Anthropic</option>
                     </select>
                 </div>
 
@@ -415,6 +415,17 @@
                                 oninput={(e) =>
                                     settings.set("geminiKey", e.target.value)}
                                 placeholder="Gemini API Key"
+                            />
+                        </div>
+                        <div class="setting-row">
+                            <label for="gemini-model">Model</label>
+                            <input
+                                id="gemini-model"
+                                type="text"
+                                value={$settings.geminiModel || ""}
+                                oninput={(e) =>
+                                    settings.set("geminiModel", e.target.value)}
+                                placeholder="gemini-1.5-flash"
                             />
                         </div>
                     </div>

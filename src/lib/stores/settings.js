@@ -21,7 +21,8 @@ function createSettingsStore() {
         anthropicKey: '',
         anthropicModel: 'claude-3-5-sonnet-latest',
         // Gemini
-        geminiKey: ''
+        geminiKey: '',
+        geminiModel: 'gemini-1.5-flash'
     });
 
     return {
@@ -47,6 +48,7 @@ function createSettingsStore() {
                     anthropicKey: '',
                     anthropicModel: 'claude-3-5-sonnet-latest',
                     geminiKey: '',
+                    geminiModel: 'gemini-1.5-flash',
                     ...result.userSettings
                 });
             }

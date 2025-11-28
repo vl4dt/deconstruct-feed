@@ -58,8 +58,8 @@ export async function summarize(text, apiKey = null) {
     );
 }
 
-async function summarizeWithGemini(text, apiKey) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+async function summarizeWithGemini(text, apiKey, model = 'gemini-1.5-flash') {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -196,7 +196,8 @@ async function generateContent(prompt, systemPrompt, cacheKey) {
                 // We'll update summarizeWithGemini to take key from settings
                 const key = config.geminiKey;
                 if (!key) throw new Error('Gemini API Key is missing in settings');
-                result = await summarizeWithGemini(prompt, key);
+                const model = config.geminiModel || 'gemini-1.5-flash';
+                result = await summarizeWithGemini(prompt, key, model);
                 break;
             case 'chrome':
             default:
