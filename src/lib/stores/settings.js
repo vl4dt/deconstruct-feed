@@ -9,6 +9,7 @@ function createSettingsStore() {
         preloadDeepDive: false,
         autoTranslateAI: false,
         trendingKeywords: [],
+        targetLanguage: 'en',
         // AI Provider Settings
         aiProvider: 'chrome', // chrome, gemini, local, openai, anthropic
         // Local AI
@@ -39,6 +40,7 @@ function createSettingsStore() {
                     preloadDeepDive: false,
                     autoTranslateAI: false,
                     trendingKeywords: [],
+                    targetLanguage: 'en',
                     // AI Provider Settings
                     aiProvider: 'chrome',
                     localAIUrl: 'http://localhost:11434/v1/chat/completions',

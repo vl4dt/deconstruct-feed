@@ -228,6 +228,26 @@
                 </div>
             </div>
 
+            <div class="section">
+                <h3>Translation</h3>
+                <div class="setting-row">
+                    <label for="target-language">Target Language</label>
+                    <select
+                        id="target-language"
+                        value={$settings.targetLanguage}
+                        onchange={(e) =>
+                            settings.set("targetLanguage", e.target.value)}
+                        class="provider-select"
+                    >
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="pt">Portuguese</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="preferences-section">
                 <h3>{$t("general")}</h3>
                 <div class="pref-row">
