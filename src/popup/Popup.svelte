@@ -18,6 +18,7 @@
   import { sourceService } from "../lib/news/sourceService";
   import Settings from "../components/Settings.svelte";
   import UpgradeModal from "../components/UpgradeModal.svelte";
+  import Logo from "../components/Logo.svelte";
   import FeedView from "./components/FeedView.svelte";
   import ArticleView from "./components/ArticleView.svelte";
   import TrendingView from "./components/TrendingView.svelte";
@@ -872,7 +873,7 @@ ${getTextContent(selectedArticle.description)}
       <div class="header-left">
         <div class="brand">
           <img src="/icons/logo.svg" alt="NewsLens AI" class="brand-logo" />
-          <h1>{$t("appTitle")}</h1>
+          <Logo />
         </div>
         {#if $userSubscription.isPro}
           <button
@@ -1158,22 +1159,6 @@ ${getTextContent(selectedArticle.description)}
     backdrop-filter: blur(10px);
     z-index: 10;
     flex-shrink: 0;
-  }
-  h1 {
-    margin: 0;
-    font-size: 1.3rem;
-    font-weight: 700;
-    font-family:
-      "Inter",
-      -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      sans-serif;
-    letter-spacing: -0.02em;
-    background: var(--accent-gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
   }
   .brand {
     display: flex;
