@@ -61,6 +61,7 @@
     }
 
     function getSnippet(html) {
+        if (!html) return "";
         const tmp = document.createElement("DIV");
         tmp.innerHTML = html;
         let text = tmp.textContent || tmp.innerText || "";
@@ -153,13 +154,35 @@
                                         alt={article.title}
                                         loading="lazy"
                                     />
+                                {:else}
+                                    <img
+                                        src="/placeholder.svg"
+                                        alt="Placeholder"
+                                    />
                                 {/if}
                             </div>
                             <div class="card-content">
-                                <h3>{article.title}</h3>
+                                <h3>{article.title || "No Title"}</h3>
                                 <p class="snippet">
-                                    {getSnippet(article.description)}
+                                    {getSnippet(article.description) ||
+                                        "No description available"}
                                 </p>
+                                <div class="card-footer">
+                                    <a
+                                        href={article.sourceLink || "#"}
+                                        target="_blank"
+                                        class="source source-link"
+                                        onclick={(e) => e.stopPropagation()}
+                                    >
+                                        {article.source || "Unknown Source"}
+                                    </a>
+                                    <span class="separator">•</span>
+                                    <span class="date"
+                                        >{new Date(
+                                            article.pubDate,
+                                        ).toLocaleDateString()}</span
+                                    >
+                                </div>
                             </div>
                             <div class="card-actions">
                                 {#if $userSubscription.isPro}
@@ -209,17 +232,6 @@
                                     Saved
                                 </button>
                             </div>
-                            <div class="card-footer">
-                                <span class="source"
-                                    >{article.source || "Unknown Source"}</span
-                                >
-                                <span class="separator">•</span>
-                                <span class="date"
-                                    >{new Date(
-                                        article.pubDate,
-                                    ).toLocaleDateString()}</span
-                                >
-                            </div>
                         </div>
                     {/each}
                 {/if}
@@ -260,11 +272,32 @@
                                 alt={article.title}
                                 loading="lazy"
                             />
+                        {:else}
+                            <img src="/placeholder.svg" alt="Placeholder" />
                         {/if}
                     </div>
                     <div class="card-content">
-                        <h3>{article.title}</h3>
-                        <p class="snippet">{getSnippet(article.description)}</p>
+                        <h3>{article.title || "No Title"}</h3>
+                        <p class="snippet">
+                            {getSnippet(article.description) ||
+                                "No description available"}
+                        </p>
+                        <div class="card-footer">
+                            <a
+                                href={article.sourceLink || "#"}
+                                target="_blank"
+                                class="source source-link"
+                                onclick={(e) => e.stopPropagation()}
+                            >
+                                {article.source || "Unknown Source"}
+                            </a>
+                            <span class="separator">•</span>
+                            <span class="date"
+                                >{new Date(
+                                    article.pubDate,
+                                ).toLocaleDateString()}</span
+                            >
+                        </div>
                     </div>
                     <div class="card-actions">
                         <button
@@ -274,22 +307,6 @@
                         >
                             Saved
                         </button>
-                    </div>
-                    <div class="card-footer">
-                        <a
-                            href={article.sourceLink || "#"}
-                            target="_blank"
-                            class="source source-link"
-                            onclick={(e) => e.stopPropagation()}
-                        >
-                            {article.source || "Unknown Source"}
-                        </a>
-                        <span class="separator">•</span>
-                        <span class="date"
-                            >{new Date(
-                                article.pubDate,
-                            ).toLocaleDateString()}</span
-                        >
                     </div>
                 </div>
             {/each}
@@ -483,10 +500,10 @@
         font-size: 1rem;
         line-height: 1.4;
         color: var(--text-primary);
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
+        display: block;
+        max-height: 2.8em; /* 2 lines * 1.4 line-height */
         overflow: hidden;
+        text-overflow: ellipsis;
     }
     .snippet {
         margin: 0;
@@ -494,6 +511,8 @@
         color: var(--text-secondary);
         display: -webkit-box;
         -webkit-line-clamp: 2;
+        line-clamp: 2;
+        /* autoprefixer: ignore next */
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
