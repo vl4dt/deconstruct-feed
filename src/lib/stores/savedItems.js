@@ -1,5 +1,43 @@
 import { writable, get } from 'svelte/store';
 import { userSubscription } from './subscription';
+import * as savedItemsDB from '../db/savedItemsDB.js';
+
+const MIGRATION_KEY = 'savedItems_migrated_to_indexeddb';
+
+async function migrateIfNeeded() {
+    try {
+        const result = await chrome.storage.local.get(MIGRATION_KEY);
+        if (result[MIGRATION_KEY]) {
+            return; // Already migrated
+        }
+
+        console.log('🔄 Migrating saved items from chrome.storage to IndexedDB...');
+
+        const data = await chrome.storage.local.get(['savedItems', 'savedCollections']);
+        const items = data.savedItems || [];
+        const collections = data.savedCollections || [];
+
+        // Migrate saved items
+        for (const item of items) {
+            const collection = item.collectionId || 'all';
+            await savedItemsDB.saveItem(item, collection);
+        }
+
+        // Migrate collections
+        for (const collection of collections) {
+            await savedItemsDB.createCollection(collection.name);
+        }
+
+        await chrome.storage.local.set({ [MIGRATION_KEY]: true });
+
+        // Remove old data
+        await chrome.storage.local.remove(['savedItems', 'savedCollections']);
+
+        console.log(`✅ Migrated ${items.length} saved items and ${collections.length} collections to IndexedDB`);
+    } catch (error) {
+        console.error('Error migrating saved items:', error);
+    }
+}
 
 function createSavedItemsStore() {
     const { subscribe, set, update } = writable({
@@ -15,10 +53,14 @@ function createSavedItemsStore() {
         subscribe,
         init: async () => {
             try {
-                const result = await chrome.storage.local.get(['savedItems', 'savedCollections']);
+                await migrateIfNeeded();
+
+                const items = await savedItemsDB.getAllSavedItems();
+                const collections = await savedItemsDB.getAllCollections();
+
                 set({
-                    items: result.savedItems || [],
-                    collections: result.savedCollections || [],
+                    items,
+                    collections,
                     loading: false,
                     error: null
                 });
@@ -27,16 +69,14 @@ function createSavedItemsStore() {
             }
         },
 
-        saveItem: async (article, collectionId = 'default') => {
+        saveItem: async (article, collectionId = 'all') => {
             const state = get(savedItems);
             const subscription = get(userSubscription);
 
             // Check if already saved
-            const existingIndex = state.items.findIndex(item => item.link === article.link);
+            const isSaved = await savedItemsDB.isItemSaved(article.link);
 
-            if (existingIndex >= 0) {
-                // Already saved, maybe update collection?
-                // For now, just return success as "idempotent" save
+            if (isSaved) {
                 return { success: true, message: 'Already saved' };
             }
 
@@ -48,28 +88,21 @@ function createSavedItemsStore() {
                 };
             }
 
-            // Create new item object
-            const newItem = {
-                ...article,
-                savedAt: Date.now(),
-                collectionId: collectionId
-            };
+            // Save to IndexedDB
+            await savedItemsDB.saveItem(article, collectionId);
 
-            const newItems = [newItem, ...state.items];
+            // Update store
+            const items = await savedItemsDB.getAllSavedItems();
+            update(s => ({ ...s, items }));
 
-            // Persist
-            await chrome.storage.local.set({ savedItems: newItems });
-
-            update(s => ({ ...s, items: newItems }));
             return { success: true };
         },
 
         removeItem: async (articleLink) => {
-            const state = get(savedItems);
-            const newItems = state.items.filter(item => item.link !== articleLink);
+            await savedItemsDB.unsaveItem(articleLink);
 
-            await chrome.storage.local.set({ savedItems: newItems });
-            update(s => ({ ...s, items: newItems }));
+            const items = await savedItemsDB.getAllSavedItems();
+            update(s => ({ ...s, items }));
         },
 
         isSaved: (articleLink) => {
@@ -84,53 +117,30 @@ function createSavedItemsStore() {
                 return { success: false, error: 'Collections are a Pro feature.' };
             }
 
-            const state = get(savedItems);
-            const newCollection = {
-                id: crypto.randomUUID(),
-                name,
-                createdAt: Date.now()
-            };
-
-            const newCollections = [...state.collections, newCollection];
-
-            await chrome.storage.local.set({ savedCollections: newCollections });
-            update(s => ({ ...s, collections: newCollections }));
-            return { success: true, collection: newCollection };
+            try {
+                const collection = await savedItemsDB.createCollection(name);
+                const collections = await savedItemsDB.getAllCollections();
+                update(s => ({ ...s, collections }));
+                return { success: true, collection };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
         },
 
         deleteCollection: async (id) => {
-            const state = get(savedItems);
+            await savedItemsDB.deleteCollection(id);
 
-            // Move items in this collection to default? Or delete them?
-            // Decision: Move to default (null/undefined collectionId) to be safe
-            const newItems = state.items.map(item => {
-                if (item.collectionId === id) {
-                    return { ...item, collectionId: 'default' };
-                }
-                return item;
-            });
-
-            const newCollections = state.collections.filter(c => c.id !== id);
-
-            await chrome.storage.local.set({
-                savedItems: newItems,
-                savedCollections: newCollections
-            });
-
-            update(s => ({ ...s, items: newItems, collections: newCollections }));
+            const items = await savedItemsDB.getAllSavedItems();
+            const collections = await savedItemsDB.getAllCollections();
+            update(s => ({ ...s, items, collections }));
         },
 
         moveItem: async (articleLink, targetCollectionId) => {
-            const state = get(savedItems);
-            const newItems = state.items.map(item => {
-                if (item.link === articleLink) {
-                    return { ...item, collectionId: targetCollectionId === 'all' ? 'default' : targetCollectionId };
-                }
-                return item;
-            });
+            const collectionId = targetCollectionId === 'all' ? 'all' : targetCollectionId;
+            await savedItemsDB.moveToCollection(articleLink, collectionId);
 
-            await chrome.storage.local.set({ savedItems: newItems });
-            update(s => ({ ...s, items: newItems }));
+            const items = await savedItemsDB.getAllSavedItems();
+            update(s => ({ ...s, items }));
             return { success: true };
         }
     };

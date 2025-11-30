@@ -55,6 +55,7 @@ graph TB
     subgraph "Storage"
         M[Chrome Storage Sync]
         N[Chrome Storage Local]
+        O[IndexedDB]
     end
     
     subgraph "External APIs"
@@ -82,10 +83,10 @@ graph TB
     D --> M
     E --> M
     F --> N
-    G --> N
     
-    K --> N
-    L --> N
+    G --> O
+    K --> O
+    L --> O
 ```
 
 ## Data Flow
@@ -288,16 +289,18 @@ Request
 ### Cache Types
 
 #### Feed Cache
-- **Location**: Chrome Storage Local
+- **Location**: IndexedDB (`feedCache` store)
 - **TTL**: 15 minutes (configurable)
-- **Key**: RSS feed URL
+- **Key**: Feed URL hash
 - **Purpose**: Reduce network requests, instant app load
+- **Limits**: Unlimited storage (gigabytes available)
 
 #### AI Cache
-- **Location**: Chrome Storage Local
-- **TTL**: Infinite (until cleared)
+- **Location**: IndexedDB (`aiCache` store)
+- **TTL**: 7 days
 - **Key**: Content hash + analysis type
 - **Purpose**: Avoid expensive API calls, instant results
+- **Limits**: 1000 cached results (auto-cleanup via LRU)
 
 ### Cache Invalidation
 
@@ -418,18 +421,41 @@ Update Feed
 
 ## Scalability Considerations
 
+### Storage Architecture
+
+**IndexedDB** (Unlimited storage for large data):
+- **AI Cache**: 1000 results (auto-cleanup via LRU)
+- **Feed Cache**: Unlimited feeds with 15min TTL
+- **Saved Articles**: Unlimited articles with metadata
+- **Collections**: Unlimited collections
+
+**Chrome Storage Sync** (100KB, syncs across devices):
+- **Topics & RSS Sources**: ~50 topics
+- **Settings**: User preferences
+
+**Chrome Storage Local** (10MB, local only):
+- **Theme**: User theme preference
+- **Subscription**: Pro license data
+- **Migration Flags**: One-time migration tracking
+
 ### Current Limits
 
-- **Topics**: ~50 topics (Chrome Storage limit)
-- **Saved Items**: ~1000 articles (10MB storage limit)
-- **Cache**: ~8MB (Chrome Storage Local limit)
+- **Topics**: ~50 topics (Chrome Storage Sync limit)
+- **Saved Items**: Unlimited (IndexedDB)
+- **Cache**: Unlimited (IndexedDB with auto-cleanup)
+
+### Implemented Optimizations
+
+- ✅ IndexedDB for cache and saved items
+- ✅ Indexed queries for fast lookups
+- ✅ LRU cache cleanup algorithm
+- ✅ Automatic migration from Chrome Storage
 
 ### Future Optimizations
 
-- Index DB for large data
 - Compression for cached content
-- Pagination for saved items
-- Virtual scrolling for feeds
+- Virtual scrolling for large feeds
+- Background sync for news updates
 
 ## Extension Lifecycle
 
@@ -465,8 +491,8 @@ Service Worker (Event-Driven)
 1. **Offline Support**: Service Worker caching for full offline capability
 2. **Real-time Updates**: WebSocket for live news updates
 3. **Shared Workers**: For cross-tab state synchronization
-4. **IndexedDB**: For larger data storage
-5. **Background Sync**: Sync news in background even when extension closed
+4. **Background Sync**: Sync news in background even when extension closed
+5. **Advanced Search**: Full-text search over saved articles using IndexedDB
 
 ---
 

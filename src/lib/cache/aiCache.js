@@ -1,50 +1,56 @@
+import * as aiCacheDB from '../db/aiCacheDB.js';
+
 const CACHE_VERSION = 1;
-const DEFAULT_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
-const MAX_CACHED_RESULTS = 200;
+const MIGRATION_KEY = 'aiCache_migrated_to_indexeddb';
+
+/**
+ * Migrate data from chrome.storage to IndexedDB (one-time)
+ */
+async function migrateIfNeeded() {
+    try {
+        const result = await chrome.storage.local.get(MIGRATION_KEY);
+        if (result[MIGRATION_KEY]) {
+            return; // Already migrated
+        }
+
+        console.log('🔄 Migrating AI cache from chrome.storage to IndexedDB...');
+
+        // Get all AI cache data from chrome.storage
+        const allData = await chrome.storage.local.get(null);
+        const aiCacheKeys = Object.keys(allData).filter(key => key.startsWith('ai_cache_'));
+
+        let migrated = 0;
+        for (const key of aiCacheKeys) {
+            const cached = allData[key];
+            if (cached && cached.contentHash && cached.analysisType && cached.result) {
+                await aiCacheDB.setCached(cached.contentHash, cached.analysisType, cached.result);
+                migrated++;
+            }
+        }
+
+        // Mark as migrated
+        await chrome.storage.local.set({ [MIGRATION_KEY]: true });
+
+        // Remove old cache data
+        if (aiCacheKeys.length > 0) {
+            await chrome.storage.local.remove(aiCacheKeys);
+        }
+
+        console.log(`✅ Migrated ${migrated} AI cache entries to IndexedDB`);
+    } catch (error) {
+        console.error('Error migrating AI cache:', error);
+    }
+}
 
 /**
  * Get cached AI result if valid
  * @param {string} contentHash - Hash of input content
- * @param {string} analysisType - Type of analysis (summary, bias, script, deepdive)
+ * @param {string} analysisType - Type of analysis (summary, bias, script, deepdive, podcast)
  * @returns {Promise<string|null>} Cached result or null
  */
 export async function getCachedAIResult(contentHash, analysisType) {
-    try {
-        const cacheKey = `ai_cache_${analysisType}_${contentHash}`;
-        const result = await chrome.storage.local.get(cacheKey);
-
-        if (!result[cacheKey]) {
-            return null;
-        }
-
-        const cached = result[cacheKey];
-
-        // Validate version
-        if (cached.version !== CACHE_VERSION) {
-            console.log('AI cache version mismatch');
-            return null;
-        }
-
-        // Check expiration
-        const now = Date.now();
-        const age = now - cached.createdAt;
-
-        if (age > DEFAULT_TTL) {
-            console.log(`AI cache expired for ${analysisType} (age: ${Math.round(age / (1000 * 60 * 60 * 24))} days)`);
-            return null;
-        }
-
-        console.log(`✅ AI cache hit for ${analysisType} (age: ${Math.round(age / (1000 * 60))} min)`);
-
-        // Update last accessed time
-        cached.lastAccessedAt = now;
-        await chrome.storage.local.set({ [cacheKey]: cached });
-
-        return cached.result;
-    } catch (error) {
-        console.error('Error reading AI cache:', error);
-        return null;
-    }
+    await migrateIfNeeded();
+    return await aiCacheDB.getCached(contentHash, analysisType);
 }
 
 /**
@@ -55,27 +61,8 @@ export async function getCachedAIResult(contentHash, analysisType) {
  * @returns {Promise<void>}
  */
 export async function setCachedAIResult(contentHash, analysisType, result) {
-    try {
-        const cacheKey = `ai_cache_${analysisType}_${contentHash}`;
-        const now = Date.now();
-
-        const cacheData = {
-            version: CACHE_VERSION,
-            result: result,
-            contentHash: contentHash,
-            analysisType: analysisType,
-            createdAt: now,
-            lastAccessedAt: now
-        };
-
-        await chrome.storage.local.set({ [cacheKey]: cacheData });
-        console.log(`💾 Cached AI result for ${analysisType} (${result.length} chars)`);
-
-        // Cleanup old entries
-        await cleanupAICache();
-    } catch (error) {
-        console.error('Error setting AI cache:', error);
-    }
+    await migrateIfNeeded();
+    await aiCacheDB.setCached(contentHash, analysisType, result);
 }
 
 /**
@@ -102,31 +89,8 @@ export function hashContent(content) {
  * @returns {Promise<void>}
  */
 export async function cleanupAICache() {
-    try {
-        const allData = await chrome.storage.local.get(null);
-        const aiCaches = Object.entries(allData)
-            .filter(([key]) => key.startsWith('ai_cache_'))
-            .map(([key, value]) => ({ key, ...value }));
-
-        // If under limit, no cleanup needed
-        if (aiCaches.length <= MAX_CACHED_RESULTS) {
-            return;
-        }
-
-        // Sort by last accessed (LRU)
-        aiCaches.sort((a, b) => (a.lastAccessedAt || 0) - (b.lastAccessedAt || 0));
-
-        // Remove oldest entries
-        const toRemove = aiCaches.slice(0, aiCaches.length - MAX_CACHED_RESULTS);
-        const keysToRemove = toRemove.map(item => item.key);
-
-        if (keysToRemove.length > 0) {
-            await chrome.storage.local.remove(keysToRemove);
-            console.log(`🧹 Cleaned up ${keysToRemove.length} old AI cache entries`);
-        }
-    } catch (error) {
-        console.error('Error cleaning up AI cache:', error);
-    }
+    await migrateIfNeeded();
+    await aiCacheDB.cleanup();
 }
 
 /**
@@ -134,17 +98,8 @@ export async function cleanupAICache() {
  * @returns {Promise<void>}
  */
 export async function clearAllAICache() {
-    try {
-        const allData = await chrome.storage.local.get(null);
-        const aiCacheKeys = Object.keys(allData).filter(key => key.startsWith('ai_cache_'));
-
-        if (aiCacheKeys.length > 0) {
-            await chrome.storage.local.remove(aiCacheKeys);
-            console.log(`🗑️ Cleared ${aiCacheKeys.length} AI cache entries`);
-        }
-    } catch (error) {
-        console.error('Error clearing AI cache:', error);
-    }
+    await migrateIfNeeded();
+    await aiCacheDB.clearAll();
 }
 
 /**
@@ -152,35 +107,6 @@ export async function clearAllAICache() {
  * @returns {Promise<Object>} Cache stats
  */
 export async function getAICacheStats() {
-    try {
-        const allData = await chrome.storage.local.get(null);
-        const aiCaches = Object.entries(allData).filter(([key]) => key.startsWith('ai_cache_'));
-
-        const stats = {
-            totalCached: aiCaches.length,
-            byType: {},
-            totalSize: 0,
-            oldestEntry: null,
-            newestEntry: null
-        };
-
-        aiCaches.forEach(([_, value]) => {
-            const type = value.analysisType || 'unknown';
-            stats.byType[type] = (stats.byType[type] || 0) + 1;
-            stats.totalSize += value.result?.length || 0;
-
-            if (!stats.oldestEntry || value.createdAt < stats.oldestEntry) {
-                stats.oldestEntry = value.createdAt;
-            }
-
-            if (!stats.newestEntry || value.createdAt > stats.newestEntry) {
-                stats.newestEntry = value.createdAt;
-            }
-        });
-
-        return stats;
-    } catch (error) {
-        console.error('Error getting AI cache stats:', error);
-        return { totalCached: 0, byType: {}, totalSize: 0 };
-    }
+    await migrateIfNeeded();
+    return await aiCacheDB.getStats();
 }
