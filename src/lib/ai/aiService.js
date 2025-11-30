@@ -93,7 +93,7 @@ async function generateWithLocalAI(prompt, systemPrompt, config) {
     }
     messages.push({ role: 'user', content: prompt });
 
-    const response = await fetch(url, {
+    let response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -103,12 +103,40 @@ async function generateWithLocalAI(prompt, systemPrompt, config) {
         })
     });
 
+    // Fallback for 404 (OpenAI endpoint not found -> try native Ollama)
+    if (response.status === 404 && url.includes('/v1/chat/completions')) {
+        console.log('OpenAI endpoint not found, trying native Ollama endpoint...');
+        const fallbackUrl = url.replace('/v1/chat/completions', '/api/chat');
+        response = await fetch(fallbackUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                messages: messages,
+                stream: false
+            })
+        });
+    }
+
     if (!response.ok) {
+        if (response.status === 403) {
+            throw new Error('Ollama connection forbidden. Please set OLLAMA_ORIGINS="*" environment variable. See docs.');
+        }
         throw new Error(`Local AI Error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    return data.choices[0].message.content;
+
+    // Handle OpenAI format
+    if (data.choices && data.choices.length > 0) {
+        return data.choices[0].message.content;
+    }
+    // Handle Native Ollama format
+    if (data.message && data.message.content) {
+        return data.message.content;
+    }
+
+    throw new Error('Unexpected response format from Local AI');
 }
 
 async function generateWithOpenAI(prompt, systemPrompt, config) {

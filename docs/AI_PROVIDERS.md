@@ -172,9 +172,6 @@ Typical usage (Pro user):
    
    # Alternative: Mistral (4.1GB)
    ollama pull mistral
-   
-   # Larger: Mixtral (26GB, better quality)
-   ollama pull mixtral
    ```
 
 3. **Start Ollama Server**
@@ -187,6 +184,7 @@ Typical usage (Pro user):
    - Settings → AI Provider → "Local LLM"
    - Server URL: `http://localhost:11434/v1/chat/completions`
    - Model: `llama3` (or your chosen model)
+   - **Note**: NewsLens automatically handles CORS headers and connection issues, so no extra configuration is needed!
 
 5. **Test**
    - Summarize an article

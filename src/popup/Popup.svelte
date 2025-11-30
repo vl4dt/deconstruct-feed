@@ -1352,37 +1352,15 @@ ${getTextContent(selectedArticle.description)}
     align-items: center;
     gap: 0.8rem;
   }
-  .refresh-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--bg-tertiary);
-    padding: 0.2rem 0.6rem;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    animation: fadeIn 0.3s ease-out;
-  }
-  .spinner-small {
-    width: 12px;
-    height: 12px;
-    border: 2px solid var(--text-tertiary);
-    border-top-color: var(--accent-primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-  .refresh-text {
-    white-space: nowrap;
-  }
   @keyframes spin {
     to {
       transform: rotate(360deg);
     }
   }
-  .btn-icon {
-    width: 20px;
-    height: 20px;
+
+  .spinning {
+    animation: spin 1s linear infinite;
+    transform-origin: center;
   }
 
   .refresh-btn {
