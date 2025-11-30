@@ -7,6 +7,7 @@
     import { t, locale, availableLanguages } from "../lib/stores/i18n";
     import UpgradeModal from "../components/UpgradeModal.svelte";
     import LicenseActivation from "../components/LicenseActivation.svelte";
+    import PromptSettings from "../components/PromptSettings.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -451,6 +452,14 @@
                     </div>
                 {/if}
             </div>
+
+            <!-- Custom Prompts Section (Pro Only) -->
+            {#if $userSubscription.isPro}
+                <div class="section">
+                    <h3>🎨 Custom AI Prompts (Pro)</h3>
+                    <PromptSettings />
+                </div>
+            {/if}
 
             <!-- License Management Section -->
             <div class="license-section">

@@ -3,6 +3,7 @@ import { getCachedAIResult, setCachedAIResult, hashContent } from '../cache/aiCa
 import { getLanguageName } from '../i18n/languageMap';
 import { get } from 'svelte/store';
 import { settings } from '../stores/settings';
+import { userSubscription } from '../stores/subscription';
 
 async function initDefaults() {
     const defaults = await LanguageModel.params();
@@ -50,10 +51,50 @@ export async function isChromeAIAvailable() {
     }
 }
 
+// Helper function to get prompts (custom if Pro, default otherwise)
+function getPrompts(operation) {
+    const config = get(settings);
+    const subscription = get(userSubscription);
+
+    // Use custom prompts if user is Pro and custom prompts exist
+    if (subscription.isPro && config.customPrompts && config.customPrompts[operation]) {
+        return config.customPrompts[operation];
+    }
+
+    // Default prompts (fallback for free users or if custom prompts not set)
+    const defaults = {
+        summarize: {
+            system: 'You are a helpful news assistant. Summarize the following article concisely in Markdown format.',
+            user: 'Summarize this news article in Markdown format:\n\n{content}'
+        },
+        script: {
+            system: 'You are a creative scriptwriter for a tech news YouTube channel.',
+            user: 'Create a YouTube video script covering these stories in Markdown format. Include an engaging hook, transition between topics, and a call to action.\n\n{articles}'
+        },
+        podcast: {
+            system: 'You are a creative podcast producer writing a script for two engaging hosts.',
+            user: 'Create a podcast script for two hosts (Alex and Sam) discussing these news stories. Include engaging banter, an intro with music cue, smooth transitions between topics, and an outro. Format in Markdown with **Host:** prefixes.\n\n{articles}'
+        },
+        deepDive: {
+            system: 'You are an expert news analyst.',
+            user: 'Analyze these articles in Markdown format. Identify common themes, contradictions, and causal relationships.\n\n{articles}'
+        },
+        bias: {
+            system: 'You are an objective media analyst.',
+            user: 'Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why. Format the response in Markdown.\n\n{content}'
+        }
+    };
+
+    return defaults[operation];
+}
+
 export async function summarize(text, apiKey = null, forceRefresh = false) {
+    const prompts = getPrompts('summarize');
+    const userPrompt = prompts.user.replace('{content}', text);
+
     return generateContent(
-        `Summarize this news article in Markdown format:\n\n${text}`,
-        'You are a helpful news assistant. Summarize the following article concisely in Markdown format.',
+        userPrompt,
+        prompts.system,
         'summary',
         forceRefresh
     );
@@ -254,47 +295,51 @@ async function generateContent(prompt, systemPrompt, cacheKey, forceRefresh = fa
 }
 
 export async function generateScript(articles, apiKey = null, forceRefresh = false) {
+    const prompts = getPrompts('script');
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
-    const prompt = `Create a YouTube video script covering these stories in Markdown format. Include an engaging hook, transition between topics, and a call to action.\n\n${combinedText}`;
+    const userPrompt = prompts.user.replace('{articles}', combinedText);
 
     return generateContent(
-        prompt,
-        'You are a creative scriptwriter for a tech news YouTube channel.',
+        userPrompt,
+        prompts.system,
         'script',
         forceRefresh
     );
 }
 
 export async function generatePodcastScript(articles, apiKey = null, forceRefresh = false) {
+    const prompts = getPrompts('podcast');
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
-    const prompt = `Create a podcast script for two hosts (Alex and Sam) discussing these news stories. Include engaging banter, an intro with music cue, smooth transitions between topics, and an outro. Format in Markdown with **Host:** prefixes.\n\n${combinedText}`;
+    const userPrompt = prompts.user.replace('{articles}', combinedText);
 
     return generateContent(
-        prompt,
-        'You are a creative podcast producer writing a script for two engaging hosts.',
+        userPrompt,
+        prompts.system,
         'podcast',
         forceRefresh
     );
 }
 
 export async function deepDive(articles, apiKey = null, forceRefresh = false) {
+    const prompts = getPrompts('deepDive');
     const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
-    const prompt = `Analyze these articles in Markdown format. Identify common themes, contradictions, and causal relationships.\n\n${combinedText}`;
+    const userPrompt = prompts.user.replace('{articles}', combinedText);
 
     return generateContent(
-        prompt,
-        'You are an expert news analyst.',
+        userPrompt,
+        prompts.system,
         'deepdive',
         forceRefresh
     );
 }
 
 export async function checkBias(text, apiKey = null, forceRefresh = false) {
-    const prompt = `Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why. Format the response in Markdown.\n\n${text}`;
+    const prompts = getPrompts('bias');
+    const userPrompt = prompts.user.replace('{content}', text);
 
     return generateContent(
-        prompt,
-        'You are an objective media analyst.',
+        userPrompt,
+        prompts.system,
         'bias',
         forceRefresh
     );

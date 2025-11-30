@@ -23,7 +23,30 @@ function createSettingsStore() {
         anthropicModel: 'claude-3-5-sonnet-latest',
         // Gemini
         geminiKey: '',
-        geminiModel: 'gemini-1.5-flash'
+        geminiModel: 'gemini-1.5-flash',
+        // Custom Prompts (Pro Feature)
+        customPrompts: {
+            summarize: {
+                system: 'You are a helpful news assistant. Summarize the following article concisely in Markdown format.',
+                user: 'Summarize this news article in Markdown format:\n\n{content}'
+            },
+            script: {
+                system: 'You are a creative scriptwriter for a tech news YouTube channel.',
+                user: 'Create a YouTube video script covering these stories in Markdown format. Include an engaging hook, transition between topics, and a call to action.\n\n{articles}'
+            },
+            podcast: {
+                system: 'You are a creative podcast producer writing a script for two engaging hosts.',
+                user: 'Create a podcast script for two hosts (Alex and Sam) discussing these news stories. Include engaging banter, an intro with music cue, smooth transitions between topics, and an outro. Format in Markdown with **Host:** prefixes.\n\n{articles}'
+            },
+            deepDive: {
+                system: 'You are an expert news analyst.',
+                user: 'Analyze these articles in Markdown format. Identify common themes, contradictions, and causal relationships.\n\n{articles}'
+            },
+            bias: {
+                system: 'You are an objective media analyst.',
+                user: 'Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why. Format the response in Markdown.\n\n{content}'
+            }
+        }
     });
 
     return {
@@ -51,6 +74,28 @@ function createSettingsStore() {
                     anthropicModel: 'claude-3-5-sonnet-latest',
                     geminiKey: '',
                     geminiModel: 'gemini-1.5-flash',
+                    customPrompts: {
+                        summarize: {
+                            system: 'You are a helpful news assistant. Summarize the following article concisely in Markdown format.',
+                            user: 'Summarize this news article in Markdown format:\n\n{content}'
+                        },
+                        script: {
+                            system: 'You are a creative scriptwriter for a tech news YouTube channel.',
+                            user: 'Create a YouTube video script covering these stories in Markdown format. Include an engaging hook, transition between topics, and a call to action.\n\n{articles}'
+                        },
+                        podcast: {
+                            system: 'You are a creative podcast producer writing a script for two engaging hosts.',
+                            user: 'Create a podcast script for two hosts (Alex and Sam) discussing these news stories. Include engaging banter, an intro with music cue, smooth transitions between topics, and an outro. Format in Markdown with **Host:** prefixes.\n\n{articles}'
+                        },
+                        deepDive: {
+                            system: 'You are an expert news analyst.',
+                            user: 'Analyze these articles in Markdown format. Identify common themes, contradictions, and causal relationships.\n\n{articles}'
+                        },
+                        bias: {
+                            system: 'You are an objective media analyst.',
+                            user: 'Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why. Format the response in Markdown.\n\n{content}'
+                        }
+                    },
                     ...result.userSettings
                 });
             }
@@ -86,6 +131,86 @@ function createSettingsStore() {
                 // Ensure trendingKeywords array exists
                 const keywords = s.trendingKeywords || [];
                 const newSettings = { ...s, trendingKeywords: keywords.filter(k => k !== keyword) };
+                chrome.storage.local.set({ userSettings: newSettings });
+                return newSettings;
+            });
+        },
+        setPrompt: async (type, field, value) => {
+            update(s => {
+                const newSettings = {
+                    ...s,
+                    customPrompts: {
+                        ...s.customPrompts,
+                        [type]: {
+                            ...s.customPrompts[type],
+                            [field]: value
+                        }
+                    }
+                };
+                chrome.storage.local.set({ userSettings: newSettings });
+                return newSettings;
+            });
+        },
+        resetPrompt: async (type) => {
+            const defaults = {
+                summarize: {
+                    system: 'You are a helpful news assistant. Summarize the following article concisely in Markdown format.',
+                    user: 'Summarize this news article in Markdown format:\n\n{content}'
+                },
+                script: {
+                    system: 'You are a creative scriptwriter for a tech news YouTube channel.',
+                    user: 'Create a YouTube video script covering these stories in Markdown format. Include an engaging hook, transition between topics, and a call to action.\n\n{articles}'
+                },
+                podcast: {
+                    system: 'You are a creative podcast producer writing a script for two engaging hosts.',
+                    user: 'Create a podcast script for two hosts (Alex and Sam) discussing these news stories. Include engaging banter, an intro with music cue, smooth transitions between topics, and an outro. Format in Markdown with **Host:** prefixes.\n\n{articles}'
+                },
+                deepDive: {
+                    system: 'You are an expert news analyst.',
+                    user: 'Analyze these articles in Markdown format. Identify common themes, contradictions, and causal relationships.\n\n{articles}'
+                },
+                bias: {
+                    system: 'You are an objective media analyst.',
+                    user: 'Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why. Format the response in Markdown.\n\n{content}'
+                }
+            };
+            update(s => {
+                const newSettings = {
+                    ...s,
+                    customPrompts: {
+                        ...s.customPrompts,
+                        [type]: defaults[type]
+                    }
+                };
+                chrome.storage.local.set({ userSettings: newSettings });
+                return newSettings;
+            });
+        },
+        resetAllPrompts: async () => {
+            const defaults = {
+                summarize: {
+                    system: 'You are a helpful news assistant. Summarize the following article concisely in Markdown format.',
+                    user: 'Summarize this news article in Markdown format:\n\n{content}'
+                },
+                script: {
+                    system: 'You are a creative scriptwriter for a tech news YouTube channel.',
+                    user: 'Create a YouTube video script covering these stories in Markdown format. Include an engaging hook, transition between topics, and a call to action.\n\n{articles}'
+                },
+                podcast: {
+                    system: 'You are a creative podcast producer writing a script for two engaging hosts.',
+                    user: 'Create a podcast script for two hosts (Alex and Sam) discussing these news stories. Include engaging banter, an intro with music cue, smooth transitions between topics, and an outro. Format in Markdown with **Host:** prefixes.\n\n{articles}'
+                },
+                deepDive: {
+                    system: 'You are an expert news analyst.',
+                    user: 'Analyze these articles in Markdown format. Identify common themes, contradictions, and causal relationships.\n\n{articles}'
+                },
+                bias: {
+                    system: 'You are an objective media analyst.',
+                    user: 'Analyze this text for potential bias, emotional language, and framing. Rate the objectivity on a scale of 1-10 and explain why. Format the response in Markdown.\n\n{content}'
+                }
+            };
+            update(s => {
+                const newSettings = { ...s, customPrompts: defaults };
                 chrome.storage.local.set({ userSettings: newSettings });
                 return newSettings;
             });
