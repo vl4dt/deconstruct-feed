@@ -2,6 +2,7 @@ export default {
     appTitle: "NewsLens AI",
     trendingTopics: "Trending Topics",
     myFeed: "My Feed",
+    refresh: "Refresh",
     refreshNews: "Refresh News",
     select: "Select",
     cancel: "Cancel",

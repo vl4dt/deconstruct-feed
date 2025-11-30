@@ -923,9 +923,11 @@ ${getTextContent(selectedArticle.description)}
       </div>
       <div class="header-actions">
         <button
-          class="icon-btn"
+          class="refresh-btn"
+          class:disabled={isRefreshing}
+          disabled={isRefreshing}
           onclick={() => loadNews(true)}
-          title={$t("refresh")}
+          title={isRefreshing ? loadingMessage : $t("refreshNews")}
         >
           <svg
             class:spinning={isRefreshing}
@@ -940,13 +942,8 @@ ${getTextContent(selectedArticle.description)}
               d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"
             />
           </svg>
+          <span>{isRefreshing ? $t("updating") : $t("refresh")}</span>
         </button>
-        {#if isRefreshing}
-          <div class="refresh-indicator" title={loadingMessage}>
-            <div class="spinner-small"></div>
-            <span class="refresh-text">{$t("updating")}</span>
-          </div>
-        {/if}
         {#if $userSubscription.isPro && view !== "article" && view !== "analysis"}
           <button
             class="icon-btn select-btn"
@@ -957,7 +954,9 @@ ${getTextContent(selectedArticle.description)}
             {selectionMode ? $t("cancel") : $t("select")}
           </button>
         {/if}
-        <button class="icon-btn" onclick={openSettings}>⚙️</button>
+        <button class="icon-btn" onclick={openSettings} title={$t("settings")}
+          >⚙️</button
+        >
       </div>
     </header>
   {/if}
@@ -1384,5 +1383,32 @@ ${getTextContent(selectedArticle.description)}
   .btn-icon {
     width: 20px;
     height: 20px;
+  }
+
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .refresh-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+
+  .refresh-btn.disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 </style>
