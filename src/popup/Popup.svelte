@@ -323,13 +323,33 @@
       }
       analysisResult = "Generating script...";
 
-      analysisResult = await generateScript(
-        selectedArticles,
+      const result = await generateScript(
+        selectedArticles.map(getOriginalArticle),
         null,
         forceRefresh,
       );
+      originalAnalysisResult = result;
+
+      if (isTranslated) {
+        const translated = await translate(
+          result,
+          $settings.targetLanguage,
+          $settings.geminiKey,
+        );
+        if (isTranslated) {
+          analysisResult = translated;
+        } else {
+          analysisResult = result;
+        }
+      } else if ($settings.autoTranslateAI && $locale !== "en") {
+        const targetLang = $locale === "es" ? "Spanish" : "English";
+        analysisResult = await translate(result, targetLang);
+      } else {
+        analysisResult = result;
+      }
     } catch (e) {
       analysisResult = "Error generating script: " + e.message;
+      originalAnalysisResult = "";
     } finally {
       scriptLoading = false;
     }
@@ -360,9 +380,33 @@
       }
       analysisResult = "Performing deep dive...";
 
-      analysisResult = await deepDive(selectedArticles, null, forceRefresh);
+      const result = await deepDive(
+        selectedArticles.map(getOriginalArticle),
+        null,
+        forceRefresh,
+      );
+      originalAnalysisResult = result;
+
+      if (isTranslated) {
+        const translated = await translate(
+          result,
+          $settings.targetLanguage,
+          $settings.geminiKey,
+        );
+        if (isTranslated) {
+          analysisResult = translated;
+        } else {
+          analysisResult = result;
+        }
+      } else if ($settings.autoTranslateAI && $locale !== "en") {
+        const targetLang = $locale === "es" ? "Spanish" : "English";
+        analysisResult = await translate(result, targetLang);
+      } else {
+        analysisResult = result;
+      }
     } catch (e) {
       analysisResult = "Error performing deep dive: " + e.message;
+      originalAnalysisResult = "";
     } finally {
       scriptLoading = false;
     }
@@ -394,14 +438,26 @@
         }
       }
 
-      const text = selectedArticle.content
-        ? `${selectedArticle.title}\n\n${selectedArticle.content}`
-        : `${selectedArticle.title}\n\n${selectedArticle.description}`;
+      const originalArticle = getOriginalArticle(selectedArticle);
+      const text = originalArticle.content
+        ? `${originalArticle.title}\n\n${originalArticle.content}`
+        : `${originalArticle.title}\n\n${originalArticle.description}`;
 
       const result = await checkBias(text, null, forceRefresh);
       originalBiasResult = result;
 
-      if ($settings.autoTranslateAI && $locale !== "en") {
+      if (isTranslated) {
+        const translated = await translate(
+          result,
+          $settings.targetLanguage,
+          $settings.geminiKey,
+        );
+        if (isTranslated) {
+          biasResult = translated;
+        } else {
+          biasResult = result;
+        }
+      } else if ($settings.autoTranslateAI && $locale !== "en") {
         const targetLang = $locale === "es" ? "Spanish" : "English";
         biasResult = await translate(result, targetLang);
       } else {
@@ -413,6 +469,17 @@
     } finally {
       biasLoading = false;
     }
+  }
+
+  function getOriginalArticle(article) {
+    if (article._originalTitle) {
+      return {
+        ...article,
+        title: article._originalTitle,
+        description: article._originalDescription,
+      };
+    }
+    return article;
   }
 
   function getAllArticles() {
@@ -437,14 +504,26 @@
         }
       }
 
-      const text = selectedArticle.content
-        ? `${selectedArticle.title}\n\n${selectedArticle.content}`
-        : `${selectedArticle.title}\n\n${selectedArticle.description}`;
+      const originalArticle = getOriginalArticle(selectedArticle);
+      const text = originalArticle.content
+        ? `${originalArticle.title}\n\n${originalArticle.content}`
+        : `${originalArticle.title}\n\n${originalArticle.description}`;
 
       const result = await summarize(text, null, forceRefresh);
       originalSummary = result;
 
-      if ($settings.autoTranslateAI && $locale !== "en") {
+      if (isTranslated) {
+        const translated = await translate(
+          result,
+          $settings.targetLanguage,
+          $settings.geminiKey,
+        );
+        if (isTranslated) {
+          summary = translated;
+        } else {
+          summary = result;
+        }
+      } else if ($settings.autoTranslateAI && $locale !== "en") {
         const targetLang = $locale === "es" ? "Spanish" : "English";
         summary = await translate(result, targetLang);
       } else {
@@ -471,7 +550,18 @@
       const result = await checkBias(currentPage.content, null, forceRefresh);
       originalBiasResult = result;
 
-      if ($settings.autoTranslateAI && $locale !== "en") {
+      if (isTranslated) {
+        const translated = await translate(
+          result,
+          $settings.targetLanguage,
+          $settings.geminiKey,
+        );
+        if (isTranslated) {
+          biasResult = translated;
+        } else {
+          biasResult = result;
+        }
+      } else if ($settings.autoTranslateAI && $locale !== "en") {
         const targetLang = $locale === "es" ? "Spanish" : "English";
         biasResult = await translate(result, targetLang);
       } else {
@@ -498,7 +588,18 @@
       const result = await summarize(currentPage.content, null, forceRefresh);
       originalSummary = result;
 
-      if ($settings.autoTranslateAI && $locale !== "en") {
+      if (isTranslated) {
+        const translated = await translate(
+          result,
+          $settings.targetLanguage,
+          $settings.geminiKey,
+        );
+        if (isTranslated) {
+          summary = translated;
+        } else {
+          summary = result;
+        }
+      } else if ($settings.autoTranslateAI && $locale !== "en") {
         const targetLang = $locale === "es" ? "Spanish" : "English";
         summary = await translate(result, targetLang);
       } else {
@@ -536,13 +637,24 @@
       analysisResult = "Generating script...";
 
       const result = await generateScript(
-        [selectedArticle],
+        [getOriginalArticle(selectedArticle)],
         null,
         forceRefresh,
       );
       originalAnalysisResult = result;
 
-      if ($settings.autoTranslateAI && $locale !== "en") {
+      if (isTranslated) {
+        const translated = await translate(
+          result,
+          $settings.targetLanguage,
+          $settings.geminiKey,
+        );
+        if (isTranslated) {
+          analysisResult = translated;
+        } else {
+          analysisResult = result;
+        }
+      } else if ($settings.autoTranslateAI && $locale !== "en") {
         const targetLang = $locale === "es" ? "Spanish" : "English";
         analysisResult = await translate(result, targetLang);
       } else {
@@ -581,13 +693,24 @@
       analysisResult = "Generating podcast script...";
 
       const result = await generatePodcastScript(
-        [selectedArticle],
+        [getOriginalArticle(selectedArticle)],
         null,
         forceRefresh,
       );
       originalAnalysisResult = result;
 
-      if ($settings.autoTranslateAI && $locale !== "en") {
+      if (isTranslated) {
+        const translated = await translate(
+          result,
+          $settings.targetLanguage,
+          $settings.geminiKey,
+        );
+        if (isTranslated) {
+          analysisResult = translated;
+        } else {
+          analysisResult = result;
+        }
+      } else if ($settings.autoTranslateAI && $locale !== "en") {
         const targetLang = $locale === "es" ? "Spanish" : "English";
         analysisResult = await translate(result, targetLang);
       } else {
@@ -625,10 +748,25 @@
       }
       analysisResult = "Performing deep dive...";
 
-      const result = await deepDive([selectedArticle], null, forceRefresh);
+      const result = await deepDive(
+        [getOriginalArticle(selectedArticle)],
+        null,
+        forceRefresh,
+      );
       originalAnalysisResult = result;
 
-      if ($settings.autoTranslateAI && $locale !== "en") {
+      if (isTranslated) {
+        const translated = await translate(
+          result,
+          $settings.targetLanguage,
+          $settings.geminiKey,
+        );
+        if (isTranslated) {
+          analysisResult = translated;
+        } else {
+          analysisResult = result;
+        }
+      } else if ($settings.autoTranslateAI && $locale !== "en") {
         const targetLang = $locale === "es" ? "Spanish" : "English";
         analysisResult = await translate(result, targetLang);
       } else {
@@ -664,7 +802,18 @@
       const result = await deepDive([mockArticle], null, forceRefresh);
       originalAnalysisResult = result;
 
-      if ($settings.autoTranslateAI && $locale !== "en") {
+      if (isTranslated) {
+        const translated = await translate(
+          result,
+          $settings.targetLanguage,
+          $settings.geminiKey,
+        );
+        if (isTranslated) {
+          analysisResult = translated;
+        } else {
+          analysisResult = result;
+        }
+      } else if ($settings.autoTranslateAI && $locale !== "en") {
         const targetLang = $locale === "es" ? "Spanish" : "English";
         analysisResult = await translate(result, targetLang);
       } else {
@@ -739,43 +888,87 @@ ${getTextContent(selectedArticle.description)}
   }
 
   async function toggleTranslation() {
-    if (!selectedArticle) return;
+    if (!selectedArticle && !analysisResult) return;
 
     if (isTranslated) {
       // Restore original content
-      if (selectedArticle._originalTitle) {
+      if (selectedArticle && selectedArticle._originalTitle) {
         selectedArticle.title = selectedArticle._originalTitle;
         selectedArticle.description = selectedArticle._originalDescription;
       }
+      if (originalSummary) summary = originalSummary;
+      if (originalBiasResult) biasResult = originalBiasResult;
+      if (originalAnalysisResult) analysisResult = originalAnalysisResult;
+
       isTranslated = false;
       return;
     }
 
     translating = true;
     try {
-      // Store original content on the article object if not already stored
-      if (!selectedArticle._originalTitle) {
-        selectedArticle._originalTitle = selectedArticle.title;
-        selectedArticle._originalDescription = selectedArticle.description;
+      const promises = [];
 
-        // Also update local state for consistency
-        originalTitle = selectedArticle.title;
-        originalDescription = selectedArticle.description;
+      // Translate Article Content
+      if (selectedArticle) {
+        if (!selectedArticle._originalTitle) {
+          selectedArticle._originalTitle = selectedArticle.title;
+          selectedArticle._originalDescription = selectedArticle.description;
+          originalTitle = selectedArticle.title;
+          originalDescription = selectedArticle.description;
+        }
+        promises.push(
+          translate(
+            selectedArticle.title,
+            $settings.targetLanguage,
+            $settings.geminiKey,
+          ).then((res) => (selectedArticle.title = res)),
+        );
+        promises.push(
+          translate(
+            selectedArticle.description,
+            $settings.targetLanguage,
+            $settings.geminiKey,
+          ).then((res) => (selectedArticle.description = res)),
+        );
       }
 
-      const translatedTitle = await translate(
-        selectedArticle.title,
-        $settings.targetLanguage,
-        $settings.geminiKey,
-      );
-      const translatedDesc = await translate(
-        selectedArticle.description,
-        $settings.targetLanguage,
-        $settings.geminiKey,
-      );
+      // Translate Summary
+      if (summary) {
+        if (!originalSummary) originalSummary = summary;
+        promises.push(
+          translate(
+            summary,
+            $settings.targetLanguage,
+            $settings.geminiKey,
+          ).then((res) => (summary = res)),
+        );
+      }
 
-      selectedArticle.title = translatedTitle;
-      selectedArticle.description = translatedDesc;
+      // Translate Bias Result
+      if (biasResult) {
+        if (!originalBiasResult) originalBiasResult = biasResult;
+        promises.push(
+          translate(
+            biasResult,
+            $settings.targetLanguage,
+            $settings.geminiKey,
+          ).then((res) => (biasResult = res)),
+        );
+      }
+
+      // Translate Analysis Result
+      if (analysisResult) {
+        if (!originalAnalysisResult) originalAnalysisResult = analysisResult;
+        promises.push(
+          translate(
+            analysisResult,
+            $settings.targetLanguage,
+            $settings.geminiKey,
+          ).then((res) => (analysisResult = res)),
+        );
+      }
+
+      await Promise.all(promises);
       isTranslated = true;
     } catch (e) {
       console.error("Translation failed:", e);
@@ -1093,9 +1286,12 @@ ${getTextContent(selectedArticle.description)}
       {analysisTitle}
       {analysisResult}
       {scriptLoading}
+      {translating}
+      {isTranslated}
       on:back={handleBack}
       on:copyToClipboard={(e) => copyToClipboard(e.detail)}
       on:regenerateAnalysis={regenerateAnalysis}
+      on:toggleTranslation={toggleTranslation}
     />
   {:else if view === "article" && selectedArticle}
     <ArticleView
