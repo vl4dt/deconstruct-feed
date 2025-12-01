@@ -82,7 +82,8 @@ class SharedWorkerBridge {
      * Send message to shared worker
      */
     send(message) {
-        if (!this.connected || !this.port) {
+        // Allow CONNECT message to pass through even if not yet marked as connected
+        if ((!this.connected && message.type !== 'CONNECT') || !this.port) {
             console.warn('SharedWorker not connected. Message not sent:', message);
             return false;
         }
