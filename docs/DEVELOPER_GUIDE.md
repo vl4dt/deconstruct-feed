@@ -72,7 +72,8 @@ newslens-ai/
 │   │   ├── LoadingSpinner.svelte
 │   │   ├── SkeletonLoader.svelte
 │   │   ├── UpgradeModal.svelte
-│   │   └── LicenseActivation.svelte
+│   │   ├── LicenseActivation.svelte
+│   │   └── OfflineBanner.svelte
 │   │
 │   ├── lib/                   # Core business logic
 │   │   ├── ai/               # AI service integrations
@@ -98,7 +99,15 @@ newslens-ai/
 │   │   │   ├── es.js
 │   │   │   └── languageMap.js
 │   │   │
-│   │   └── pageContent.js    # Page content extraction
+│   │   ├── db/               # IndexedDB
+│   │   │   ├── indexedDB.js
+│   │   │   ├── savedItemsDB.js
+│   │   │   ├── feedCacheDB.js
+│   │   │   └── aiCacheDB.js
+│   │   │
+│   │   ├── pageContent.js    # Page content extraction
+│   │   ├── offlineDetector.js # Network status
+│   │   └── sharedWorkerBridge.js # Cross-tab sync
 │   │
 │   ├── styles/                # Global styles
 │   │   ├── global.css

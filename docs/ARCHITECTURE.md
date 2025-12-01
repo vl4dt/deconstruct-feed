@@ -480,6 +480,200 @@ Service Worker (Event-Driven)
 ├── contextMenu click (chrome.contextMenus.onClicked)
 ├── alarm (chrome.alarms.onAlarm)
 └── message (chrome.runtime.onMessage)
+### Cache Types
+
+#### Feed Cache
+- **Location**: IndexedDB (`feedCache` store)
+- **TTL**: 15 minutes (configurable)
+- **Key**: Feed URL hash
+- **Purpose**: Reduce network requests, instant app load
+- **Limits**: Unlimited storage (gigabytes available)
+
+#### AI Cache
+- **Location**: IndexedDB (`aiCache` store)
+- **TTL**: 7 days
+- **Key**: Content hash + analysis type
+- **Purpose**: Avoid expensive API calls, instant results
+- **Limits**: 1000 cached results (auto-cleanup via LRU)
+
+### Cache Invalidation
+
+**Manual**:
+- User clicks refresh button
+- Settings → Clear cache
+
+**Automatic**:
+- Feed cache: TTL expiration (15min)
+- AI cache: Never (only manual clear)
+
+**Partial**:
+- Feed refresh: Invalidates specific feed
+- Force refresh on analysis: Only that analysis type
+
+## AI Integration Architecture
+
+### Provider Abstraction
+
+```typescript
+// Unified interface
+async function generateContent(prompt, systemPrompt, cacheKey, forceRefresh) {
+  // 1. Check cache
+  // 2. Get provider from settings
+  // 3. Route to appropriate provider
+  // 4. Handle errors
+  // 5. Cache result
+  // 6. Return
+}
+
+// Provider-specific implementations
+- generateWithChromeAI()
+- generateWithGemini()
+- generateWithLocalAI()
+- generateWithOpenAI()
+- generateWithAnthropic()
+```
+
+### Provider Selection Flow
+
+```mermaid
+graph TD
+    A[User Request] --> B{Check Settings}
+    B -->|chrome| C[Chrome AI Available?]
+    B -->|gemini| D[Gemini API]
+    B -->|local| E[Local LLM]
+    B -->|openai| F[OpenAI API]
+    B -->|anthropic| G[Anthropic API]
+    
+    C -->|Yes| H[Use Chrome AI]
+    C -->|No| I[Error: Chrome AI Unavailable]
+    
+    D --> J[Check API Key]
+    E --> K[Check Server URL]
+    F --> J
+    G --> J
+    
+    J -->|Valid| L[Make API Call]
+    J -->|Invalid| M[Error: API Key Missing]
+    
+    K -->|Valid| L
+    K --> Invalid| N[Error: Server Unreachable]
+    
+    L --> O[Return Result]
+```
+
+### Error Handling Strategy
+
+1. **Provider-Level**: Catch provider-specific errors
+2. **Service-Level**: Wrap in try-catch, return error messages
+3. **UI-Level**: Display error to user, suggest fallback
+4. **Retry Logic**: Exponential backoff for transient failures (future)
+
+## Performance Optimizations
+
+### Progressive Loading
+
+```
+App Start
+  ↓
+Load Stores (instant)
+  ↓
+Load Cached News (100ms)
+  ↓
+Display Feed
+  ↓
+Fetch Fresh News (background, 2-5s)
+  ↓
+Update Feed
+```
+
+### Lazy Loading
+
+- Components lazy loaded on demand
+- Images lazy loaded (future)
+- Virtual scrolling for large lists (future)
+
+### Debouncing
+
+- Search input: 300ms debounce
+- Scroll events: Throttled
+- Auto-save: Debounced writes
+
+## Security Considerations
+
+### Data Protection
+
+- **API Keys**: Stored in Chrome Storage (encrypted by Chrome)
+- **User Data**: Never sent to NewsLens servers
+- **AI Providers**: Check provider privacy policies
+- **XSS Protection**: Sanitize all user input and RSS content
+
+### Content Security Policy
+
+- No inline scripts
+- Strict CSP in manifest
+- HTTPS only for API calls
+
+## Scalability Considerations
+
+### Storage Architecture
+
+**IndexedDB** (Unlimited storage for large data):
+- **AI Cache**: 1000 results (auto-cleanup via LRU)
+- **Feed Cache**: Unlimited feeds with 15min TTL
+- **Saved Articles**: Unlimited articles with metadata
+- **Collections**: Unlimited collections
+
+**Chrome Storage Sync** (100KB, syncs across devices):
+- **Topics & RSS Sources**: ~50 topics
+- **Settings**: User preferences
+
+**Chrome Storage Local** (10MB, local only):
+- **Theme**: User theme preference
+- **Subscription**: Pro license data
+- **Migration Flags**: One-time migration tracking
+
+### Current Limits
+
+- **Topics**: ~50 topics (Chrome Storage Sync limit)
+- **Saved Items**: Unlimited (IndexedDB)
+- **Cache**: Unlimited (IndexedDB with auto-cleanup)
+
+### Implemented Optimizations
+
+- ✅ IndexedDB for cache and saved items
+- ✅ Indexed queries for fast lookups
+- ✅ LRU cache cleanup algorithm
+- ✅ Automatic migration from Chrome Storage
+
+### Future Optimizations
+
+- Compression for cached content
+- Virtual scrolling for large feeds
+- Background sync for news updates
+
+## Extension Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Installed
+    Installed --> Idle
+    Idle --> Active: User opens extension
+    Active --> Idle: User closes extension
+    Active --> Background: Service worker runs
+    Background --> Idle: Task complete
+    Idle --> Updated: Update available
+    Updated --> Idle: Extension reloaded
+```
+
+### Service Worker Lifecycle
+
+```
+Service Worker (Event-Driven)
+├── startup (chrome.runtime.onStartup)
+├── installed (chrome.runtime.onInstalled)
+├── contextMenu click (chrome.contextMenus.onClicked)
+├── alarm (chrome.alarms.onAlarm)
+└── message (chrome.runtime.onMessage)
 ```
 
 **Note**: Service workers don't persist. They wake on events, perform tasks, and shut down.
@@ -488,11 +682,9 @@ Service Worker (Event-Driven)
 
 ### Planned Improvements
 
-1. **Offline Support**: Service Worker caching for full offline capability
-2. **Real-time Updates**: WebSocket for live news updates
-3. **Shared Workers**: For cross-tab state synchronization
-4. **Background Sync**: Sync news in background even when extension closed
-5. **Advanced Search**: Full-text search over saved articles using IndexedDB
+1. **Real-time Updates**: WebSocket for live news updates
+2. **Background Sync**: Sync news in background even when extension closed
+3. **Cloud Sync**: Optional cloud backup for saved items
 
 ---
 

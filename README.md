@@ -20,6 +20,11 @@ NewsLens AI is a powerful Chrome extension that curates personalized news feeds 
 - **Page Analysis**: Analyze any web page directly from your browser
 - **Privacy-First**: Uses Chrome's built-in on-device AI when available
 
+### ⚡ Offline & Performance
+- **Offline Support**: Read saved articles and cached feeds even without internet
+- **Smart Caching**: Automatically caches news and AI analysis for instant access
+- **Background Sync**: Keeps your feed updated efficiently
+
 ### 🎬 Content Creation Tools
 - **YouTube Script Generator**: Transform articles into engaging video scripts (Pro)
 - **Podcast Script Generator**: Create two-host podcast scripts with natural banter (Pro)
