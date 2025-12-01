@@ -1,6 +1,7 @@
 import { writable, get } from 'svelte/store';
 import { userSubscription } from './subscription';
 import * as savedItemsDB from '../db/savedItemsDB.js';
+import { fetchArticleContent } from '../content/contentFetcher.js';
 
 const MIGRATION_KEY = 'savedItems_migrated_to_indexeddb';
 
@@ -95,6 +96,16 @@ function createSavedItemsStore() {
             const items = await savedItemsDB.getAllSavedItems();
             update(s => ({ ...s, items }));
 
+            // Background fetch content for search
+            fetchArticleContent(article.link).then(async (content) => {
+                if (content) {
+                    await savedItemsDB.updateItem(article.link, { content });
+                    // Update store with new content so it's searchable immediately
+                    const updatedItems = await savedItemsDB.getAllSavedItems();
+                    update(s => ({ ...s, items: updatedItems }));
+                }
+            });
+
             return { success: true };
         },
 
@@ -142,6 +153,10 @@ function createSavedItemsStore() {
             const items = await savedItemsDB.getAllSavedItems();
             update(s => ({ ...s, items }));
             return { success: true };
+        },
+
+        search: async (query) => {
+            return await savedItemsDB.searchSavedItems(query);
         }
     };
 }

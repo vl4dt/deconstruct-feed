@@ -12,12 +12,44 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
 
+    // Search state
+    let searchQuery = "";
+    let searchResults = null;
+    let isSearching = false;
+    let searchTimeout;
+
+    async function performSearch() {
+        if (!searchQuery.trim()) {
+            searchResults = null;
+            isSearching = false;
+            return;
+        }
+        isSearching = true;
+        searchResults = await savedItems.search(searchQuery);
+        isSearching = false;
+    }
+
+    function handleSearchInput(e) {
+        searchQuery = e.target.value;
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(performSearch, 300);
+    }
+
+    function clearSearch() {
+        searchQuery = "";
+        searchResults = null;
+        isSearching = false;
+    }
+
     // Derived state for filtered items
+    $: displayItems =
+        searchResults !== null ? searchResults : $savedItems.items;
+
     $: filteredItems =
         activeCollection === "all"
-            ? $savedItems.items
-            : $savedItems.items.filter(
-                  (i) => i.collectionId === activeCollection,
+            ? displayItems
+            : displayItems.filter(
+                  (i) => (i.collection || i.collectionId) === activeCollection,
               );
 
     function selectArticle(article) {
@@ -81,6 +113,22 @@
                 title="New Collection">New</button
             >
         {/if}
+    </div>
+
+    <div class="search-container">
+        <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input
+                type="text"
+                placeholder="Search saved articles..."
+                value={searchQuery}
+                oninput={handleSearchInput}
+            />
+            {#if searchQuery}
+                <button class="clear-search-btn" onclick={clearSearch}>×</button
+                >
+            {/if}
+        </div>
     </div>
 
     {#if showCreateCollection}
@@ -358,12 +406,57 @@
         margin-bottom: 1rem;
     }
     .section-title {
-        margin: 0 0 1rem 0;
+        margin: 0;
         font-size: 1.2rem;
         color: var(--text-primary);
         display: flex;
         align-items: center;
         gap: 0.5rem;
+    }
+    .search-container {
+        margin-bottom: 1rem;
+    }
+    .search-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.4rem 0.8rem;
+        transition: border-color 0.2s;
+    }
+    .search-input-wrapper:focus-within {
+        border-color: var(--accent-primary);
+    }
+    .search-icon {
+        font-size: 0.9rem;
+        margin-right: 0.5rem;
+        opacity: 0.6;
+    }
+    .search-input-wrapper input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        outline: none;
+        min-width: 0;
+    }
+    .clear-search-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0 0.2rem;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .clear-search-btn:hover {
+        color: var(--text-primary);
     }
     .add-btn {
         font-size: 0.85rem;

@@ -36,6 +36,22 @@ export async function saveItem(article, collection = 'all') {
 }
 
 /**
+ * Update an existing saved item
+ */
+export async function updateItem(link, updates) {
+    try {
+        const item = await db.get(SAVED_ITEMS_STORE, link);
+        if (item) {
+            const updatedItem = { ...item, ...updates };
+            await db.put(SAVED_ITEMS_STORE, updatedItem);
+            // console.log(`Updated article: ${link}`);
+        }
+    } catch (error) {
+        console.error('Error updating item:', error);
+    }
+}
+
+/**
  * Unsave an item
  */
 export async function unsaveItem(link) {
@@ -57,6 +73,33 @@ export async function isItemSaved(link) {
     } catch (error) {
         console.error('Error checking if item is saved:', error);
         return false;
+    }
+}
+
+/**
+ * Search saved items
+ */
+export async function searchSavedItems(query) {
+    try {
+        if (!query || query.trim() === '') {
+            return await getAllSavedItems();
+        }
+
+        const items = await db.getAll(SAVED_ITEMS_STORE);
+        const lowerQuery = query.toLowerCase();
+
+        return items.filter(item => {
+            const title = (item.title || '').toLowerCase();
+            const description = (item.description || '').toLowerCase();
+            const content = (item.content || '').toLowerCase();
+
+            return title.includes(lowerQuery) ||
+                description.includes(lowerQuery) ||
+                content.includes(lowerQuery);
+        });
+    } catch (error) {
+        console.error('Error searching saved items:', error);
+        return [];
     }
 }
 
