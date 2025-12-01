@@ -1,4 +1,4 @@
-console.log('News Curator Background Service Worker Started');
+console.log('NewsLens AI Background Service Worker Started');
 
 // Default inactivity threshold in days (can be overridden via options page)
 const DEFAULT_INACTIVITY_DAYS = 7;
@@ -74,7 +74,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Initialize timestamp on install
 chrome.runtime.onInstalled.addListener(() => {
-    console.log('News Curator Extension Installed');
+    console.log('NewsLens AI Extension Installed');
     updateLastUsed();
 
     // Create context menu item for selected text

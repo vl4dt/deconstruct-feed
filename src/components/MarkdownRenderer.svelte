@@ -13,11 +13,6 @@
     let html = $derived.by(() => {
         let processedContent = content || "";
 
-        console.log(
-            "🔍 MarkdownRenderer RAW INPUT:",
-            processedContent.substring(0, 300),
-        );
-
         // Strip ALL code fence markers (AI sometimes has multiple fences that create unwanted code blocks)
         // Remove ```markdown or ``` from anywhere in the content
         processedContent = processedContent.replace(/```markdown\s*/gi, "");
@@ -33,21 +28,12 @@
 
         // If there's consistent indentation, remove it
         if (minIndent > 0 && minIndent !== Infinity) {
-            console.log("🔧 Normalizing indentation, minIndent:", minIndent);
             processedContent = lines
                 .map((line) => line.substring(minIndent))
                 .join("\n");
         }
 
-        console.log(
-            "🔍 MarkdownRenderer PROCESSED:",
-            processedContent.substring(0, 300),
-        );
         const parsed = marked.parse(processedContent);
-        console.log(
-            "🔍 MarkdownRenderer HTML OUTPUT:",
-            parsed.substring(0, 300),
-        );
 
         return parsed;
     });

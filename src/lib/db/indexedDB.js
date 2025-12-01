@@ -1,5 +1,5 @@
 const DB_NAME = 'newslens_db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 class NewsLensDB {
     constructor() {
@@ -26,18 +26,19 @@ class NewsLensDB {
             };
 
             request.onupgradeneeded = (event) => {
-                const db = event.target.result;
+                const db = /** @type {IDBOpenDBRequest} */ (event.target).result;
                 console.log(`🔄 Upgrading IndexedDB from version ${event.oldVersion} to ${event.newVersion}`);
 
-                // AI Cache store
-                if (!db.objectStoreNames.contains('aiCache')) {
-                    const aiCacheStore = db.createObjectStore('aiCache', { keyPath: 'id', autoIncrement: true });
-                    aiCacheStore.createIndex('contentHash', 'contentHash', { unique: true });
-                    aiCacheStore.createIndex('analysisType', 'analysisType', { unique: false });
-                    aiCacheStore.createIndex('createdAt', 'createdAt', { unique: false });
-                    aiCacheStore.createIndex('lastAccessedAt', 'lastAccessedAt', { unique: false });
-                    console.log('Created aiCache store');
+                // AI Cache store - v3: compound key for contentHash + analysisType
+                if (db.objectStoreNames.contains('aiCache')) {
+                    db.deleteObjectStore('aiCache');
                 }
+
+                const aiCacheStore = db.createObjectStore('aiCache', { keyPath: ['contentHash', 'analysisType'] });
+                aiCacheStore.createIndex('contentHash', 'contentHash', { unique: false });
+                aiCacheStore.createIndex('analysisType', 'analysisType', { unique: false });
+                aiCacheStore.createIndex('createdAt', 'createdAt', { unique: false });
+                aiCacheStore.createIndex('lastAccessedAt', 'lastAccessedAt', { unique: false });
 
                 // Feed Cache store
                 if (!db.objectStoreNames.contains('feedCache')) {

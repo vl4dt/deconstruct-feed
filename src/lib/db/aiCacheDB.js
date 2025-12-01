@@ -9,30 +9,30 @@ const MAX_CACHED_RESULTS = 1000; // Much higher limit with IndexedDB
  */
 export async function getCached(contentHash, analysisType) {
     try {
-        // Query by contentHash index (unique compound key would be better but this works)
-        const allForHash = await db.getByIndex(STORE_NAME, 'contentHash', contentHash);
+        // Use compound key to get the specific entry
+        const cached = await db.get(STORE_NAME, [contentHash, analysisType]);
 
-        if (!allForHash || allForHash.analysisType !== analysisType) {
+        if (!cached) {
             return null;
         }
 
         // Check expiration
         const now = Date.now();
-        const age = now - allForHash.createdAt;
+        const age = now - cached.createdAt;
 
         if (age > DEFAULT_TTL) {
             console.log(`AI cache expired for ${analysisType} (age: ${Math.round(age / (1000 * 60 * 60 * 24))} days)`);
-            await db.delete(STORE_NAME, allForHash.id);
+            await db.delete(STORE_NAME, [contentHash, analysisType]);
             return null;
         }
 
         console.log(`✅ AI cache hit for ${analysisType} (age: ${Math.round(age / (1000 * 60))} min)`);
 
         // Update last accessed time
-        allForHash.lastAccessedAt = now;
-        await db.put(STORE_NAME, allForHash);
+        cached.lastAccessedAt = now;
+        await db.put(STORE_NAME, cached);
 
-        return allForHash.result;
+        return cached.result;
     } catch (error) {
         console.error('Error reading AI cache from IndexedDB:', error);
         return null;
@@ -47,9 +47,9 @@ export async function setCached(contentHash, analysisType, result) {
         const now = Date.now();
 
         const cacheData = {
-            result,
             contentHash,
             analysisType,
+            result,
             createdAt: now,
             lastAccessedAt: now
         };
@@ -83,7 +83,7 @@ export async function cleanup() {
         const toRemove = all.slice(0, count - MAX_CACHED_RESULTS);
 
         for (const item of toRemove) {
-            await db.delete(STORE_NAME, item.id);
+            await db.delete(STORE_NAME, [item.contentHash, item.analysisType]);
         }
 
         if (toRemove.length > 0) {
