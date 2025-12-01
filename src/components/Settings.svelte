@@ -17,6 +17,9 @@
     let newSource = $state("");
     let newTrendingKeyword = $state("");
     let selectedTopic = $state(null);
+    let isCustomFeedMode = $state(false);
+    let newCustomTopic = $state("");
+    let newCustomUrl = $state("");
 
     // Modal State
     let showUpgradeModal = $state(false);
@@ -28,6 +31,10 @@
         await settings.init();
         await loadData();
     });
+
+    function selectTopic(topic) {
+        selectedTopic = topic;
+    }
 
     async function loadData() {
         topics = await sourceService.getTopics();
@@ -54,8 +61,23 @@
         await loadData();
     }
 
-    function selectTopic(topic) {
-        selectedTopic = topic;
+    async function addCustomFeed() {
+        if (!$userSubscription.isPro && topics.length >= 3) {
+            upgradeMessage =
+                "Free tier is limited to 3 topics. Upgrade to Pro for unlimited topics!";
+            showUpgradeModal = true;
+            return;
+        }
+        if (newCustomTopic && newCustomUrl) {
+            await sourceService.addTopicWithSource(
+                newCustomTopic,
+                newCustomUrl,
+            );
+            newCustomTopic = "";
+            newCustomUrl = "";
+            isCustomFeedMode = false;
+            await loadData();
+        }
     }
 
     async function addSource() {
@@ -534,21 +556,61 @@
             {/if}
 
             <h3>{$t("topics")}</h3>
-            <div class="input-group">
-                <input
-                    type="text"
-                    bind:value={newTopic}
-                    placeholder={$userSubscription.isPro || topics.length < 3
-                        ? $t("add") + " topic..."
-                        : "Limit reached"}
-                    disabled={!$userSubscription.isPro && topics.length >= 3}
-                />
+
+            <div class="custom-feed-toggle">
                 <button
-                    onclick={addTopic}
-                    disabled={!$userSubscription.isPro && topics.length >= 3}
-                    >{$t("add")}</button
+                    class="text-btn"
+                    onclick={() => (isCustomFeedMode = !isCustomFeedMode)}
                 >
+                    {isCustomFeedMode
+                        ? "Cancel Custom Feed"
+                        : "+ Add Custom RSS Feed"}
+                </button>
             </div>
+
+            {#if isCustomFeedMode}
+                <div class="custom-feed-form">
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            bind:value={newCustomTopic}
+                            placeholder="Topic Name (e.g. Tech Blog)"
+                            list="existing-topics"
+                        />
+                        <datalist id="existing-topics">
+                            {#each topics as topic}
+                                <option value={topic}></option>
+                            {/each}
+                        </datalist>
+                    </div>
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            bind:value={newCustomUrl}
+                            placeholder="RSS URL (e.g. https://example.com/feed.xml)"
+                        />
+                        <button onclick={addCustomFeed}>Add Feed</button>
+                    </div>
+                </div>
+            {:else}
+                <div class="input-group">
+                    <input
+                        type="text"
+                        bind:value={newTopic}
+                        placeholder={$userSubscription.isPro ||
+                        topics.length < 3
+                            ? $t("add") + " topic..."
+                            : "Limit reached"}
+                        disabled={!$userSubscription.isPro &&
+                            topics.length >= 3}
+                    />
+                    <button
+                        onclick={addTopic}
+                        disabled={!$userSubscription.isPro &&
+                            topics.length >= 3}>{$t("add")}</button
+                    >
+                </div>
+            {/if}
             <ul class="list">
                 {#each topics as topic, i}
                     <li>
@@ -566,8 +628,11 @@
                         </div>
                         <button
                             class="item-btn"
-                            onclick={() => selectTopic(topic)}>{topic}</button
+                            onclick={() => selectTopic(topic)}
+                            title="Manage Sources"
                         >
+                            {topic} <span class="manage-icon">⚙️</span>
+                        </button>
                         <button
                             class="delete-btn"
                             onclick={() => removeTopic(topic)}>×</button
@@ -798,6 +863,38 @@
     }
     .pref-row:first-of-type {
         margin-top: -0.5rem;
+    }
+
+    .custom-feed-toggle {
+        margin-bottom: 1rem;
+        text-align: right;
+    }
+    .text-btn {
+        background: none;
+        color: var(--accent-primary);
+        padding: 0;
+        font-size: 0.9rem;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+    .text-btn:hover {
+        background: none;
+        color: var(--accent-hover);
+    }
+    .custom-feed-form {
+        background: var(--bg-tertiary);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+    }
+    .manage-icon {
+        font-size: 0.8em;
+        opacity: 0.5;
+        margin-left: 0.5rem;
+    }
+    .item-btn:hover .manage-icon {
+        opacity: 1;
     }
     .pref-row:last-child {
         border-bottom: none;

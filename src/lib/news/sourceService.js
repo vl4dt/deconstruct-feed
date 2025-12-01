@@ -80,6 +80,27 @@ class SourceService {
         }
     }
 
+    async addTopicWithSource(topic, url) {
+        await this.init();
+
+        // Add topic if it doesn't exist
+        if (!this.topics.includes(topic)) {
+            this.topics.push(topic);
+        }
+
+        // Initialize sources array if needed
+        if (!this.sources[topic]) {
+            this.sources[topic] = [];
+        }
+
+        // Add the custom URL if not present
+        if (!this.sources[topic].includes(url)) {
+            this.sources[topic].push(url);
+        }
+
+        await this.save();
+    }
+
     async removeTopic(topic) {
         await this.init();
         this.topics = this.topics.filter(t => t !== topic);
