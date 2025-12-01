@@ -68,7 +68,6 @@
 
 <div class="prompt-settings">
     <div class="info-banner">
-        <span class="info-icon">💡</span>
         <p>
             Customize AI prompts to match your preferred style and tone. Use <code
                 >{"{content}"}</code
@@ -152,11 +151,6 @@
         border-radius: 8px;
         padding: 1rem;
         margin-bottom: 1.5rem;
-    }
-
-    .info-icon {
-        font-size: 1.2rem;
-        flex-shrink: 0;
     }
 
     .info-banner p {

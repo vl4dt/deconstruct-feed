@@ -478,7 +478,7 @@
             <!-- Custom Prompts Section (Pro Only) -->
             {#if $userSubscription.isPro}
                 <div class="section">
-                    <h3>🎨 Custom AI Prompts (Pro)</h3>
+                    <h3>Custom AI Prompts</h3>
                     <PromptSettings />
                 </div>
             {/if}
