@@ -1,5 +1,35 @@
+import { cacheFirst, networkFirstWithCache, cleanupCache } from './cacheStrategies.js';
+
 console.log('NewsLens AI Background Service Worker Started');
 
+// ==================== CACHE CONFIGURATION ====================
+// Cache version - increment when cache structure changes
+const CACHE_VERSION = 'v1';
+const STATIC_CACHE = `newslens-static-${CACHE_VERSION}`;
+const FEED_CACHE = `newslens-feeds-${CACHE_VERSION}`;
+const ARTICLE_CACHE = `newslens-articles-${CACHE_VERSION}`;
+const IMAGE_CACHE = `newslens-images-${CACHE_VERSION}`;
+
+// All current cache names
+const CURRENT_CACHES = [
+    STATIC_CACHE,
+    FEED_CACHE,
+    ARTICLE_CACHE,
+    IMAGE_CACHE
+];
+
+// Static assets are local to the extension and don't need caching
+const STATIC_ASSETS = [];
+
+// Cache size limits
+const CACHE_LIMITS = {
+    feeds: 50,
+    articles: 100,
+    images: 200
+};
+
+
+// ==================== INACTIVITY TRACKING ====================
 // Default inactivity threshold in days (can be overridden via options page)
 const DEFAULT_INACTIVITY_DAYS = 7;
 
@@ -47,15 +77,23 @@ function setIcon(isAttention) {
     chrome.action.setIcon({ path });
 }
 
-// Alarm to periodically check inactivity
+// Alarm to periodically check inactivity and cleanup cache
 chrome.alarms.create('checkInactivity', { periodInMinutes: 60 });
+chrome.alarms.create('cleanupCache', { periodInMinutes: 60 });
+
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-    if (alarm.name !== 'checkInactivity') return;
-    const [lastUsed, days] = await Promise.all([getLastUsed(), getInactivityDays()]);
-    const idleMs = Date.now() - lastUsed;
-    const thresholdMs = days * 24 * 60 * 60 * 1000;
-    const shouldShowAttention = idleMs > thresholdMs;
-    setIcon(shouldShowAttention);
+    if (alarm.name === 'checkInactivity') {
+        const [lastUsed, days] = await Promise.all([getLastUsed(), getInactivityDays()]);
+        const idleMs = Date.now() - lastUsed;
+        const thresholdMs = days * 24 * 60 * 60 * 1000;
+        const shouldShowAttention = idleMs > thresholdMs;
+        setIcon(shouldShowAttention);
+    } else if (alarm.name === 'cleanupCache') {
+        console.log('Running periodic cache cleanup...');
+        await cleanupCache(FEED_CACHE, CACHE_LIMITS.feeds);
+        await cleanupCache(ARTICLE_CACHE, CACHE_LIMITS.articles);
+        await cleanupCache(IMAGE_CACHE, CACHE_LIMITS.images);
+    }
 });
 
 // Update timestamp on extension click
@@ -63,10 +101,17 @@ chrome.action.onClicked.addListener(() => {
     updateLastUsed();
 });
 
-// Listen for messages from popup/options to reset usage (e.g., when user interacts)
+// Listen for messages from popup/options
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'resetUsage') {
         updateLastUsed();
+        sendResponse({ status: 'ok' });
+        return true;
+    }
+
+    if (message.type === 'networkRestored') {
+        console.log('📡 Network restored - triggering background refresh');
+        // Optionally trigger feed refresh here
         sendResponse({ status: 'ok' });
         return true;
     }
@@ -109,3 +154,120 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             });
     }
 });
+
+// ==================== SERVICE WORKER CACHING ====================
+
+/**
+ * Install Event - Cache static assets
+ */
+self.addEventListener('install', (event) => {
+    console.log('Service Worker installing...');
+    // Force the waiting service worker to become the active service worker
+    self.skipWaiting();
+});
+
+/**
+ * Activate Event - Clean up old caches
+ */
+self.addEventListener('activate', (event) => {
+    console.log('Service Worker activating...');
+
+    event.waitUntil(
+        caches.keys()
+            .then(cacheNames => {
+                return Promise.all(
+                    cacheNames
+                        .filter(cacheName => {
+                            return cacheName.startsWith('newslens-') &&
+                                !CURRENT_CACHES.includes(cacheName);
+                        })
+                        .map(cacheName => {
+                            console.log('Deleting old cache:', cacheName);
+                            return caches.delete(cacheName);
+                        })
+                );
+            })
+            .then(() => {
+                console.log('✅ Old caches cleaned up');
+                return self.clients.claim();
+            })
+    );
+});
+
+/**
+ * Fetch Event - Intercept network requests
+ */
+self.addEventListener('fetch', (event) => {
+    const { request } = event;
+    const url = new URL(request.url);
+
+    // Only cache HTTP/HTTPS requests
+    if (!url.protocol.startsWith('http')) {
+        return;
+    }
+
+    // Determine caching strategy based on resource type
+    if (isRSSFeed(url)) {
+        event.respondWith(networkFirstWithCache(request, FEED_CACHE, 5000));
+    } else if (isArticleContent(url)) {
+        event.respondWith(networkFirstWithCache(request, ARTICLE_CACHE, 3000));
+    } else if (isImage(url)) {
+        event.respondWith(cacheFirst(request, IMAGE_CACHE));
+    } else if (request.mode === 'navigate') {
+        // Fallback for navigation requests
+        event.respondWith(
+            fetch(request).catch(() => fetch('/offlineFallback.html'))
+        );
+    }
+});
+
+
+
+/**
+ * Helper: Check if URL is an RSS feed
+ */
+function isRSSFeed(url) {
+    const hostname = url.hostname;
+    const path = url.pathname;
+
+    return hostname.includes('feeds.') ||
+        hostname.includes('rss.') ||
+        path.includes('/feed') ||
+        path.includes('/rss') ||
+        path.endsWith('.xml') ||
+        path.endsWith('.rss');
+}
+
+/**
+ * Helper: Check if URL is article content
+ */
+function isArticleContent(url) {
+    const hostname = url.hostname;
+
+    const newsDomains = [
+        'techcrunch.com',
+        'theverge.com',
+        'arstechnica.com',
+        'wired.com',
+        'engadget.com',
+        'cnet.com',
+        'zdnet.com',
+        'reuters.com',
+        'apnews.com'
+    ];
+
+    return newsDomains.some(domain => hostname.includes(domain));
+}
+
+/**
+ * Helper: Check if URL is an image
+ */
+function isImage(url) {
+    const path = url.pathname;
+    return path.endsWith('.jpg') ||
+        path.endsWith('.jpeg') ||
+        path.endsWith('.png') ||
+        path.endsWith('.gif') ||
+        path.endsWith('.webp') ||
+        path.endsWith('.svg');
+}

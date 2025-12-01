@@ -26,6 +26,7 @@
   import AnalysisView from "./components/AnalysisView.svelte";
   import CurrentPageView from "./components/CurrentPageView.svelte";
   import SavedView from "./components/SavedView.svelte";
+  import OfflineBanner from "../components/OfflineBanner.svelte";
 
   import { userSubscription } from "../lib/stores/subscription";
   import { theme } from "../lib/stores/theme";
@@ -1229,6 +1230,9 @@ ${getTextContent(selectedArticle.description)}
       </div>
     </header>
   {/if}
+
+  <!-- Offline Banner -->
+  <OfflineBanner />
 
   {#if view === "feed" || view === "trending"}
     <div class="main-search-container">
