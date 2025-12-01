@@ -37,6 +37,16 @@
     "service_worker": "src/background/index.js",
     "type": "module"
   },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "shared-worker.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
   "side_panel": {
     "default_path": "popup.html"
   },

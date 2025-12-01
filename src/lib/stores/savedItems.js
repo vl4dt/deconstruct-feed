@@ -2,6 +2,7 @@ import { writable, get } from 'svelte/store';
 import { userSubscription } from './subscription';
 import * as savedItemsDB from '../db/savedItemsDB.js';
 import { fetchArticleContent } from '../content/contentFetcher.js';
+import { getSharedWorkerBridge } from '../sharedWorkerBridge.js';
 
 const MIGRATION_KEY = 'savedItems_migrated_to_indexeddb';
 
@@ -50,21 +51,64 @@ function createSavedItemsStore() {
 
     const FREE_LIMIT = 20;
 
+    // Shared worker integration
+    let workerBridge = null;
+    let suppressBroadcast = false; // Flag to prevent echo
+
+    // Try to initialize shared worker
+    const initSharedWorker = async () => {
+        try {
+            workerBridge = getSharedWorkerBridge();
+            if (!workerBridge.connected) {
+                await workerBridge.init();
+            }
+
+            // Listen for savedItems updates from other tabs
+            workerBridge.on('STATE_UPDATE', (data) => {
+                if (!suppressBroadcast) {
+                    suppressBroadcast = true;
+                    set(data);
+                    suppressBroadcast = false;
+                }
+            }, 'savedItems');
+
+            console.log('✅ SavedItems store connected to SharedWorker');
+        } catch (error) {
+            console.warn('SharedWorker not available for savedItems, falling back to local-only mode:', error);
+            workerBridge = null;
+        }
+    };
+
+    // Helper to broadcast state changes
+    const broadcastState = (state) => {
+        if (!suppressBroadcast && workerBridge && workerBridge.connected) {
+            workerBridge.broadcastStateUpdate('savedItems', state);
+        }
+    };
+
     return {
         subscribe,
         init: async () => {
             try {
+                // Initialize shared worker
+                await initSharedWorker();
+
                 await migrateIfNeeded();
 
                 const items = await savedItemsDB.getAllSavedItems();
                 const collections = await savedItemsDB.getAllCollections();
 
-                set({
+                const state = {
                     items,
                     collections,
                     loading: false,
                     error: null
-                });
+                };
+
+                set(state);
+
+                // Broadcast initial state to other tabs
+                broadcastState(state);
             } catch (e) {
                 update(s => ({ ...s, loading: false, error: e.message }));
             }
@@ -94,7 +138,11 @@ function createSavedItemsStore() {
 
             // Update store
             const items = await savedItemsDB.getAllSavedItems();
-            update(s => ({ ...s, items }));
+            const newState = { ...get(savedItems), items };
+            update(s => newState);
+
+            // Broadcast to other tabs
+            broadcastState(newState);
 
             // Background fetch content for search
             fetchArticleContent(article.link).then(async (content) => {
@@ -102,7 +150,9 @@ function createSavedItemsStore() {
                     await savedItemsDB.updateItem(article.link, { content });
                     // Update store with new content so it's searchable immediately
                     const updatedItems = await savedItemsDB.getAllSavedItems();
-                    update(s => ({ ...s, items: updatedItems }));
+                    const updatedState = { ...get(savedItems), items: updatedItems };
+                    update(s => updatedState);
+                    broadcastState(updatedState);
                 }
             });
 
@@ -113,7 +163,9 @@ function createSavedItemsStore() {
             await savedItemsDB.unsaveItem(articleLink);
 
             const items = await savedItemsDB.getAllSavedItems();
-            update(s => ({ ...s, items }));
+            const newState = { ...get(savedItems), items };
+            update(s => newState);
+            broadcastState(newState);
         },
 
         isSaved: (articleLink) => {
@@ -131,7 +183,9 @@ function createSavedItemsStore() {
             try {
                 const collection = await savedItemsDB.createCollection(name);
                 const collections = await savedItemsDB.getAllCollections();
-                update(s => ({ ...s, collections }));
+                const newState = { ...get(savedItems), collections };
+                update(s => newState);
+                broadcastState(newState);
                 return { success: true, collection };
             } catch (error) {
                 return { success: false, error: error.message };
@@ -143,7 +197,9 @@ function createSavedItemsStore() {
 
             const items = await savedItemsDB.getAllSavedItems();
             const collections = await savedItemsDB.getAllCollections();
-            update(s => ({ ...s, items, collections }));
+            const newState = { ...get(savedItems), items, collections };
+            update(s => newState);
+            broadcastState(newState);
         },
 
         moveItem: async (articleLink, targetCollectionId) => {
@@ -151,7 +207,9 @@ function createSavedItemsStore() {
             await savedItemsDB.moveToCollection(articleLink, collectionId);
 
             const items = await savedItemsDB.getAllSavedItems();
-            update(s => ({ ...s, items }));
+            const newState = { ...get(savedItems), items };
+            update(s => newState);
+            broadcastState(newState);
             return { success: true };
         },
 
