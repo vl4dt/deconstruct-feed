@@ -16,6 +16,7 @@
     isChromeAIAvailable,
   } from "../lib/ai/aiService";
   import { sourceService } from "../lib/news/sourceService";
+  import { fetchArticleContent } from "../lib/content/articleFetcher";
   import Settings from "../components/Settings.svelte";
   import UpgradeModal from "../components/UpgradeModal.svelte";
   import Logo from "../components/Logo.svelte";
@@ -310,6 +311,18 @@
     view = "analysis";
 
     try {
+      // Fetch full content for selected articles
+      for (let i = 0; i < selectedArticles.length; i++) {
+        if (!selectedArticles[i].content) {
+          analysisResult = `Fetching content for article ${i + 1} of ${selectedArticles.length}...`;
+          const content = await fetchArticleContent(selectedArticles[i].link);
+          if (content) {
+            selectedArticles[i].content = content;
+          }
+        }
+      }
+      analysisResult = "Generating script...";
+
       analysisResult = await generateScript(
         selectedArticles,
         null,
@@ -335,6 +348,18 @@
     view = "analysis";
 
     try {
+      // Fetch full content for selected articles
+      for (let i = 0; i < selectedArticles.length; i++) {
+        if (!selectedArticles[i].content) {
+          analysisResult = `Fetching content for article ${i + 1} of ${selectedArticles.length}...`;
+          const content = await fetchArticleContent(selectedArticles[i].link);
+          if (content) {
+            selectedArticles[i].content = content;
+          }
+        }
+      }
+      analysisResult = "Performing deep dive...";
+
       analysisResult = await deepDive(selectedArticles, null, forceRefresh);
     } catch (e) {
       analysisResult = "Error performing deep dive: " + e.message;
@@ -359,7 +384,20 @@
     }
     biasLoading = true;
     try {
-      const text = `${selectedArticle.title}\n\n${selectedArticle.description}`;
+      if (!selectedArticle.content) {
+        // Temporary loading indicator in the result area if needed,
+        // but biasLoading handles the spinner.
+        // We can just await.
+        const content = await fetchArticleContent(selectedArticle.link);
+        if (content) {
+          selectedArticle.content = content;
+        }
+      }
+
+      const text = selectedArticle.content
+        ? `${selectedArticle.title}\n\n${selectedArticle.content}`
+        : `${selectedArticle.title}\n\n${selectedArticle.description}`;
+
       const result = await checkBias(text, null, forceRefresh);
       originalBiasResult = result;
 
@@ -392,7 +430,17 @@
 
     summaryLoading = true;
     try {
-      const text = `${selectedArticle.title}\n\n${selectedArticle.description}`;
+      if (!selectedArticle.content) {
+        const content = await fetchArticleContent(selectedArticle.link);
+        if (content) {
+          selectedArticle.content = content;
+        }
+      }
+
+      const text = selectedArticle.content
+        ? `${selectedArticle.title}\n\n${selectedArticle.content}`
+        : `${selectedArticle.title}\n\n${selectedArticle.description}`;
+
       const result = await summarize(text, null, forceRefresh);
       originalSummary = result;
 
@@ -478,6 +526,15 @@
     analysisType = "script";
 
     try {
+      if (!selectedArticle.content) {
+        analysisResult = "Fetching content...";
+        const content = await fetchArticleContent(selectedArticle.link);
+        if (content) {
+          selectedArticle.content = content;
+        }
+      }
+      analysisResult = "Generating script...";
+
       const result = await generateScript(
         [selectedArticle],
         null,
@@ -514,6 +571,15 @@
     analysisType = "podcast";
 
     try {
+      if (!selectedArticle.content) {
+        analysisResult = "Fetching content...";
+        const content = await fetchArticleContent(selectedArticle.link);
+        if (content) {
+          selectedArticle.content = content;
+        }
+      }
+      analysisResult = "Generating podcast script...";
+
       const result = await generatePodcastScript(
         [selectedArticle],
         null,
@@ -550,6 +616,15 @@
     analysisType = "deepdive";
 
     try {
+      if (!selectedArticle.content) {
+        analysisResult = "Fetching content...";
+        const content = await fetchArticleContent(selectedArticle.link);
+        if (content) {
+          selectedArticle.content = content;
+        }
+      }
+      analysisResult = "Performing deep dive...";
+
       const result = await deepDive([selectedArticle], null, forceRefresh);
       originalAnalysisResult = result;
 

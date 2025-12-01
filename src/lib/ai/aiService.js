@@ -296,7 +296,7 @@ async function generateContent(prompt, systemPrompt, cacheKey, forceRefresh = fa
 
 export async function generateScript(articles, apiKey = null, forceRefresh = false) {
     const prompts = getPrompts('script');
-    const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
+    const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.content || a.description}`).join('\n\n');
     const userPrompt = prompts.user.replace('{articles}', combinedText);
 
     return generateContent(
@@ -309,7 +309,7 @@ export async function generateScript(articles, apiKey = null, forceRefresh = fal
 
 export async function generatePodcastScript(articles, apiKey = null, forceRefresh = false) {
     const prompts = getPrompts('podcast');
-    const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
+    const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.content || a.description}`).join('\n\n');
     const userPrompt = prompts.user.replace('{articles}', combinedText);
 
     return generateContent(
@@ -322,7 +322,7 @@ export async function generatePodcastScript(articles, apiKey = null, forceRefres
 
 export async function deepDive(articles, apiKey = null, forceRefresh = false) {
     const prompts = getPrompts('deepDive');
-    const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.description}`).join('\n\n');
+    const combinedText = articles.map(a => `Title: ${a.title}\nContent: ${a.content || a.description}`).join('\n\n');
     const userPrompt = prompts.user.replace('{articles}', combinedText);
 
     return generateContent(
