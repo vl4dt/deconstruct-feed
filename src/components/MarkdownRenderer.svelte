@@ -10,10 +10,52 @@
     });
 
     // Parse markdown to HTML using Svelte 5 runes
-    let html = $derived(marked.parse(content || ""));
+    let html = $derived.by(() => {
+        let processedContent = content || "";
+
+        console.log(
+            "🔍 MarkdownRenderer RAW INPUT:",
+            processedContent.substring(0, 300),
+        );
+
+        // Strip ALL code fence markers (AI sometimes has multiple fences that create unwanted code blocks)
+        // Remove ```markdown or ``` from anywhere in the content
+        processedContent = processedContent.replace(/```markdown\s*/gi, "");
+        processedContent = processedContent.replace(/```\s*/g, "");
+
+        // Normalize indentation to prevent unintended code blocks
+        // AI sometimes indents entire paragraphs which markdown treats as code blocks (4+ spaces)
+        const lines = processedContent.split("\n");
+        const minIndent = lines
+            .filter((line) => line.trim().length > 0) // Ignore empty lines
+            .map((line) => line.match(/^(\s*)/)[1].length) // Get leading whitespace
+            .reduce((min, indent) => Math.min(min, indent), Infinity);
+
+        // If there's consistent indentation, remove it
+        if (minIndent > 0 && minIndent !== Infinity) {
+            console.log("🔧 Normalizing indentation, minIndent:", minIndent);
+            processedContent = lines
+                .map((line) => line.substring(minIndent))
+                .join("\n");
+        }
+
+        console.log(
+            "🔍 MarkdownRenderer PROCESSED:",
+            processedContent.substring(0, 300),
+        );
+        const parsed = marked.parse(processedContent);
+        console.log(
+            "🔍 MarkdownRenderer HTML OUTPUT:",
+            parsed.substring(0, 300),
+        );
+
+        return parsed;
+    });
 </script>
 
-{@html html}
+<div class="markdown-content">
+    {@html html}
+</div>
 
 <style>
     :global(.markdown-content h1) {
