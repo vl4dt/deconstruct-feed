@@ -99,6 +99,21 @@
         let text = tmp.textContent || tmp.innerText || "";
         return text.length > 100 ? text.substring(0, 100) + "..." : text;
     }
+
+    function highlightText(text, query) {
+        if (!query || !text) return text;
+
+        // Split query into terms and escape them
+        const terms = query
+            .split(/\s+/)
+            .filter((t) => t.length > 0)
+            .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+
+        if (terms.length === 0) return text;
+
+        const regex = new RegExp(`(${terms.join("|")})`, "gi");
+        return text.replace(regex, '<mark class="highlight">$1</mark>');
+    }
 </script>
 
 <div class="feed" class:selection-mode={selectionMode}>
@@ -210,10 +225,26 @@
                                 {/if}
                             </div>
                             <div class="card-content">
-                                <h3>{article.title || "No Title"}</h3>
+                                <h3>
+                                    {#if searchQuery}
+                                        {@html highlightText(
+                                            article.title || "No Title",
+                                            searchQuery,
+                                        )}
+                                    {:else}
+                                        {article.title || "No Title"}
+                                    {/if}
+                                </h3>
                                 <p class="snippet">
-                                    {getSnippet(article.description) ||
-                                        "No description available"}
+                                    {#if searchQuery && article._searchSnippet}
+                                        {@html highlightText(
+                                            article._searchSnippet,
+                                            searchQuery,
+                                        )}
+                                    {:else}
+                                        {getSnippet(article.description) ||
+                                            "No description available"}
+                                    {/if}
                                 </p>
                                 <div class="card-footer">
                                     <a
@@ -230,6 +261,12 @@
                                             article.pubDate,
                                         ).toLocaleDateString()}</span
                                     >
+                                    {#if article._matchType}
+                                        <span class="separator">•</span>
+                                        <span class="match-badge"
+                                            >Match in {article._matchType}</span
+                                        >
+                                    {/if}
                                 </div>
                             </div>
                             <div class="card-actions">
@@ -325,10 +362,26 @@
                         {/if}
                     </div>
                     <div class="card-content">
-                        <h3>{article.title || "No Title"}</h3>
+                        <h3>
+                            {#if searchQuery}
+                                {@html highlightText(
+                                    article.title || "No Title",
+                                    searchQuery,
+                                )}
+                            {:else}
+                                {article.title || "No Title"}
+                            {/if}
+                        </h3>
                         <p class="snippet">
-                            {getSnippet(article.description) ||
-                                "No description available"}
+                            {#if searchQuery && article._searchSnippet}
+                                {@html highlightText(
+                                    article._searchSnippet,
+                                    searchQuery,
+                                )}
+                            {:else}
+                                {getSnippet(article.description) ||
+                                    "No description available"}
+                            {/if}
                         </p>
                         <div class="card-footer">
                             <a
@@ -345,6 +398,12 @@
                                     article.pubDate,
                                 ).toLocaleDateString()}</span
                             >
+                            {#if article._matchType}
+                                <span class="separator">•</span>
+                                <span class="match-badge"
+                                    >Match in {article._matchType}</span
+                                >
+                            {/if}
                         </div>
                     </div>
                     <div class="card-actions">

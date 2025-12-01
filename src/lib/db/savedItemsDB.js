@@ -86,17 +86,87 @@ export async function searchSavedItems(query) {
         }
 
         const items = await db.getAll(SAVED_ITEMS_STORE);
-        const lowerQuery = query.toLowerCase();
+        const lowerQuery = query.toLowerCase().trim();
+        const terms = lowerQuery.split(/\s+/).filter(t => t.length > 0);
 
-        return items.filter(item => {
+        const results = items.map(item => {
+            let score = 0;
+            let matchType = null; // 'title', 'description', 'content'
+            let snippet = '';
+
             const title = (item.title || '').toLowerCase();
             const description = (item.description || '').toLowerCase();
             const content = (item.content || '').toLowerCase();
 
-            return title.includes(lowerQuery) ||
-                description.includes(lowerQuery) ||
-                content.includes(lowerQuery);
-        });
+            // Scoring logic
+            // 1. Exact phrase match
+            if (title.includes(lowerQuery)) {
+                score += 20;
+                matchType = matchType || 'title';
+            }
+            if (description.includes(lowerQuery)) {
+                score += 10;
+                matchType = matchType || 'description';
+            }
+            if (content.includes(lowerQuery)) {
+                score += 5;
+                matchType = matchType || 'content';
+            }
+
+            // 2. Term matching
+            let termsMatched = 0;
+            for (const term of terms) {
+                let termMatched = false;
+                if (title.includes(term)) {
+                    score += 5;
+                    termMatched = true;
+                }
+                if (description.includes(term)) {
+                    score += 3;
+                    termMatched = true;
+                }
+                if (content.includes(term)) {
+                    score += 1;
+                    termMatched = true;
+                }
+                if (termMatched) termsMatched++;
+            }
+
+            // Bonus for matching all terms
+            if (termsMatched === terms.length && terms.length > 1) {
+                score += 10;
+            }
+
+            if (score > 0) {
+                // Generate Snippet
+                // If match is in content but not title/desc, extract relevant part
+                if (matchType === 'content' && !title.includes(lowerQuery) && !description.includes(lowerQuery)) {
+                    const idx = content.indexOf(terms[0]); // Use first term for snippet center
+                    if (idx !== -1) {
+                        const start = Math.max(0, idx - 60);
+                        const end = Math.min(content.length, idx + 100);
+                        snippet = (start > 0 ? '...' : '') +
+                            item.content.substring(start, end).trim() +
+                            (end < content.length ? '...' : '');
+                    }
+                } else {
+                    // Default to description
+                    snippet = item.description || '';
+                }
+
+                return {
+                    ...item,
+                    _searchScore: score,
+                    _searchSnippet: snippet,
+                    _matchType: matchType
+                };
+            }
+            return null;
+        }).filter(item => item !== null);
+
+        // Sort by score descending
+        return results.sort((a, b) => b._searchScore - a._searchScore);
+
     } catch (error) {
         console.error('Error searching saved items:', error);
         return [];
