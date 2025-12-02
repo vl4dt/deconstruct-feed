@@ -30,6 +30,8 @@
   import WelcomeWizard from "../components/WelcomeWizard.svelte";
   import ContextualHint from "../components/ContextualHint.svelte";
   import FeatureTour from "../components/FeatureTour.svelte";
+  import OnboardingChecklist from "../components/OnboardingChecklist.svelte";
+  import HelpPanel from "../components/HelpPanel.svelte";
 
   import { userSubscription } from "../lib/stores/subscription";
   import { theme } from "../lib/stores/theme";
@@ -100,6 +102,7 @@
   // Onboarding State
   let showWelcomeWizard = false;
   let showFeatureTour = false;
+  let showHelp = false;
 
   $: tourSteps = [
     {
@@ -1296,6 +1299,9 @@ ${getTextContent(selectedArticle.description)}
             </ContextualHint>
           </div>
         {/if}
+        <button class="icon-btn" onclick={() => (showHelp = true)} title="Help"
+          >?</button
+        >
         <button
           class="icon-btn"
           onclick={openSettings}
@@ -1322,6 +1328,12 @@ ${getTextContent(selectedArticle.description)}
       on:complete={handleTourComplete}
       on:skip={handleTourComplete}
     />
+  {/if}
+
+  <OnboardingChecklist />
+
+  {#if showHelp}
+    <HelpPanel {view} on:close={() => (showHelp = false)} />
   {/if}
 
   {#if view === "feed" || view === "trending"}

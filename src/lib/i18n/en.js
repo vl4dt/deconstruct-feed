@@ -104,6 +104,53 @@ export default {
         yourSetup: "Your Setup:",
         topicsLabel: "Topics",
         aiProviderLabel: "AI Provider",
+
+        checklistTitle: "Setup Progress",
+        checklist: {
+            addedTopic: "Add Topics",
+            configuredAI: "Configure AI",
+            readArticle: "Read an Article",
+            triedSummarize: "Try Summarize",
+            savedArticle: "Save an Article",
+            triedTranslate: "Try Translate",
+        },
+        help: {
+            feed: {
+                title: "News Feed Help",
+                description: "Your personalized news feed based on your selected topics.",
+                tip1: "Click articles to read the full story.",
+                tip2: "Use 'Quick Add' to follow new topics instantly.",
+                tip3: "Go to Settings to manage your sources."
+            },
+            article: {
+                title: "Article View Help",
+                description: "Read and analyze articles with AI.",
+                tip1: "Click 'Summarize' for a quick AI summary.",
+                tip2: "Translate articles to your preferred language.",
+                tip3: "Save articles to read later (offline supported)."
+            },
+            saved: {
+                title: "Saved Items Help",
+                description: "Your collection of bookmarked articles.",
+                tip1: "Access your saved articles even when offline.",
+                tip2: "Remove items you no longer need.",
+                tip3: "Use search to find specific saved articles."
+            },
+            settings: {
+                title: "Settings Help",
+                description: "Configure NewsLens AI to your preferences.",
+                tip1: "Choose your preferred AI provider.",
+                tip2: "Manage your news topics and sources.",
+                tip3: "Customize your reading experience."
+            },
+            trending: {
+                title: "Trending Help",
+                description: "See what's popular right now.",
+                tip1: "Add keywords to track specific trends.",
+                tip2: "Click trending items to see related news.",
+                tip3: "Stay updated with real-time information."
+            }
+        }
     },
 
     // Empty States

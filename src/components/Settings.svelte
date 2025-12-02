@@ -8,6 +8,7 @@
     import UpgradeModal from "../components/UpgradeModal.svelte";
     import LicenseActivation from "../components/LicenseActivation.svelte";
     import PromptSettings from "../components/PromptSettings.svelte";
+    import ConfirmDialog from "../components/ConfirmDialog.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -48,6 +49,8 @@
     let showUpgradeModal = $state(false);
     let upgradeMessage = $state("");
     let showLicenseActivation = $state(false);
+    let showResetConfirm = $state(false);
+    let showResetSuccess = $state(false);
 
     onMount(async () => {
         await userSubscription.init();
@@ -182,15 +185,60 @@
         await settings.removeTrendingKeyword(keyword);
     }
 
-    async function handleProviderChange(event) {
-        const provider = event.target.value;
-        if (provider !== "chrome" && !$userSubscription.isPro) {
-            upgradeMessage = `${provider === "local" ? "Local AI" : provider.charAt(0).toUpperCase() + provider.slice(1)} is a Pro feature. Upgrade to unlock!`;
+    const providers = [
+        {
+            id: "chrome",
+            name: "Chrome AI",
+            description: "On-device, private, free. Best for privacy.",
+            badge: "Recommended",
+        },
+        {
+            id: "gemini",
+            name: "Google Gemini",
+            description: "Powerful cloud AI. Requires API Key.",
+            badge: "Free Tier",
+        },
+        {
+            id: "anthropic",
+            name: "Anthropic",
+            description: "Claude 3.5 Sonnet. Requires API Key.",
+            badge: "Pro",
+        },
+        {
+            id: "openai",
+            name: "OpenAI",
+            description: "GPT-4o. Requires API Key.",
+            badge: "Pro",
+        },
+        {
+            id: "local",
+            name: "Local AI",
+            description: "Ollama / LM Studio. For power users.",
+            badge: "Pro",
+        },
+    ];
+
+    async function handleProviderSelect(id) {
+        if (id !== "chrome" && !$userSubscription.isPro) {
+            upgradeMessage = `${id === "local" ? "Local AI" : id.charAt(0).toUpperCase() + id.slice(1)} is a Pro feature. Upgrade to unlock!`;
             showUpgradeModal = true;
-            event.target.value = $settings.aiProvider; // Revert UI
             return;
         }
-        await settings.set("aiProvider", provider);
+        await settings.set("aiProvider", id);
+    }
+
+    async function handleResetConfirm() {
+        showResetConfirm = false;
+        await onboardingHelpers.resetOnboarding();
+        showResetSuccess = true;
+    }
+
+    function handleResetCancel() {
+        showResetConfirm = false;
+    }
+
+    function handleResetSuccessClose() {
+        showResetSuccess = false;
     }
 </script>
 
@@ -207,6 +255,26 @@
         show={showLicenseActivation}
         on:close={() => (showLicenseActivation = false)}
         on:activated={handleLicenseActivated}
+    />
+
+    <ConfirmDialog
+        show={showResetConfirm}
+        title="Reset Onboarding"
+        message="Reset onboarding status? This will show the welcome wizard on next launch."
+        confirmText="Reset"
+        cancelText="Cancel"
+        on:confirm={handleResetConfirm}
+        on:cancel={handleResetCancel}
+    />
+
+    <ConfirmDialog
+        show={showResetSuccess}
+        title="Onboarding Reset"
+        message="Onboarding reset! Please close and reopen the extension."
+        confirmText="OK"
+        cancelText=""
+        on:confirm={handleResetSuccessClose}
+        on:cancel={handleResetSuccessClose}
     />
 
     <header>
@@ -355,20 +423,31 @@
             <!-- AI Provider Section -->
             <div class="section">
                 <h3>AI Provider</h3>
-                <div class="input-group">
-                    <select
-                        value={$settings.aiProvider}
-                        onchange={handleProviderChange}
-                        class="provider-select"
-                    >
-                        <option value="chrome">Chrome AI (On-Device)</option>
-                        <option value="gemini">Google Gemini</option>
-                        <option value="anthropic">Anthropic</option>
-                        <option value="openai">OpenAI</option>
-                        <option value="local"
-                            >Local AI (Ollama/LM Studio)</option
+                <div class="provider-grid">
+                    {#each providers as provider}
+                        <button
+                            class="provider-card"
+                            class:selected={$settings.aiProvider ===
+                                provider.id}
+                            onclick={() => handleProviderSelect(provider.id)}
                         >
-                    </select>
+                            <div class="provider-header">
+                                <span class="provider-name"
+                                    >{provider.name}</span
+                                >
+                                {#if provider.badge}
+                                    <span
+                                        class="badge"
+                                        class:pro={provider.badge === "Pro"}
+                                        class:recommended={provider.badge ===
+                                            "Recommended"}
+                                        >{provider.badge}</span
+                                    >
+                                {/if}
+                            </div>
+                            <p class="provider-desc">{provider.description}</p>
+                        </button>
+                    {/each}
                 </div>
 
                 {#if $settings.aiProvider === "local"}
@@ -699,17 +778,8 @@
                     <span>Reset Onboarding Flow</span>
                     <button
                         class="secondary-btn"
-                        onclick={async () => {
-                            if (
-                                confirm(
-                                    "Reset onboarding status? This will show the welcome wizard on next launch.",
-                                )
-                            ) {
-                                await onboardingHelpers.resetOnboarding();
-                                alert(
-                                    "Onboarding reset! Please close and reopen the extension.",
-                                );
-                            }
+                        onclick={() => {
+                            showResetConfirm = true;
                         }}
                     >
                         Reset
@@ -1248,5 +1318,65 @@
         background: var(--accent-primary);
         color: white;
         border-color: var(--accent-primary);
+    }
+
+    /* Provider Grid */
+    .provider-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .provider-card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+        width: 100%;
+    }
+    .provider-card:hover {
+        border-color: var(--accent-primary);
+        background: var(--bg-secondary);
+    }
+    .provider-card.selected {
+        border-color: var(--accent-primary);
+        background: rgba(var(--accent-primary-rgb), 0.05);
+    }
+    .provider-header {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+    .provider-name {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+    }
+    .badge.pro {
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+        color: black;
+        font-weight: bold;
+    }
+    .badge.recommended {
+        background: var(--accent-primary);
+        color: white;
+    }
+    .provider-desc {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin: 0;
     }
 </style>
