@@ -1,6 +1,6 @@
-
 import { sourceService } from './sourceService';
 import { getCachedFeed, setCachedFeed } from '../cache/feedCache';
+import { parseFeed } from './rssParser';
 
 export async function fetchNewsForTopics(topics, forceRefresh = false, onProgress = null) {
     const allArticles = [];
@@ -52,36 +52,7 @@ export async function fetchCachedNewsForTopics(topics) {
     return uniqueArticles.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
 }
 
-function extractImageFromItem(item) {
-    // Try 1: <enclosure> tag with image type
-    const enclosure = item.querySelector('enclosure[type^="image"]');
-    if (enclosure?.getAttribute('url')) {
-        return enclosure.getAttribute('url');
-    }
 
-    // Try 2: <media:content> or <media:thumbnail> (Media RSS)
-    const mediaContent = item.querySelector('content[medium="image"], thumbnail');
-    if (mediaContent?.getAttribute('url')) {
-        return mediaContent.getAttribute('url');
-    }
-
-    // Try 3: Extract from description HTML
-    const description = item.querySelector('description')?.textContent;
-    if (description) {
-        const imgMatch = description.match(/<img[^>]+src=["']([^"']+)["']/i);
-        if (imgMatch?.[1]) {
-            return imgMatch[1];
-        }
-    }
-
-    // Try 4: <image> tag
-    const imageTag = item.querySelector('image');
-    if (imageTag?.textContent) {
-        return imageTag.textContent;
-    }
-
-    return null;
-}
 
 async function fetchRSS(url, forceRefresh = false, sourceNameOverride = null) {
     // Try cache first unless force refresh
@@ -100,62 +71,9 @@ async function fetchRSS(url, forceRefresh = false, sourceNameOverride = null) {
     console.log(`Fetching fresh data for ${url}`);
     const response = await fetch(url);
     const text = await response.text();
-    const parser = new DOMParser();
-    const xml = parser.parseFromString(text, 'text/xml');
 
-    // Extract channel-level defaults
-    const channelTitle = xml.querySelector('channel > title')?.textContent?.trim();
-    const channelLink = xml.querySelector('channel > link')?.textContent?.trim();
-
-    const items = Array.from(xml.querySelectorAll('item'));
-    const articles = items.map(item => {
-        // Extract article link first
-        const articleLink = item.querySelector('link')?.textContent?.trim();
-
-        // Try to extract source from the item itself (for aggregators like Google News, Bing)
-        let itemSource = null;
-
-        // Method 1: Check for <source> tag (Google News uses this)
-        const sourceTag = item.querySelector('source');
-        if (sourceTag) {
-            itemSource = sourceTag.textContent?.trim();
-        }
-
-        // Method 2: Extract from article link domain (most reliable for actual source)
-        if (articleLink && !itemSource) {
-            try {
-                const linkUrl = new URL(articleLink);
-                // Extract clean domain name
-                const hostname = linkUrl.hostname.replace('www.', '');
-                // Convert domain to readable name
-                const domainParts = hostname.split('.');
-                if (domainParts.length >= 2) {
-                    // Get the main domain part (e.g., "cnn" from "cnn.com")
-                    const mainDomain = domainParts[0];
-                    // Capitalize it nicely
-                    itemSource = mainDomain.charAt(0).toUpperCase() + mainDomain.slice(1);
-                }
-            } catch (e) {
-                // Invalid URL, will fall back
-            }
-        }
-
-        // Fallback to channel-level or override
-        const finalSource = sourceNameOverride || itemSource || channelTitle || 'Unknown Source';
-        // Use the article link as the source link (same as "Read Full Article")
-        const finalSourceLink = articleLink || channelLink || '#';
-
-        return {
-            title: item.querySelector('title')?.textContent,
-            link: articleLink,
-            description: item.querySelector('description')?.textContent,
-            pubDate: item.querySelector('pubDate')?.textContent,
-            source: finalSource,
-            sourceLink: finalSourceLink,
-            guid: item.querySelector('guid')?.textContent || articleLink,
-            image: extractImageFromItem(item)
-        };
-    });
+    // Parse using the environment-aware parser
+    const articles = await parseFeed(text, sourceNameOverride);
 
     // Cache the results
     await setCachedFeed(url, articles);

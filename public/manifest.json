@@ -10,7 +10,8 @@
     "alarms",
     "contextMenus",
     "scripting",
-    "declarativeNetRequest"
+    "declarativeNetRequest",
+    "offscreen"
   ],
   "host_permissions": [
     "<all_urls>"

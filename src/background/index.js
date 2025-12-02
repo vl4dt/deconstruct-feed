@@ -1,4 +1,6 @@
 import { cacheFirst, networkFirstWithCache, cleanupCache } from './cacheStrategies.js';
+import { fetchNewsForTopics } from '../lib/news/newsEngine.js';
+import { sourceService } from '../lib/news/sourceService.js';
 
 console.log('NewsLens AI Background Service Worker Started');
 
@@ -80,6 +82,7 @@ function setIcon(isAttention) {
 // Alarm to periodically check inactivity and cleanup cache
 chrome.alarms.create('checkInactivity', { periodInMinutes: 60 });
 chrome.alarms.create('cleanupCache', { periodInMinutes: 60 });
+chrome.alarms.create('backgroundSync', { periodInMinutes: 60 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'checkInactivity') {
@@ -93,6 +96,9 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         await cleanupCache(FEED_CACHE, CACHE_LIMITS.feeds);
         await cleanupCache(ARTICLE_CACHE, CACHE_LIMITS.articles);
         await cleanupCache(IMAGE_CACHE, CACHE_LIMITS.images);
+    } else if (alarm.name === 'backgroundSync') {
+        console.log('🔄 Background sync triggered');
+        await syncNewsInBackground();
     }
 });
 
@@ -154,6 +160,59 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             });
     }
 });
+
+// ==================== BACKGROUND SYNC ====================
+
+/**
+ * Setup offscreen document for RSS parsing in background
+ */
+async function setupOffscreenDocument() {
+    const offscreenUrl = 'src/offscreen/offscreen.html';
+    const existingContexts = await chrome.runtime.getContexts({
+        contextTypes: ['OFFSCREEN_DOCUMENT'],
+        documentUrls: [chrome.runtime.getURL(offscreenUrl)]
+    });
+
+    if (existingContexts.length > 0) {
+        // Offscreen document already exists
+        return;
+    }
+
+    // Create offscreen document
+    await chrome.offscreen.createDocument({
+        url: offscreenUrl,
+        reasons: ['DOM_PARSER'],
+        justification: 'Parse RSS/XML feeds in background'
+    });
+    console.log('📄 Offscreen document created for background parsing');
+}
+
+/**
+ * Sync news in background
+ */
+async function syncNewsInBackground() {
+    try {
+        // Setup offscreen document if needed
+        await setupOffscreenDocument();
+
+        // Get user's topics
+        const topics = await sourceService.getTopics();
+
+        if (!topics || topics.length === 0) {
+            console.log('No topics configured, skipping background sync');
+            return;
+        }
+
+        console.log(`Syncing ${topics.length} topics in background...`);
+
+        // Fetch news (will use offscreen document for parsing)
+        const articles = await fetchNewsForTopics(topics, true);
+
+        console.log(`✅ Background sync complete: ${articles.length} articles cached`);
+    } catch (error) {
+        console.error('Background sync error:', error);
+    }
+}
 
 // ==================== SERVICE WORKER CACHING ====================
 
