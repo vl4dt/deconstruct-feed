@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 import { getSharedWorkerBridge, isSharedWorkerConnected } from '../sharedWorkerBridge.js';
 
 function createSettingsStore() {
@@ -25,6 +25,28 @@ function createSettingsStore() {
         // Gemini
         geminiKey: '',
         geminiModel: 'gemini-1.5-flash',
+        // Onboarding State
+        onboarding: {
+            completed: false,
+            completedAt: null,
+            currentStep: 0,
+            skipped: false,
+            wizardVersion: 1,
+        },
+        // UI State
+        ui: {
+            shownHints: [],
+            featureTourCompleted: false,
+            dismissedSuggestions: [],
+            checklistProgress: {
+                addedTopic: false,
+                configuredAI: false,
+                readArticle: false,
+                triedSummarize: false,
+                savedArticle: false,
+                triedTranslate: false,
+            },
+        },
         // Custom Prompts (Pro Feature)
         customPrompts: {
             summarize: {
@@ -160,6 +182,26 @@ function createSettingsStore() {
                     anthropicModel: 'claude-3-5-sonnet-latest',
                     geminiKey: '',
                     geminiModel: 'gemini-1.5-flash',
+                    onboarding: {
+                        completed: false,
+                        completedAt: null,
+                        currentStep: 0,
+                        skipped: false,
+                        wizardVersion: 1,
+                    },
+                    ui: {
+                        shownHints: [],
+                        featureTourCompleted: false,
+                        dismissedSuggestions: [],
+                        checklistProgress: {
+                            addedTopic: false,
+                            configuredAI: false,
+                            readArticle: false,
+                            triedSummarize: false,
+                            savedArticle: false,
+                            triedTranslate: false,
+                        },
+                    },
                 };
                 broadcastState(defaults);
             }
@@ -290,3 +332,113 @@ function createSettingsStore() {
 }
 
 export const settings = createSettingsStore();
+
+// Onboarding helper functions
+export const onboardingHelpers = {
+    completeOnboarding: async () => {
+        await settings.set('onboarding', {
+            completed: true,
+            completedAt: new Date().toISOString(),
+            currentStep: 3,
+            skipped: false,
+            wizardVersion: 1,
+        });
+    },
+
+    skipOnboarding: async () => {
+        await settings.set('onboarding', {
+            completed: false,
+            completedAt: null,
+            currentStep: 0,
+            skipped: true,
+            wizardVersion: 1,
+        });
+    },
+
+    markHintShown: async (hintId) => {
+        const currentSettings = get(settings);
+
+        const current = currentSettings.ui?.shownHints || [];
+        if (!current.includes(hintId)) {
+            const newHints = [...current, hintId];
+            await settings.set('ui', {
+                ...currentSettings.ui,
+                shownHints: newHints,
+            });
+        }
+    },
+
+    isHintShown: (hintId, settingsState) => {
+        return settingsState.ui?.shownHints?.includes(hintId) || false;
+    },
+
+    updateChecklistProgress: async (key, value = true) => {
+        const currentSettings = get(settings);
+
+        const progress = currentSettings.ui?.checklistProgress || {};
+        await settings.set('ui', {
+            ...currentSettings.ui,
+            checklistProgress: {
+                ...progress,
+                [key]: value,
+            },
+        });
+    },
+
+    getChecklistProgress: (settingsState) => {
+        return settingsState.ui?.checklistProgress || {
+            addedTopic: false,
+            configuredAI: false,
+            readArticle: false,
+            triedSummarize: false,
+            savedArticle: false,
+            triedTranslate: false,
+        };
+    },
+
+    getChecklistCompletion: (settingsState) => {
+        const progress = onboardingHelpers.getChecklistProgress(settingsState);
+        const completed = Object.values(progress).filter(v => v === true).length;
+        const total = Object.keys(progress).length;
+        return { completed, total, percentage: Math.round((completed / total) * 100) };
+    },
+
+    resetOnboarding: async () => {
+        await settings.set('onboarding', {
+            completed: false,
+            completedAt: null,
+            currentStep: 0,
+            skipped: false,
+            wizardVersion: 1,
+        });
+        await settings.set('ui', {
+            shownHints: [],
+            featureTourCompleted: false,
+            dismissedSuggestions: [],
+            checklistProgress: {
+                addedTopic: false,
+                configuredAI: false,
+                readArticle: false,
+                triedSummarize: false,
+                savedArticle: false,
+                triedTranslate: false,
+            },
+        });
+    },
+
+    dismissSuggestion: async (suggestionId) => {
+        const currentSettings = get(settings);
+
+        const current = currentSettings.ui?.dismissedSuggestions || [];
+        if (!current.includes(suggestionId)) {
+            await settings.set('ui', {
+                ...currentSettings.ui,
+                dismissedSuggestions: [...current, suggestionId],
+            });
+        }
+    },
+
+    isSuggestionDismissed: (suggestionId, settingsState) => {
+        return settingsState.ui?.dismissedSuggestions?.includes(suggestionId) || false;
+    },
+};

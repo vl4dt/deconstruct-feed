@@ -1,6 +1,8 @@
 <script>
   import LoadingSpinner from "../../components/LoadingSpinner.svelte";
+  import EmptyState from "../../components/EmptyState.svelte";
   import { savedItems } from "../../lib/stores/savedItems";
+  import { sourceService } from "../../lib/news/sourceService";
   import { t } from "../../lib/stores/i18n";
 
   export let loading = false;
@@ -42,6 +44,12 @@
 
   function performDeepDive() {
     dispatch("performDeepDive");
+  }
+
+  async function handleQuickAddTopic(event) {
+    const { topic } = event.detail;
+    await sourceService.addTopic(topic);
+    dispatch("refresh");
   }
 
   function getSnippet(html) {
@@ -155,10 +163,12 @@
       </div>
     {/each}
   {:else}
-    <div class="empty-state">
-      <p>No topics found.</p>
-      <button onclick={openSettings}>Add Topics</button>
-    </div>
+    <EmptyState
+      type="feed"
+      hasTopics={topics.length > 0}
+      on:goToSettings={openSettings}
+      on:quick-add-topic={handleQuickAddTopic}
+    />
   {/if}
 </div>
 
