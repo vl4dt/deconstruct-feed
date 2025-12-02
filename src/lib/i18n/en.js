@@ -121,4 +121,24 @@ export default {
         title: "No Saved Articles",
         description: "Bookmark articles to read them later.",
     },
+
+    finish: "Finish",
+    tour: {
+        feed: {
+            title: "Your News Feed",
+            description: "Browse curated articles tailored to your interests."
+        },
+        search: {
+            title: "Search",
+            description: "Find specific topics or articles instantly."
+        },
+        saved: {
+            title: "Saved Items",
+            description: "Access your bookmarks and collections here."
+        },
+        settings: {
+            title: "Settings",
+            description: "Customize your experience, manage topics, and AI providers."
+        }
+    },
 };

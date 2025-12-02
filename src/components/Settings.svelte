@@ -3,7 +3,7 @@
     import { sourceService } from "../lib/news/sourceService";
     import { userSubscription } from "../lib/stores/subscription";
     import { theme } from "../lib/stores/theme";
-    import { settings } from "../lib/stores/settings";
+    import { settings, onboardingHelpers } from "../lib/stores/settings";
     import { t, locale, availableLanguages } from "../lib/stores/i18n";
     import UpgradeModal from "../components/UpgradeModal.svelte";
     import LicenseActivation from "../components/LicenseActivation.svelte";
@@ -20,6 +20,29 @@
     let isCustomFeedMode = $state(false);
     let newCustomTopic = $state("");
     let newCustomUrl = $state("");
+
+    const suggestedTopics = [
+        "Technology",
+        "Science",
+        "Business",
+        "Health",
+        "Sports",
+        "Entertainment",
+        "Politics",
+        "World",
+        "AI",
+        "Crypto",
+        "Space",
+        "Gaming",
+        "Startups",
+        "Programming",
+        "Design",
+        "Cybersecurity",
+        "Environment",
+        "Economics",
+        "History",
+        "Art",
+    ];
 
     // Modal State
     let showUpgradeModal = $state(false);
@@ -597,6 +620,7 @@
                     <input
                         type="text"
                         bind:value={newTopic}
+                        list="topic-suggestions"
                         placeholder={$userSubscription.isPro ||
                         topics.length < 3
                             ? $t("add") + " topic..."
@@ -610,6 +634,11 @@
                             topics.length >= 3}>{$t("add")}</button
                     >
                 </div>
+                <datalist id="topic-suggestions">
+                    {#each suggestedTopics as topic}
+                        <option value={topic}></option>
+                    {/each}
+                </datalist>
             {/if}
             <ul class="list">
                 {#each topics as topic, i}
@@ -662,6 +691,31 @@
                     </li>
                 {/each}
             </ul>
+
+            <!-- Debug / Testing Section -->
+            <h3>Debug</h3>
+            <div class="section">
+                <div class="pref-row">
+                    <span>Reset Onboarding Flow</span>
+                    <button
+                        class="secondary-btn"
+                        onclick={async () => {
+                            if (
+                                confirm(
+                                    "Reset onboarding status? This will show the welcome wizard on next launch.",
+                                )
+                            ) {
+                                await onboardingHelpers.resetOnboarding();
+                                alert(
+                                    "Onboarding reset! Please close and reopen the extension.",
+                                );
+                            }
+                        }}
+                    >
+                        Reset
+                    </button>
+                </div>
+            </div>
 
             <div class="actions">
                 <button class="done-btn" onclick={goBack}>Done</button>

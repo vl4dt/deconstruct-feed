@@ -368,6 +368,14 @@ export const onboardingHelpers = {
         }
     },
 
+    markTourCompleted: async () => {
+        const currentSettings = get(settings);
+        await settings.set('ui', {
+            ...currentSettings.ui,
+            featureTourCompleted: true,
+        });
+    },
+
     isHintShown: (hintId, settingsState) => {
         return settingsState.ui?.shownHints?.includes(hintId) || false;
     },

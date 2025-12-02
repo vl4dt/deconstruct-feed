@@ -27,10 +27,13 @@
   import CurrentPageView from "./components/CurrentPageView.svelte";
   import SavedView from "./components/SavedView.svelte";
   import OfflineBanner from "../components/OfflineBanner.svelte";
+  import WelcomeWizard from "../components/WelcomeWizard.svelte";
+  import ContextualHint from "../components/ContextualHint.svelte";
+  import FeatureTour from "../components/FeatureTour.svelte";
 
   import { userSubscription } from "../lib/stores/subscription";
   import { theme } from "../lib/stores/theme";
-  import { settings } from "../lib/stores/settings";
+  import { settings, onboardingHelpers } from "../lib/stores/settings";
   import { savedItems } from "../lib/stores/savedItems";
   import { t, locale } from "../lib/stores/i18n";
 
@@ -94,6 +97,37 @@
   let newCollectionName = "";
   let movingArticleLink = null;
 
+  // Onboarding State
+  let showWelcomeWizard = false;
+  let showFeatureTour = false;
+
+  $: tourSteps = [
+    {
+      target: '[data-tour-id="feed"]',
+      title: $t("tour.feed.title"),
+      description: $t("tour.feed.description"),
+      position: "bottom",
+    },
+    {
+      target: '[data-tour-id="search"]',
+      title: $t("tour.search.title"),
+      description: $t("tour.search.description"),
+      position: "bottom",
+    },
+    {
+      target: '[data-tour-id="saved"]',
+      title: $t("tour.saved.title"),
+      description: $t("tour.saved.description"),
+      position: "bottom",
+    },
+    {
+      target: '[data-tour-id="settings"]',
+      title: $t("tour.settings.title"),
+      description: $t("tour.settings.description"),
+      position: "left",
+    },
+  ];
+
   // Derived state for grouped articles
   $: groupedArticles = (() => {
     const groups = {};
@@ -147,6 +181,14 @@
       console.error("Initialization error:", e);
     } finally {
       loading = false;
+
+      // Check if should show welcome wizard for new users
+      if (!$settings.onboarding?.completed && !$settings.onboarding?.skipped) {
+        showWelcomeWizard = true;
+      } else if (!$settings.ui?.featureTourCompleted) {
+        setTimeout(() => (showFeatureTour = true), 1000);
+      }
+
       setTimeout(() => {
         window.scrollTo(0, 0);
         const feedEl = document.querySelector(".feed");
@@ -181,6 +223,23 @@
     } finally {
       loading = false;
     }
+  }
+
+  async function handleWizardComplete() {
+    showWelcomeWizard = false;
+    await loadTopics();
+    await loadNews(true);
+    setTimeout(() => (showFeatureTour = true), 500);
+  }
+
+  async function handleWizardSkip() {
+    showWelcomeWizard = false;
+    setTimeout(() => (showFeatureTour = true), 500);
+  }
+
+  function handleTourComplete() {
+    onboardingHelpers.markTourCompleted();
+    showFeatureTour = false;
   }
 
   async function loadTopics() {
@@ -1175,8 +1234,10 @@ ${getTextContent(selectedArticle.description)}
           class:active={view === "feed"}
           onclick={() => {
             view = "feed";
+            window.scrollTo(0, 0);
           }}
-          title={$t("myFeed")}
+          title="News Feed"
+          data-tour-id="feed"
         >
           Feed
         </button>
@@ -1187,6 +1248,7 @@ ${getTextContent(selectedArticle.description)}
             view = "saved";
           }}
           title="Saved Items"
+          data-tour-id="saved"
         >
           Saved
         </button>
@@ -1215,17 +1277,30 @@ ${getTextContent(selectedArticle.description)}
           <span>{isRefreshing ? $t("updating") : $t("refresh")}</span>
         </button>
         {#if $userSubscription.isPro && view !== "article" && view !== "analysis"}
-          <button
-            class="icon-btn select-btn"
-            class:active={selectionMode}
-            onclick={toggleSelectionMode}
-            title="Select articles for video script"
-          >
-            {selectionMode ? $t("cancel") : $t("select")}
-          </button>
+          <div class="hint-wrapper">
+            <button
+              class="icon-btn select-btn"
+              class:active={selectionMode}
+              onclick={toggleSelectionMode}
+              title="Select articles for video script"
+            >
+              {selectionMode ? $t("cancel") : $t("select")}
+            </button>
+            <ContextualHint
+              id="first-select-mode"
+              position="bottom"
+              align="end"
+              delay={2000}
+            >
+              Select multiple articles to generate a script or deep dive.
+            </ContextualHint>
+          </div>
         {/if}
-        <button class="icon-btn" onclick={openSettings} title={$t("settings")}
-          >⚙️</button
+        <button
+          class="icon-btn"
+          onclick={openSettings}
+          title={$t("settings")}
+          data-tour-id="settings">⚙️</button
         >
       </div>
     </header>
@@ -1234,9 +1309,24 @@ ${getTextContent(selectedArticle.description)}
   <!-- Offline Banner -->
   <OfflineBanner />
 
+  {#if showWelcomeWizard}
+    <WelcomeWizard
+      on:complete={handleWizardComplete}
+      on:skip={handleWizardSkip}
+    />
+  {/if}
+
+  {#if showFeatureTour}
+    <FeatureTour
+      steps={tourSteps}
+      on:complete={handleTourComplete}
+      on:skip={handleTourComplete}
+    />
+  {/if}
+
   {#if view === "feed" || view === "trending"}
     <div class="main-search-container">
-      <div class="search-input-wrapper">
+      <div class="search-input-wrapper" data-tour-id="search">
         <svg
           class="search-icon"
           viewBox="0 0 24 24"
@@ -1648,5 +1738,9 @@ ${getTextContent(selectedArticle.description)}
   .refresh-btn.disabled {
     opacity: 0.7;
     cursor: not-allowed;
+  }
+  .hint-wrapper {
+    position: relative;
+    display: inline-flex;
   }
 </style>

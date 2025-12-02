@@ -83,4 +83,41 @@ export default {
     trendingKeywords: "Trend-Schlüsselwörter",
     addTrendingKeyword: "Trend-Schlüsselwort Hinzufügen",
     trendingKeywordsDesc: "Personalisieren Sie Ihre Trend-Nachrichten mit spezifischen Schlüsselwörtern (z.B. KI, SpaceX, Gaming)",
+
+    // Onboarding (English Fallback)
+    onboarding: {
+        welcome: "Welcome to NewsLens AI!",
+        tagline: "Your intelligent news companion powered by AI",
+        step1Title: "Choose Your Interests",
+        step1Description: "Select topics you'd like to follow (choose up to 5):",
+        step2Title: "Choose AI Provider",
+        step2Description: "Select how you want to analyze news articles:",
+        step3Title: "You're All Set!",
+        step3Description: "NewsLens AI is ready to curate news for you.",
+        addCustomTopic: "Or add a custom topic...",
+        recommended: "Recommended",
+        skip: "Skip",
+        next: "Next",
+        startReading: "Start Reading",
+        quickTips: "Quick Tips:",
+        yourSetup: "Your Setup:",
+        topicsLabel: "Topics",
+        aiProviderLabel: "AI Provider",
+    },
+
+    // Empty States (English Fallback)
+    emptyFeed: {
+        title: "Your feed is empty",
+        description: "Get started by adding topics you're interested in.",
+        addTopics: "Go to Settings",
+        suggestedTopics: "Suggested topics:",
+    },
+    emptyTrending: {
+        title: "No Trending News Yet",
+        description: "Configure trending keywords in Settings to see real-time news.",
+    },
+    emptySaved: {
+        title: "No Saved Articles",
+        description: "Bookmark articles to read them later.",
+    },
 };

@@ -1,6 +1,7 @@
 <script>
   import LoadingSpinner from "../../components/LoadingSpinner.svelte";
   import EmptyState from "../../components/EmptyState.svelte";
+  import SmartSuggestion from "../../components/SmartSuggestion.svelte";
   import { savedItems } from "../../lib/stores/savedItems";
   import { sourceService } from "../../lib/news/sourceService";
   import { t } from "../../lib/stores/i18n";
@@ -65,6 +66,13 @@
   {#if loading}
     <LoadingSpinner text={loadingMessage} />
   {:else if topics.length > 0}
+    <SmartSuggestion
+      id="suggest-customize-feed"
+      message="Want more specific news? Add your own topics in Settings."
+      actionLabel="Go to Settings"
+      on:action={openSettings}
+      delay={2000}
+    />
     {#each topics as topic}
       <div class="topic-group">
         <button class="topic-header" onclick={() => toggleCollapse(topic)}>

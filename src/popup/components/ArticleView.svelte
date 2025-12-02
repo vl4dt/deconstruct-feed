@@ -1,6 +1,7 @@
 <script>
     import MarkdownRenderer from "../../components/MarkdownRenderer.svelte";
     import SkeletonLoader from "../../components/SkeletonLoader.svelte";
+    import ContextualHint from "../../components/ContextualHint.svelte";
     import { savedItems } from "../../lib/stores/savedItems";
     import { t, locale } from "../../lib/stores/i18n";
 
@@ -88,44 +89,67 @@
 
     <div class="ai-section">
         <div class="ai-toolbar">
-            <button
-                class="ai-chip"
-                class:active={summary}
-                onclick={() => doSummarize(false)}
-                disabled={summaryLoading}
-                title={$t("summarize")}
-            >
-                <svg
-                    class="btn-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
+            <div class="hint-wrapper">
+                <button
+                    class="ai-chip"
+                    class:active={summary}
+                    onclick={() => doSummarize(false)}
+                    disabled={summaryLoading}
+                    title={$t("summarize")}
                 >
-                    <path
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                </svg>
-            </button>
-            <button
-                class="ai-chip"
-                class:active={biasResult}
-                onclick={() => doBiasCheck(false)}
-                disabled={biasLoading}
-                title={$t("biasCheck")}
-            >
-                <svg
-                    class="btn-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
+                    <svg
+                        class="btn-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                    </svg>
+                </button>
+                <ContextualHint
+                    id="first-summarize"
+                    position="bottom"
+                    align="center"
+                    delay={1000}
                 >
-                    <path
-                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                </svg>
-            </button>
+                    Tap to get a quick AI summary of this article.
+                </ContextualHint>
+            </div>
+
+            <div class="hint-wrapper">
+                <button
+                    class="ai-chip"
+                    class:active={biasResult}
+                    onclick={() => doBiasCheck(false)}
+                    disabled={biasLoading}
+                    title={$t("biasCheck")}
+                >
+                    <svg
+                        class="btn-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                        />
+                    </svg>
+                </button>
+                <ContextualHint
+                    id="first-bias-check"
+                    position="bottom"
+                    align="center"
+                    delay={500}
+                    condition={!!summary}
+                >
+                    Check for media bias and political leaning.
+                </ContextualHint>
+            </div>
+
             <button
                 class="ai-chip"
                 onclick={doGenerateScript}
@@ -177,30 +201,40 @@
                     />
                 </svg>
             </button>
-            <button
-                class="icon-btn translate-btn"
-                onclick={toggleTranslation}
-                disabled={translating}
-                title={translating
-                    ? $t("translating")
-                    : isTranslated
-                      ? $t("showOriginal")
-                      : $locale === "en"
-                        ? $t("translateToSpanish")
-                        : $t("translateToEnglish")}
-            >
-                <svg
-                    class="btn-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
+            <div class="hint-wrapper">
+                <button
+                    class="icon-btn translate-btn"
+                    onclick={toggleTranslation}
+                    disabled={translating}
+                    title={translating
+                        ? $t("translating")
+                        : isTranslated
+                          ? $t("showOriginal")
+                          : $locale === "en"
+                            ? $t("translateToSpanish")
+                            : $t("translateToEnglish")}
                 >
-                    <path
-                        d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
-                    />
-                </svg>
-            </button>
+                    <svg
+                        class="btn-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path
+                            d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
+                        />
+                    </svg>
+                </button>
+                <ContextualHint
+                    id="first-translate"
+                    position="bottom"
+                    align="end"
+                    delay={3000}
+                >
+                    Translate articles to your preferred language.
+                </ContextualHint>
+            </div>
             <div class="divider"></div>
             <button
                 class="generate-btn"
@@ -580,5 +614,9 @@
     }
     .read-more:hover {
         opacity: 0.9;
+    }
+    .hint-wrapper {
+        position: relative;
+        display: inline-flex;
     }
 </style>
