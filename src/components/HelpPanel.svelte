@@ -23,14 +23,24 @@
     $: key = helpKeys[view] || "onboarding.help.feed";
 </script>
 
-<div class="help-overlay" transition:fade={{ duration: 200 }} onclick={close}>
+<div
+    class="help-overlay"
+    transition:fade={{ duration: 200 }}
+    role="button"
+    tabindex="0"
+    onclick={close}
+    onkeydown={(e) => e.key === "Escape" && close()}
+>
     <div
         class="help-panel"
+        role="dialog"
+        aria-labelledby="help-title"
+        tabindex="-1"
         transition:fly={{ y: 20, duration: 300 }}
         onclick={(e) => e.stopPropagation()}
     >
         <div class="panel-header">
-            <h2>{$t(`${key}.title`) || "Help"}</h2>
+            <h2 id="help-title">{$t(`${key}.title`) || "Help"}</h2>
             <button class="close-btn" onclick={close}>&times;</button>
         </div>
 

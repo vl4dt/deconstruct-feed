@@ -23,15 +23,21 @@
     <div
         class="modal-overlay"
         transition:fade={{ duration: 200 }}
+        role="button"
+        tabindex="0"
         onclick={cancel}
+        onkeydown={(e) => e.key === "Escape" && cancel()}
     >
         <div
             class="modal-dialog"
+            role="dialog"
+            aria-labelledby="dialog-title"
+            tabindex="-1"
             transition:scale={{ duration: 200, start: 0.9 }}
             onclick={(e) => e.stopPropagation()}
         >
             <div class="modal-header">
-                <h3>{title}</h3>
+                <h3 id="dialog-title">{title}</h3>
             </div>
             <div class="modal-body">
                 <p>{message}</p>

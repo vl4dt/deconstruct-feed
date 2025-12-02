@@ -9,7 +9,6 @@
     export let align = "center"; // start, center, end
     export let delay = 0; // Delay before showing
     export let condition = true; // Extra condition to show
-    export let target = null; // Target element selector (optional, for positioning)
 
     const dispatch = createEventDispatcher();
     let visible = false;

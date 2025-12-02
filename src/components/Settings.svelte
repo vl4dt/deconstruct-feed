@@ -350,7 +350,11 @@
                         id="target-language"
                         value={$settings.targetLanguage}
                         onchange={(e) =>
-                            settings.set("targetLanguage", e.target.value)}
+                            settings.set(
+                                "targetLanguage",
+                                /** @type {HTMLSelectElement} */ (e.target)
+                                    .value,
+                            )}
                         class="provider-select"
                     >
                         <option value="en">English</option>
@@ -459,7 +463,12 @@
                                 type="text"
                                 value={$settings.localAIUrl}
                                 oninput={(e) =>
-                                    settings.set("localAIUrl", e.target.value)}
+                                    settings.set(
+                                        "localAIUrl",
+                                        /** @type {HTMLInputElement} */ (
+                                            e.target
+                                        ).value,
+                                    )}
                                 placeholder="http://localhost:11434/v1/chat/completions"
                             />
                         </div>
@@ -472,7 +481,9 @@
                                 oninput={(e) =>
                                     settings.set(
                                         "localAIModel",
-                                        e.target.value,
+                                        /** @type {HTMLInputElement} */ (
+                                            e.target
+                                        ).value,
                                     )}
                                 placeholder="llama3"
                             />
@@ -487,7 +498,12 @@
                                 type="password"
                                 value={$settings.openaiKey}
                                 oninput={(e) =>
-                                    settings.set("openaiKey", e.target.value)}
+                                    settings.set(
+                                        "openaiKey",
+                                        /** @type {HTMLInputElement} */ (
+                                            e.target
+                                        ).value,
+                                    )}
                                 placeholder="sk-..."
                             />
                         </div>
@@ -498,7 +514,12 @@
                                 type="text"
                                 value={$settings.openaiModel}
                                 oninput={(e) =>
-                                    settings.set("openaiModel", e.target.value)}
+                                    settings.set(
+                                        "openaiModel",
+                                        /** @type {HTMLInputElement} */ (
+                                            e.target
+                                        ).value,
+                                    )}
                                 placeholder="gpt-4o-mini"
                             />
                         </div>
@@ -514,7 +535,9 @@
                                 oninput={(e) =>
                                     settings.set(
                                         "anthropicKey",
-                                        e.target.value,
+                                        /** @type {HTMLInputElement} */ (
+                                            e.target
+                                        ).value,
                                     )}
                                 placeholder="sk-ant-..."
                             />
@@ -528,7 +551,9 @@
                                 oninput={(e) =>
                                     settings.set(
                                         "anthropicModel",
-                                        e.target.value,
+                                        /** @type {HTMLInputElement} */ (
+                                            e.target
+                                        ).value,
                                     )}
                                 placeholder="claude-3-5-sonnet-latest"
                             />
@@ -558,7 +583,12 @@
                                 type="password"
                                 value={$settings.geminiKey || ""}
                                 oninput={(e) =>
-                                    settings.set("geminiKey", e.target.value)}
+                                    settings.set(
+                                        "geminiKey",
+                                        /** @type {HTMLInputElement} */ (
+                                            e.target
+                                        ).value,
+                                    )}
                                 placeholder="Gemini API Key"
                             />
                         </div>
@@ -569,7 +599,12 @@
                                 type="text"
                                 value={$settings.geminiModel || ""}
                                 oninput={(e) =>
-                                    settings.set("geminiModel", e.target.value)}
+                                    settings.set(
+                                        "geminiModel",
+                                        /** @type {HTMLInputElement} */ (
+                                            e.target
+                                        ).value,
+                                    )}
                                 placeholder="gemini-1.5-flash"
                             />
                         </div>

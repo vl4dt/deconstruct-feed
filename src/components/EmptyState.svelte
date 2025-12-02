@@ -3,7 +3,6 @@
   import { t } from "../lib/stores/i18n";
 
   export let type = "feed"; // 'feed', 'trending', 'saved'
-  export let hasTopics = false;
 
   const dispatch = createEventDispatcher();
 
