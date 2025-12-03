@@ -478,6 +478,10 @@
         color: white;
         border-color: var(--accent-primary);
     }
+    .ai-chip.active:hover:not(:disabled) {
+        background: var(--accent-hover);
+        color: white;
+    }
     .ai-chip:disabled {
         opacity: 0.6;
         cursor: not-allowed;

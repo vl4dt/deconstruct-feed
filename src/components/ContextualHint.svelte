@@ -158,6 +158,13 @@
         left: 50%;
         transform: translateX(-50%);
     }
+
+    /* Prevent tooltip from overflowing left edge on small containers */
+    @media (max-width: 400px) {
+        .contextual-hint.center {
+            left: calc(50% + 10px);
+        }
+    }
     .contextual-hint.left.center,
     .contextual-hint.right.center {
         transform: translateY(-50%); /* Reset for side positioning */
