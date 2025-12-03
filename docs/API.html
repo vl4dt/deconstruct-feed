@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Reference - Deconstruct Feed</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <a href="index.html" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none;">
+                    <span class="logo-icon">📰</span>
+                    <span class="logo-text">Deconstruct Feed</span>
+                </a>
+            </div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="USER_GUIDE.html">User Guide</a>
+                <a href="DEVELOPER_GUIDE.html">Developer</a>
+                <a href="https://github.com/vl4dt/deconstruct-feed" target="_blank">GitHub ↗</a>
+            </nav>
+        </header>
+
+        <main class="doc-content" id="markdown-content">
+            <p>Loading...</p>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <p>&copy; 2025 Deconstruct Feed. MIT License.</p>
+                <div class="footer-links">
+                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="terms.html">Terms of Service</a>
+                    <a href="https://github.com/vl4dt/deconstruct-feed/issues" target="_blank">Support</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        fetch('API.md')
+            .then(response => response.text())
+            .then(markdown => {
+                const html = marked.parse(markdown);
+                document.getElementById('markdown-content').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error loading documentation:', error);
+                document.getElementById('markdown-content').innerHTML = '<p>Error loading documentation. Please try again later.</p>';
+            });
+    </script>
+</body>
+
+</html>

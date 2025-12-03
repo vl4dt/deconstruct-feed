@@ -1,37 +1,130 @@
-<main>
-    <h1>Your Intelligent News Companion</h1>
-    <p class="lead">Curate personalized news feeds, analyze bias, and generate content with the power of
-        on-device AI.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deconstruct Feed - Your Intelligent News Companion</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span class="logo-icon">📰</span>
+                <span class="logo-text">Deconstruct Feed</span>
+            </div>
+            <nav>
+                <a href="USER_GUIDE.html">User Guide</a>
+                <a href="DEVELOPER_GUIDE.html">Developer</a>
+                <a href="https://github.com/vl4dt/deconstruct-feed" target="_blank">GitHub ↗</a>
+            </nav>
+        </header>
 
-    <div class="features">
-        <div class="feature-card">
-            <h3>🤖 AI Analysis</h3>
-            <p>Instantly summarize articles and detect bias using Chrome's built-in AI or Gemini.</p>
-        </div>
-        <div class="feature-card">
-            <h3>📰 Smart Curation</h3>
-            <p>Follow your favorite topics in a clean, distraction-free feed.</p>
-        </div>
-        <div class="feature-card">
-            <h3>🎬 Content Creation</h3>
-            <p>Generate YouTube and Podcast scripts from any article in seconds.</p>
-        </div>
+        <main>
+            <div class="hero">
+                <h1>Your Intelligent News Companion</h1>
+                <p class="hero-subtitle">Curate personalized news feeds, analyze bias, and generate content with the power of on-device AI.</p>
+                <div class="cta-buttons">
+                    <a href="USER_GUIDE.html" class="btn btn-primary">Read User Guide</a>
+                    <a href="https://github.com/vl4dt/deconstruct-feed" target="_blank" class="btn btn-secondary">View on GitHub</a>
+                </div>
+            </div>
+
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI-Powered Analysis</h3>
+                    <p>Instantly summarize articles and detect bias using Chrome's built-in AI or connect your own Gemini API.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📰</div>
+                    <h3>Smart Curation</h3>
+                    <p>Follow your favorite topics in a clean, distraction-free feed. Customize with RSS sources.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎬</div>
+                    <h3>Content Creation</h3>
+                    <p>Generate YouTube and Podcast scripts from any article in seconds. Perfect for creators.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Deep Dive Analysis</h3>
+                    <p>Get comprehensive insights with AI-powered research and analysis tools.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>Multi-Language Support</h3>
+                    <p>Translate articles and AI-generated content to your preferred language instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3>Offline Support</h3>
+                    <p>Save articles and access them offline. Full IndexedDB integration for unlimited storage.</p>
+                </div>
+            </div>
+
+            <div class="documentation-links">
+                <h2>Documentation</h2>
+                <div class="doc-grid">
+                    <a href="USER_GUIDE.html" class="doc-card">
+                        <div class="doc-card-icon">📖</div>
+                        <h3>User Guide</h3>
+                        <p>Learn how to use all features of Deconstruct Feed</p>
+                    </a>
+                    <a href="DEVELOPER_GUIDE.html" class="doc-card">
+                        <div class="doc-card-icon">⚙️</div>
+                        <h3>Developer Guide</h3>
+                        <p>Build and customize the extension</p>
+                    </a>
+                    <a href="API.html" class="doc-card">
+                        <div class="doc-card-icon">🔌</div>
+                        <h3>API Reference</h3>
+                        <p>Complete API documentation</p>
+                    </a>
+                    <a href="ARCHITECTURE.html" class="doc-card">
+                        <div class="doc-card-icon">🏗️</div>
+                        <h3>Architecture</h3>
+                        <p>System design and technical overview</p>
+                    </a>
+                    <a href="AI_PROVIDERS.html" class="doc-card">
+                        <div class="doc-card-icon">🧠</div>
+                        <h3>AI Providers</h3>
+                        <p>Configure and use different AI backends</p>
+                    </a>
+                    <a href="TESTING.html" class="doc-card">
+                        <div class="doc-card-icon">🧪</div>
+                        <h3>Testing Guide</h3>
+                        <p>Testing strategies and examples</p>
+                    </a>
+                </div>
+            </div>
+
+            <div class="tech-stack">
+                <h2>Built With Modern Tech</h2>
+                <div class="tech-badges">
+                    <span class="badge">Svelte 5</span>
+                    <span class="badge">Chrome AI</span>
+                    <span class="badge">Vite</span>
+                    <span class="badge">IndexedDB</span>
+                    <span class="badge">Service Workers</span>
+                    <span class="badge">Gemini API</span>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <p>&copy; 2025 Deconstruct Feed. MIT License.</p>
+                <div class="footer-links">
+                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="terms.html">Terms of Service</a>
+                    <a href="https://github.com/vl4dt/deconstruct-feed/issues" target="_blank">Support</a>
+                </div>
+            </div>
+        </footer>
     </div>
-
-    <h2>Get Started</h2>
-    <p>Ready to transform your news experience?</p>
-    <a href="USER_GUIDE" class="btn">Read the User Guide</a>
-</main>
-
-<footer>
-    <p>&copy; 2025 NewsLens AI. All rights reserved.</p>
-    <p>
-        <a href="privacy.html">Privacy Policy</a> |
-        <a href="terms.html">Terms of Service</a> |
-        <a href="mailto:support@newslens-ai.com">Contact Support</a>
-    </p>
-</footer>
-</div>
 </body>
-
 </html>
