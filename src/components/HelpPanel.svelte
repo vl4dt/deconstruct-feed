@@ -11,6 +11,13 @@
         dispatch("close");
     }
 
+    function openUserGuide() {
+        chrome.tabs.create({
+            url: "https://newslens-ai.vercel.app/docs/USER_GUIDE",
+        });
+        close();
+    }
+
     // Map views to translation keys
     const helpKeys = {
         feed: "onboarding.help.feed",
@@ -59,6 +66,12 @@
                     {/if}
                 {/each}
             </ul>
+
+            <div class="panel-footer">
+                <button class="full-guide-btn" onclick={openUserGuide}>
+                    {$t("viewUserGuide")} ↗
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -145,5 +158,30 @@
     .bullet {
         color: var(--accent-primary);
         font-weight: bold;
+    }
+
+    .panel-footer {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .full-guide-btn {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--bg-tertiary);
+        color: var(--accent-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .full-guide-btn:hover {
+        background: var(--bg-secondary);
+        border-color: var(--accent-primary);
+        transform: translateY(-1px);
     }
 </style>

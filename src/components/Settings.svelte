@@ -240,6 +240,13 @@
     function handleResetSuccessClose() {
         showResetSuccess = false;
     }
+
+    function openUserGuide() {
+        // Open the hosted user guide (Vercel)
+        chrome.tabs.create({
+            url: "https://newslens-ai.vercel.app/docs/USER_GUIDE",
+        });
+    }
 </script>
 
 <div class="settings-container">
@@ -424,7 +431,22 @@
                 </div>
             </div>
 
+            <!-- Help & Resources Section -->
+            <div class="section">
+                <h3>📖 Help & Resources</h3>
+                <button
+                    class="user-guide-btn"
+                    onclick={openUserGuide}
+                    title={$t("userGuideTooltip")}
+                >
+                    <span class="btn-icon">📚</span>
+                    <span class="btn-text">{$t("viewUserGuide")}</span>
+                    <span class="external-icon">↗</span>
+                </button>
+            </div>
+
             <!-- AI Provider Section -->
+
             <div class="section">
                 <h3>AI Provider</h3>
                 <div class="provider-grid">
@@ -1413,5 +1435,42 @@
         font-size: 0.85rem;
         color: var(--text-secondary);
         margin: 0;
+    }
+
+    /* User Guide Button */
+    .user-guide-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #4a90e2, #357abd);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+    }
+    .user-guide-btn:hover {
+        background: linear-gradient(135deg, #357abd, #2a5f8f);
+        box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+        transform: translateY(-2px);
+    }
+    .user-guide-btn:active {
+        transform: translateY(0);
+    }
+    .user-guide-btn .btn-icon {
+        font-size: 1.2rem;
+    }
+    .user-guide-btn .btn-text {
+        flex: 1;
+    }
+    .user-guide-btn .external-icon {
+        font-size: 0.9rem;
+        opacity: 0.8;
     }
 </style>

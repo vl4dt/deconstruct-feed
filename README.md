@@ -243,12 +243,18 @@ For detailed development documentation, see [docs/DEVELOPER_GUIDE.md](docs/DEVEL
 
 ## 📚 Documentation
 
-- **[User Guide](docs/USER_GUIDE.md)** - Comprehensive feature walkthrough
+> **[📖 View Complete User Guide](https://newslens-ai.vercel.app/docs/)**  
+> Access our comprehensive documentation online for detailed guides and support.
+
+### Quick Links
+- **[User Guide](https://newslens-ai.vercel.app/docs/USER_GUIDE)** - Comprehensive feature walkthrough
+
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Architecture and development
 - **[API Documentation](docs/API.md)** - Service APIs and interfaces
 - **[Architecture](docs/ARCHITECTURE.md)** - System design and data flow
 - **[AI Providers Guide](docs/AI_PROVIDERS.md)** - AI integration setup
 - **[Contributing](CONTRIBUTING.md)** - Contribution guidelines
+
 
 ## 💎 Pro Features
 

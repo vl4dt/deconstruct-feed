@@ -13,3 +13,9 @@ Transform how you consume and create news with NewsLens AI. This powerful extens
 *   **Privacy First**: Utilizes Chrome's built-in on-device AI for fast, private processing whenever available.
 
 Whether you're a news junkie, a content creator, or just want to stay informed without the noise, NewsLens AI is your intelligent news companion.
+
+## Documentation & Support
+
+Need help getting started? Check out our comprehensive [User Guide](https://newslens-ai.vercel.app/docs/USER_GUIDE) for detailed instructions on all features.
+
+

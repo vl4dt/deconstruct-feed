@@ -84,6 +84,9 @@ export default {
     trendingKeywords: "Trending Keywords",
     addTrendingKeyword: "Add trending keyword",
     trendingKeywordsDesc: "Customize your trending news with specific keywords (e.g., AI, SpaceX, Gaming)",
+    viewUserGuide: "View User Guide",
+    userGuideTooltip: "Open complete user guide in new tab",
+
 
     // Onboarding
     onboarding: {
