@@ -1,6 +1,6 @@
-# NewsLens AI Developer Guide
+# Deconstruct Feed Developer Guide
 
-This guide provides technical information for developers working on NewsLens AI.
+This guide provides technical information for developers working on Deconstruct Feed.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ This guide provides technical information for developers working on NewsLens AI.
 
 ## Project Overview
 
-NewsLens AI is a Chrome extension that combines:
+Deconstruct Feed is a Chrome extension that combines:
 - **News Aggregation**: RSS feed parsing and curation
 - **AI Analysis**: Multi-provider AI integration (Chrome AI, Gemini, Local LLM, OpenAI, Anthropic)
 - **Content Creation**: Script and podcast generation
@@ -51,7 +51,7 @@ NewsLens AI is a Chrome extension that combines:
 ## Project Structure
 
 ```
-newslens-ai/
+Deconstruct Feed-ai/
 ├── public/
 │   ├── manifest.json          # Extension manifest
 │   └── icons/                 # Extension icons
@@ -240,7 +240,7 @@ chrome.storage.local.clear();
 
 ## Svelte 5 Patterns
 
-NewsLens AI uses Svelte 5 with the new runes syntax.
+Deconstruct Feed uses Svelte 5 with the new runes syntax.
 
 ### State Management
 
@@ -341,7 +341,7 @@ For complex events, consider using custom event dispatching or stores.
 
 ### Svelte Stores
 
-NewsLens uses custom stores for global state.
+Deconstruct Feed uses custom stores for global state.
 
 #### Creating a Store
 
@@ -425,7 +425,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 ### Manifest V3
 
-NewsLens uses Manifest V3 (required for new extensions).
+Deconstruct Feed uses Manifest V3 (required for new extensions).
 
 **Key Differences from V2**:
 - Service workers instead of background pages
@@ -446,7 +446,7 @@ chrome.runtime.onInstalled.addListener(() => {
   // Create context menus
   chrome.contextMenus.create({
     id: 'analyze-page',
-    title: 'Analyze with NewsLens AI',
+    title: 'Analyze with Deconstruct Feed',
     contexts: ['page']
   });
 });
@@ -520,14 +520,14 @@ const isPopup = views.includes(window);
 ```javascript
 // src/lib/i18n/en.js
 export default {
-  welcome: 'Welcome to NewsLens AI',
+  welcome: 'Welcome to Deconstruct Feed',
   settings: 'Settings',
   // ...
 };
 
 // src/lib/i18n/es.js
 export default {
-  welcome: 'Bienvenido a NewsLens AI',
+  welcome: 'Bienvenido a Deconstruct Feed',
   settings: 'Configuración',
   // ...
 };

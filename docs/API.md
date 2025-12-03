@@ -1,6 +1,6 @@
 # API Documentation
 
-This document provides comprehensive API documentation for NewsLens AI's core services and functions.
+This document provides comprehensive API documentation for Deconstruct Feed's core services and functions.
 
 ## Table of Contents
 
@@ -515,7 +515,7 @@ async function setCachedFeed(
 
 ## Storage & Stores
 
-NewsLens uses Svelte stores for reactive state management.
+Deconstruct Feed uses Svelte stores for reactive state management.
 
 ### Settings Store
 

@@ -1,6 +1,6 @@
 # System Architecture
 
-This document provides a high-level overview of NewsLens AI's architecture, component interactions, and data flow.
+This document provides a high-level overview of Deconstruct Feed's architecture, component interactions, and data flow.
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@ This document provides a high-level overview of NewsLens AI's architecture, comp
 
 ## Architecture Overview
 
-NewsLens AI follows a modular, service-oriented architecture built on Chrome Extension APIs and Svelte 5.
+Deconstruct Feed follows a modular, service-oriented architecture built on Chrome Extension APIs and Svelte 5.
 
 ### Key Architectural Principles
 
@@ -159,7 +159,7 @@ sequenceDiagram
 ### Manifest V3 Structure
 
 ```
-NewsLens AI Extension
+Deconstruct Feed Extension
 │
 ├── Service Worker (Background)
 │   ├── Context Menus
@@ -409,7 +409,7 @@ Update Feed
 ### Data Protection
 
 - **API Keys**: Stored in Chrome Storage (encrypted by Chrome)
-- **User Data**: Never sent to NewsLens servers
+- **User Data**: Never sent to Deconstruct Feed servers
 - **AI Providers**: Check provider privacy policies
 - **XSS Protection**: Sanitize all user input and RSS content
 
@@ -603,7 +603,7 @@ Update Feed
 ### Data Protection
 
 - **API Keys**: Stored in Chrome Storage (encrypted by Chrome)
-- **User Data**: Never sent to NewsLens servers
+- **User Data**: Never sent to Deconstruct Feed servers
 - **AI Providers**: Check provider privacy policies
 - **XSS Protection**: Sanitize all user input and RSS content
 

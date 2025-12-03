@@ -1,6 +1,6 @@
-# Testing Guide for NewsLens AI
+# Testing Guide for Deconstruct Feed
 
-This document describes the automated testing setup for the NewsLens AI Chrome extension.
+This document describes the automated testing setup for the Deconstruct Feed Chrome extension.
 
 ## Overview
 

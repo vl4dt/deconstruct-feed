@@ -1,6 +1,6 @@
-# NewsLens AI User Guide
+# Deconstruct Feed User Guide
 
-Welcome to NewsLens AI! This comprehensive guide will help you get the most out of your intelligent news companion.
+Welcome to Deconstruct Feed! This comprehensive guide will help you get the most out of your intelligent news companion.
 
 ## Table of Contents
 
@@ -20,7 +20,7 @@ Welcome to NewsLens AI! This comprehensive guide will help you get the most out 
 
 ### First Launch
 
-When you first open NewsLens AI:
+When you first open Deconstruct Feed:
 
 1. **Choose Your Interface**
    - Click the extension icon for popup mode
@@ -34,7 +34,7 @@ When you first open NewsLens AI:
    - Click Settings (⚙️ icon)
    - Navigate to "Manage News Sources & Topics"
    - Click "Add Topic" and enter a topic (e.g., "Technology", "Science")
-   - NewsLens will automatically discover relevant sources
+   - Deconstruct Feed will automatically discover relevant sources
 
 ### Understanding the Interface
 
@@ -237,7 +237,7 @@ Analyze any webpage you're currently viewing:
 1. **Navigate to Any Webpage**
    - Open any article, blog post, or news page in Chrome
 
-2. **Open NewsLens AI**
+2. **Open Deconstruct Feed**
    - Click the extension icon
 
 3. **Start Page Analysis**
@@ -259,7 +259,7 @@ Analyze any webpage you're currently viewing:
 
 ### Context Menu Integration
 
-Right-click on any webpage and look for NewsLens AI options:
+Right-click on any webpage and look for Deconstruct Feed options:
 - "Analyze this page" - Quick analysis
 - "Search for..." - Search selected text in trending topics
 
@@ -336,7 +336,7 @@ Right-click on any webpage and look for NewsLens AI options:
 **Local LLM**
 1. Install [Ollama](https://ollama.ai) or LM Studio
 2. Start local server (default: http://localhost:11434)
-3. Select "Local LLM" in NewsLens
+3. Select "Local LLM" in Deconstruct Feed
 4. Configure server URL and model name
 5. Completely private, no data leaves your device
 
@@ -434,7 +434,7 @@ Right-click on any webpage and look for NewsLens AI options:
 *Coming in future update*
 
 Planned shortcuts:
-- `Ctrl+Shift+N` - Open NewsLens
+- `Ctrl+Shift+N` - Open Deconstruct Feed
 - `R` - Refresh feed
 - `S` - Toggle search
 - `Esc` - Go back/close panels
@@ -531,7 +531,7 @@ Planned shortcuts:
 
 **Extension Not Loading**
 1. Check Chrome extensions page (`chrome://extensions/`)
-2. Ensure NewsLens AI is enabled
+2. Ensure Deconstruct Feed is enabled
 3. Click refresh icon on extension
 4. Try reloading Chrome
 5. Reinstall extension if needed
@@ -566,7 +566,7 @@ Planned shortcuts:
 ### Maximize Your Workflow
 
 1. **Use Side Panel Mode**
-   - Keeps NewsLens  always accessible
+   - Keeps Deconstruct Feed  always accessible
    - Browse articles while reading in main tab
 
 2. **Enable Auto-Features**
@@ -592,4 +592,4 @@ Planned shortcuts:
 
 ---
 
-**Enjoy using NewsLens AI! Stay informed, analyze smartly, and create brilliantly.** 🚀
+**Enjoy using Deconstruct Feed! Stay informed, analyze smartly, and create brilliantly.** 🚀

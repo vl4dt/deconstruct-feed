@@ -1,10 +1,10 @@
-# Privacy Policy for NewsLens AI
+# Privacy Policy for Deconstruct Feed
 
 **Last Updated: December 2, 2025**
 
 ## Introduction
 
-NewsLens AI ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how our Chrome Extension ("Extension") handles your data.
+Deconstruct Feed ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how our Chrome Extension ("Extension") handles your data.
 
 **Summary: We do not collect, store, or sell your personal data. All AI analysis happens locally on your device or via your own API keys.**
 
@@ -39,4 +39,4 @@ We may update this Privacy Policy from time to time. We will notify you of any c
 ## Contact Us
 
 If you have any questions about this Privacy Policy, please contact us at:
-**Email**: support@newslens-ai.com
+**Email**: support@Deconstruct Feed-ai.com

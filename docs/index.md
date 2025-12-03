@@ -1,11 +1,11 @@
-# NewsLens AI Documentation
+# Deconstruct Feed Documentation
 
-Welcome to the NewsLens AI documentation portal. Here you'll find comprehensive guides to help you get the most out of your intelligent news companion.
+Welcome to the Deconstruct Feed documentation portal. Here you'll find comprehensive guides to help you get the most out of your intelligent news companion.
 
 ## 📚 Documentation
 
 ### [User Guide](USER_GUIDE.md)
-Complete guide covering all features, settings, and troubleshooting for NewsLens AI users.
+Complete guide covering all features, settings, and troubleshooting for Deconstruct Feed users.
 
 ### [Developer Guide](DEVELOPER_GUIDE.md)
 Architecture, development setup, and contribution guidelines for developers.
@@ -32,13 +32,13 @@ Unit testing, integration testing, and E2E testing documentation.
 ## 🚀 Quick Links
 
 
-- [GitHub Repository](https://github.com/yourusername/newslens-ai)
-- [Report an Issue](https://github.com/yourusername/newslens-ai/issues)
+- [GitHub Repository](https://github.com/yourusername/Deconstruct Feed-ai)
+- [Report an Issue](https://github.com/yourusername/Deconstruct Feed-ai/issues)
 - [Contributing Guidelines](../CONTRIBUTING.md)
 
 ## 📖 Getting Started
 
-New to NewsLens AI? Start with the [User Guide](USER_GUIDE.md) to learn about:
+New to Deconstruct Feed? Start with the [User Guide](USER_GUIDE.md) to learn about:
 - Installing and configuring the extension
 - Managing your news feed
 - Using AI analysis features
@@ -47,4 +47,4 @@ New to NewsLens AI? Start with the [User Guide](USER_GUIDE.md) to learn about:
 
 ---
 
-**NewsLens AI** - Transform how you consume and create news with AI-powered analysis and curation.
+**Deconstruct Feed** - Transform how you consume and create news with AI-powered analysis and curation.

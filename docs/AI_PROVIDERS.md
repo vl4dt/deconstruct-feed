@@ -1,6 +1,6 @@
 # AI Providers Setup Guide
 
-NewsLens AI supports multiple AI providers, giving you flexibility in choosing the best option for your needs. This guide covers setup, features, costs, and recommendations for each provider.
+Deconstruct Feed supports multiple AI providers, giving you flexibility in choosing the best option for your needs. This guide covers setup, features, costs, and recommendations for each provider.
 
 ## Quick Comparison
 
@@ -41,12 +41,12 @@ NewsLens AI supports multiple AI providers, giving you flexibility in choosing t
    - Restart Chrome
 
 3. **Download Model**
-   - Open NewsLens AI
+   - Open Deconstruct Feed
    - Wait for model download (automatic, ~200-500MB)
    - Check progress in `chrome://components/`
    - Look for "Optimization Guide On Device Model"
 
-4. **Select in NewsLens**
+4. **Select in Deconstruct Feed**
    - Go to Settings → AI Provider
    - Select "Chrome Built-in AI"
    - No API key needed!
@@ -102,8 +102,8 @@ NewsLens AI supports multiple AI providers, giving you flexibility in choosing t
    - Click "Create API Key"
    - Copy the key (starts with `AIza...`)
 
-2. **Configure NewsLens**
-   - Open NewsLens → Settings → AI Provider
+2. **Configure Deconstruct Feed**
+   - Open Deconstruct Feed → Settings → AI Provider
    - Select "Google Gemini"
    - Paste API key
    - Choose model:
@@ -139,7 +139,7 @@ Typical usage (Pro user):
 **Rate Limit Errors**
 - Free tier: 15 requests/minute
 - Spread out requests or upgrade to paid tier
-- Enable caching in NewsLens to reduce requests
+- Enable caching in Deconstruct Feed to reduce requests
 
 ---
 
@@ -180,11 +180,11 @@ Typical usage (Pro user):
    ```
    - Default URL: `http://localhost:11434`
 
-4. **Configure NewsLens**
+4. **Configure Deconstruct Feed**
    - Settings → AI Provider → "Local LLM"
    - Server URL: `http://localhost:11434/v1/chat/completions`
    - Model: `llama3` (or your chosen model)
-   - **Note**: NewsLens automatically handles CORS headers and connection issues, so no extra configuration is needed!
+   - **Note**: Deconstruct Feed automatically handles CORS headers and connection issues, so no extra configuration is needed!
 
 5. **Test**
    - Summarize an article
@@ -207,7 +207,7 @@ Typical usage (Pro user):
    - Click "Start Server"
    - Note the URL (usually `http://localhost:1234`)
 
-4. **Configure NewsLens**
+4. **Configure Deconstruct Feed**
    - Settings → AI Provider → "Local LLM"
    - Server URL: `http://localhost:1234/v1/chat/completions`
    - Model name: (check LM Studio)
@@ -233,7 +233,7 @@ Typical usage (Pro user):
 **Server Connection Failed**
 - Verify server is running: visit `http://localhost:11434` in browser
 - Check firewall settings
-- Ensure correct port in NewsLens settings
+- Ensure correct port in Deconstruct Feed settings
 
 **Slow Responses**
 - Use smaller model (7B instead of 70B)
@@ -259,7 +259,7 @@ Typical usage (Pro user):
 
 ### Pricing
 
-- **GPT-4o-mini**: ~$0.001/request (recommended for NewsLens)
+- **GPT-4o-mini**: ~$0.001/request (recommended for Deconstruct Feed)
 - **GPT-4o**: ~$0.01/request
 - **GPT-4-turbo**: ~$0.03/request
 - [View Pricing](https://openai.com/pricing)
@@ -273,7 +273,7 @@ Typical usage (Pro user):
    - Click "Create new secret key"
    - Copy key (starts with `sk-...`)
 
-2. **Configure NewsLens**
+2. **Configure Deconstruct Feed**
    - Settings → AI Provider → "OpenAI"
    - Paste API key
    - Select model:
@@ -296,7 +296,7 @@ Typical usage (Pro user, gpt-4o-mini):
 
 ### Recommended Models
 
-- **gpt-4o-mini**: Best for NewsLens (fast, cheap, excellent)
+- **gpt-4o-mini**: Best for Deconstruct Feed (fast, cheap, excellent)
 - **gpt-4o**: When you need the absolute best
 
 ### Troubleshooting
@@ -309,7 +309,7 @@ Typical usage (Pro user, gpt-4o-mini):
 **Rate Limits**
 - Free trial: 3 requests/minute
 - Paid: 500-10,000 requests/minute
-- Enable caching in NewsLens
+- Enable caching in Deconstruct Feed
 
 ---
 
@@ -337,7 +337,7 @@ Typical usage (Pro user, gpt-4o-mini):
    - Create new key
    - Copy key (starts with `sk-ant-...`)
 
-2. **Configure NewsLens**
+2. **Configure Deconstruct Feed**
    - Settings → AI Provider → "Anthropic Claude"
    - Paste API key
    - Select model:
@@ -433,10 +433,10 @@ You can switch providers anytime in Settings. Consider:
 - [Anthropic](https://docs.anthropic.com/)
 
 ### Getting Help
-- Check NewsLens [troubleshooting guide](USER_GUIDE.md#troubleshooting)
+- Check Deconstruct Feed [troubleshooting guide](USER_GUIDE.md#troubleshooting)
 - Browse provider documentation
 - Check provider status pages for outages
-- Contact the development team for NewsLens-specific issues
+- Contact the development team for Deconstruct Feed-specific issues
 
 ---
 
