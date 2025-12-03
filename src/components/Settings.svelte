@@ -237,21 +237,6 @@
         showResetConfirm = false;
     }
 
-    function handleResetSuccessClose() {
-        showResetSuccess = false;
-    }
-
-    function openUserGuide() {
-        // Open the hosted user guide (Vercel)
-        chrome.tabs.create({
-            url: "https://newslens-ai.vercel.app/docs/USER_GUIDE",
-        });
-    }
-</script>
-
-<div class="settings-container">
-    <UpgradeModal
-        show={showUpgradeModal}
         message={upgradeMessage}
         on:close={() => (showUpgradeModal = false)}
         on:checkout-opened={handleCheckoutOpened}

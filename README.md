@@ -1,8 +1,8 @@
-# NewsLens AI 🔍
+# Deconstruct Feed
 
-> **Transform how you consume and create news with AI-powered analysis and curation**
+**Deconstruct your news feed with AI analysis, bias detection, and smart curation.**
 
-NewsLens AI is a powerful Chrome extension that curates personalized news feeds based on your interests and leverages advanced AI to help you understand, analyze, and repurpose content. Whether you're a news enthusiast, content creator, or just staying informed, NewsLens AI is your intelligent news companion.
+Deconstruct Feed is a powerful Chrome extension that curates personalized news feeds based on your interests and leverages advanced AI to help you understand, analyze, and repurpose content. Whether you're a news enthusiast, content creator, or just staying informed, Deconstruct Feed is your intelligent news companion.
 
 ## ✨ Key Features
 

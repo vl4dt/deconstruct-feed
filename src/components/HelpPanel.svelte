@@ -7,21 +7,6 @@
 
     const dispatch = createEventDispatcher();
 
-    function close() {
-        dispatch("close");
-    }
-
-    function openUserGuide() {
-        chrome.tabs.create({
-            url: "https://newslens-ai.vercel.app/docs/USER_GUIDE",
-        });
-        close();
-    }
-
-    // Map views to translation keys
-    const helpKeys = {
-        feed: "onboarding.help.feed",
-        article: "onboarding.help.article",
         saved: "onboarding.help.saved",
         settings: "onboarding.help.settings",
         trending: "onboarding.help.trending",
