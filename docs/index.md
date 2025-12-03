@@ -22,9 +22,15 @@ Setup and configuration for Chrome AI, Gemini, Local LLM, OpenAI, and Anthropic.
 ### [Testing Guide](TESTING.md)
 Unit testing, integration testing, and E2E testing documentation.
 
+## ⚖️ Legal
+
+- **[Privacy Policy](PRIVACY.md)**
+- **[Terms of Service](TERMS.md)**
+
 ---
 
 ## 🚀 Quick Links
+
 
 - [GitHub Repository](https://github.com/yourusername/newslens-ai)
 - [Report an Issue](https://github.com/yourusername/newslens-ai/issues)
