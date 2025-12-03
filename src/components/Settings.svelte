@@ -237,38 +237,52 @@
         showResetConfirm = false;
     }
 
-        message={upgradeMessage}
-        on:close={() => (showUpgradeModal = false)}
-        on:checkout-opened={handleCheckoutOpened}
-        on:show-activation={handleShowActivation}
-    />
+    function handleResetSuccessClose() {
+        showResetSuccess = false;
+    }
 
-    <LicenseActivation
-        show={showLicenseActivation}
-        on:close={() => (showLicenseActivation = false)}
-        on:activated={handleLicenseActivated}
-    />
+    function openUserGuide() {
+        chrome.tabs.create({
+            url: "https://github.com/vl4dt/deconstruct-feed/blob/main/docs/USER_GUIDE.md",
+        });
+    }
+</script>
 
-    <ConfirmDialog
-        show={showResetConfirm}
-        title="Reset Onboarding"
-        message="Reset onboarding status? This will show the welcome wizard on next launch."
-        confirmText="Reset"
-        cancelText="Cancel"
-        on:confirm={handleResetConfirm}
-        on:cancel={handleResetCancel}
-    />
+<UpgradeModal
+    show={showUpgradeModal}
+    message={upgradeMessage}
+    on:close={() => (showUpgradeModal = false)}
+    on:checkout-opened={handleCheckoutOpened}
+    on:show-activation={handleShowActivation}
+/>
 
-    <ConfirmDialog
-        show={showResetSuccess}
-        title="Onboarding Reset"
-        message="Onboarding reset! Please close and reopen the extension."
-        confirmText="OK"
-        cancelText=""
-        on:confirm={handleResetSuccessClose}
-        on:cancel={handleResetSuccessClose}
-    />
+<LicenseActivation
+    show={showLicenseActivation}
+    on:close={() => (showLicenseActivation = false)}
+    on:activated={handleLicenseActivated}
+/>
 
+<ConfirmDialog
+    show={showResetConfirm}
+    title="Reset Onboarding"
+    message="Reset onboarding status? This will show the welcome wizard on next launch."
+    confirmText="Reset"
+    cancelText="Cancel"
+    on:confirm={handleResetConfirm}
+    on:cancel={handleResetCancel}
+/>
+
+<ConfirmDialog
+    show={showResetSuccess}
+    title="Onboarding Reset"
+    message="Onboarding reset! Please close and reopen the extension."
+    confirmText="OK"
+    cancelText=""
+    on:confirm={handleResetSuccessClose}
+    on:cancel={handleResetSuccessClose}
+/>
+
+<div class="settings-container">
     <header>
         <button class="back-btn" onclick={goBack}>&larr;</button>
         <h2>{selectedTopic ? selectedTopic : $t("settings")}</h2>

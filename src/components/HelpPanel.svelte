@@ -7,12 +7,24 @@
 
     const dispatch = createEventDispatcher();
 
+    const helpKeys = {
+        feed: "onboarding.help.feed",
         saved: "onboarding.help.saved",
         settings: "onboarding.help.settings",
         trending: "onboarding.help.trending",
     };
 
     $: key = helpKeys[view] || "onboarding.help.feed";
+
+    function close() {
+        dispatch("close");
+    }
+
+    function openUserGuide() {
+        chrome.tabs.create({
+            url: "https://github.com/vl4dt/deconstruct-feed/blob/main/docs/USER_GUIDE.md",
+        });
+    }
 </script>
 
 <div

@@ -1,0 +1,136 @@
+
+> deconstruct-feed@0.0.0 build
+> vite build
+
+[36mvite v7.2.4 [32mbuilding client environment for production...[36m[39m
+transforming...
+1:54:23 AM [vite-plugin-svelte] src/components/UpgradeModal.svelte:97:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+ 95:         onkeydown={(e) => e.key === "Escape" && close()}
+ 96:     >
+ 97:         <div
+                  ^
+ 98:             class="modal-content"
+ 99:             onclick={(e) => e.stopPropagation()}
+1:54:23 AM [vite-plugin-svelte] src/components/UpgradeModal.svelte:282:4 Unused CSS selector ".sparkle"
+https://svelte.dev/e/css_unused_selector
+280:     }
+281: 
+282:     .sparkle {
+                 ^
+283:         font-size: 1.75rem;
+284:         animation: sparkle 2s ease-in-out infinite;
+1:54:23 AM [vite-plugin-svelte] src/components/UpgradeModal.svelte:509:4 Unused CSS selector ".btn-icon"
+https://svelte.dev/e/css_unused_selector
+507:     }
+508: 
+509:     .btn-icon {
+                  ^
+510:         font-size: 1rem;
+511:     }
+1:54:23 AM [vite-plugin-svelte] src/popup/components/ArticleView.svelte:239:12 Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label
+237:             </div>
+238:             <div class="divider"></div>
+239:             <button
+                         ^
+240:                 class="generate-btn"
+241:                 onclick={() =>
+1:54:23 AM [vite-plugin-svelte] src/popup/components/FeedView.svelte:370:2 Unused CSS selector ".empty-state"
+https://svelte.dev/e/css_unused_selector
+368:     text-decoration: underline;
+369:   }
+370:   .empty-state {
+                   ^
+371:     text-align: center;
+372:     padding: 2rem;
+1:54:23 AM [vite-plugin-svelte] src/popup/components/FeedView.svelte:375:2 Unused CSS selector ".empty-state button"
+https://svelte.dev/e/css_unused_selector
+373:     color: var(--text-secondary);
+374:   }
+375:   .empty-state button {
+                          ^
+376:     margin-top: 1rem;
+377:     padding: 0.5rem 1rem;
+1:54:23 AM [vite-plugin-svelte] src/components/WelcomeWizard.svelte:121:0 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+119: </script>
+120: 
+121: <div class="wizard-overlay" on:click|self={skipWizard}>
+           ^
+122:     <div class="wizard-container">
+123:         <div class="wizard-header">
+1:54:23 AM [vite-plugin-svelte] src/components/WelcomeWizard.svelte:121:0 `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+119: </script>
+120: 
+121: <div class="wizard-overlay" on:click|self={skipWizard}>
+           ^
+122:     <div class="wizard-container">
+123:         <div class="wizard-header">
+1:54:24 AM [vite-plugin-svelte] src/components/HelpPanel.svelte:38:4 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+36:     onkeydown={(e) => e.key === "Escape" && close()}
+37: >
+38:     <div
+             ^
+39:         class="help-panel"
+40:         role="dialog"
+1:54:24 AM [vite-plugin-svelte] src/components/LicenseActivation.svelte:83:8 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+81:         onkeydown={(e) => e.key === "Escape" && close()}
+82:     >
+83:         <div
+                 ^
+84:             class="modal-content"
+85:             onclick={(e) => e.stopPropagation()}
+1:54:24 AM [vite-plugin-svelte] src/components/LicenseActivation.svelte:83:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+81:         onkeydown={(e) => e.key === "Escape" && close()}
+82:     >
+83:         <div
+                 ^
+84:             class="modal-content"
+85:             onclick={(e) => e.stopPropagation()}
+1:54:24 AM [vite-plugin-svelte] src/components/ConfirmDialog.svelte:31:8 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+29:         onkeydown={(e) => e.key === "Escape" && cancel()}
+30:     >
+31:         <div
+                 ^
+32:             class="modal-dialog"
+33:             role="dialog"
+1:54:24 AM [vite-plugin-svelte] src/components/PromptSettings.svelte:97:24 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+ 95:                 <div class="prompt-content">
+ 96:                     <div class="prompt-field">
+ 97:                         <label>System Prompt</label>
+                                                         ^
+ 98:                         <textarea
+ 99:                             value={$settings.customPrompts[promptType.id]
+1:54:24 AM [vite-plugin-svelte] src/components/PromptSettings.svelte:109:24 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+107: 
+108:                     <div class="prompt-field">
+109:                         <label
+                              ^
+110:                             >User Prompt Template <span class="var-hint"
+111:                                 >Use: {promptType.vars}</span
+[32mΓ£ô[39m 186 modules transformed.
+Γ£ù Build failed in 885ms
+error during build:
+src/lib/i18n/en.js (2:13): Expected ';', '}' or <eof>
+file: C:/Lab/Antigravity/ChromeExtensionProjects/deconstruct-feed/src/lib/i18n/en.js:2:13
+
+1: back: "Back",
+2:     summarize: "Summarize",
+                ^
+3:         bias: "Bias",
+4:             script: "Script",
+
+    at getRollupError (file:///C:/Lab/Antigravity/ChromeExtensionProjects/deconstruct-feed/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at ParseError.initialise (file:///C:/Lab/Antigravity/ChromeExtensionProjects/deconstruct-feed/node_modules/rollup/dist/es/shared/node-entry.js:14469:28)
+    at convertNode (file:///C:/Lab/Antigravity/ChromeExtensionProjects/deconstruct-feed/node_modules/rollup/dist/es/shared/node-entry.js:16352:10)
+    at convertProgram (file:///C:/Lab/Antigravity/ChromeExtensionProjects/deconstruct-feed/node_modules/rollup/dist/es/shared/node-entry.js:15592:12)
+    at Module.setSource (file:///C:/Lab/Antigravity/ChromeExtensionProjects/deconstruct-feed/node_modules/rollup/dist/es/shared/node-entry.js:17352:24)
+    at async ModuleLoader.addModuleSource (file:///C:/Lab/Antigravity/ChromeExtensionProjects/deconstruct-feed/node_modules/rollup/dist/es/shared/node-entry.js:21377:13)
