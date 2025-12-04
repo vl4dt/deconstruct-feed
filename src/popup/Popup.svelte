@@ -677,11 +677,6 @@
 
   async function doGenerateScript(forceRefresh = false) {
     if (!selectedArticle) return;
-    if (!$userSubscription.isPro) {
-      upgradeMessage = "Video Script is a Pro feature. Upgrade to unlock!";
-      showUpgradeModal = true;
-      return;
-    }
 
     scriptLoading = true;
     analysisTitle = "Video Script";
@@ -705,6 +700,11 @@
         forceRefresh,
       );
       originalAnalysisResult = result;
+
+      // Increment usage if successful
+      if (result && !result.startsWith("Error")) {
+        userSubscription.incrementUsage("script");
+      }
 
       if (isTranslated) {
         const translated = await translate(
@@ -733,11 +733,6 @@
 
   async function doGeneratePodcastScript(forceRefresh = false) {
     if (!selectedArticle) return;
-    if (!$userSubscription.isPro) {
-      upgradeMessage = "Podcast Script is a Pro feature. Upgrade to unlock!";
-      showUpgradeModal = true;
-      return;
-    }
 
     scriptLoading = true;
     analysisTitle = $t("podcastScript");
@@ -761,6 +756,11 @@
         forceRefresh,
       );
       originalAnalysisResult = result;
+
+      // Increment usage if successful
+      if (result && !result.startsWith("Error")) {
+        userSubscription.incrementUsage("podcast");
+      }
 
       if (isTranslated) {
         const translated = await translate(
@@ -789,17 +789,12 @@
 
   async function doDeepDive(forceRefresh = false) {
     if (!selectedArticle) return;
-    if (!$userSubscription.isPro) {
-      upgradeMessage = "Deep Dive is a Pro feature. Upgrade to unlock!";
-      showUpgradeModal = true;
-      return;
-    }
 
     scriptLoading = true;
     analysisTitle = $t("deepDiveAnalysis");
     view = "analysis";
     analysisSource = "article";
-    analysisType = "deepdive";
+    analysisType = "deepDive";
 
     try {
       if (!selectedArticle.content) {
@@ -817,6 +812,11 @@
         forceRefresh,
       );
       originalAnalysisResult = result;
+
+      // Increment usage if successful
+      if (result && !result.startsWith("Error")) {
+        userSubscription.incrementUsage("deepDive");
+      }
 
       if (isTranslated) {
         const translated = await translate(
@@ -1203,7 +1203,11 @@ ${getTextContent(selectedArticle.description)}
     <header>
       <div class="header-left">
         <div class="brand">
-          <img src="/icons/logo.svg" alt="NewsLens AI" class="brand-logo" />
+          <img
+            src="/icons/logo.svg"
+            alt="Deconstruct Feed"
+            class="brand-logo"
+          />
           <Logo />
         </div>
         {#if $userSubscription.isPro}
@@ -1394,6 +1398,7 @@ ${getTextContent(selectedArticle.description)}
       {scriptLoading}
       {translating}
       {isTranslated}
+      featureType={analysisType}
       on:back={handleBack}
       on:copyToClipboard={(e) => copyToClipboard(e.detail)}
       on:regenerateAnalysis={regenerateAnalysis}

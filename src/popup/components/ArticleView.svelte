@@ -243,6 +243,8 @@
                         `https://www.youtube.com/results?search_query=${encodeURIComponent(selectedArticle.title)}`,
                         "_blank",
                     )}
+                title="Search this topic on YouTube"
+                aria-label="Search this topic on YouTube"
             >
                 <svg
                     class="btn-icon"

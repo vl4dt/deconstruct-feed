@@ -1,15 +1,15 @@
 <script>
-    export let width = "160";
+    export let width = "200";
     export let height = "32";
 </script>
 
 <svg
     {width}
     {height}
-    viewBox="0 0 160 32"
+    viewBox="0 0 200 32"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    aria-label="NewsLens AI"
+    aria-label="Deconstruct Feed"
 >
     <defs>
         <linearGradient id="logo-gradient" x1="0" y1="0" x2="100%" y2="0">
@@ -24,12 +24,12 @@
         y="24"
         font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
         font-weight="800"
-        font-size="22"
+        font-size="20"
         letter-spacing="-0.5"
         fill="url(#logo-gradient)"
     >
-        NewsLens <tspan font-weight="400" fill="currentColor" opacity="0.9"
-            >AI</tspan
+        Deconstruct <tspan font-weight="400" fill="currentColor" opacity="0.9"
+            >Feed</tspan
         >
     </text>
 </svg>

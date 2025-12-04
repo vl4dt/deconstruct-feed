@@ -167,6 +167,21 @@ export default {
         description: "Bookmark articles to read them later.",
     },
 
+    // Paywall & Pricing
+    freeLimitReached: "Free Limit Reached",
+    upgradeToExport: "Upgrade to Pro to export unlimited scripts and deep dives.",
+    upgradeToPro: "Upgrade to Pro",
+    viralVideoScripts: "Viral Video Scripts",
+    deepDiveResearch: "Deep Dive Research",
+    trendSpotting: "Trend Spotting",
+    commercialLicense: "Commercial License",
+    bestValue: "Best Value",
+    save17: "Save 17%",
+    monthly: "Monthly",
+    annual: "Annual",
+    lifetime: "Lifetime",
+    restorePurchase: "Restore Purchase",
+
     finish: "Finish",
     tour: {
         feed: {

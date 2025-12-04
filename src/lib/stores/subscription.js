@@ -12,12 +12,25 @@ function createSubscriptionStore() {
         expiresAt: null,
         email: null,
         lastValidated: null,
-        error: null
+        error: null,
+        usage: {
+            scriptsGenerated: 0,
+            podcastsGenerated: 0,
+            deepDives: 0,
+            lastReset: Date.now()
+        }
     });
 
     // Validation check interval (24 hours)
     const VALIDATION_INTERVAL = 24 * 60 * 60 * 1000;
     let validationTimer = null;
+
+    // Free tier limits
+    const FREE_LIMITS = {
+        scripts: 3,
+        podcasts: 3,
+        deepDives: 3
+    };
 
     async function validateLicense(licenseKey, forceValidate = false) {
         try {
@@ -127,11 +140,41 @@ function createSubscriptionStore() {
         }, VALIDATION_INTERVAL);
     }
 
+    async function loadUsage() {
+        const data = await chrome.storage.local.get(['usage']);
+        const now = Date.now();
+        let usage = data.usage || {
+            scriptsGenerated: 0,
+            deepDives: 0,
+            lastReset: now
+        };
+
+        // Check for monthly reset
+        const lastReset = new Date(usage.lastReset);
+        const currentDate = new Date(now);
+
+        if (lastReset.getMonth() !== currentDate.getMonth() ||
+            lastReset.getFullYear() !== currentDate.getFullYear()) {
+            // Reset usage
+            usage = {
+                scriptsGenerated: 0,
+                deepDives: 0,
+                lastReset: now
+            };
+            await chrome.storage.local.set({ usage });
+        }
+
+        update(s => ({ ...s, usage }));
+    }
+
     return {
         subscribe,
 
         init: async () => {
             const result = await chrome.storage.local.get(['licenseKey', 'cachedLicenseData']);
+
+            // Load usage data
+            await loadUsage();
 
             if (result.licenseKey) {
                 await validateLicense(result.licenseKey);
@@ -176,9 +219,60 @@ function createSubscriptionStore() {
                 expiresAt: null,
                 email: null,
                 lastValidated: null,
-                error: null
+                error: null,
+                usage: { // Keep usage tracking even if downgraded
+                    scriptsGenerated: 0,
+                    deepDives: 0,
+                    lastReset: Date.now()
+                }
             });
+            await loadUsage(); // Reload usage to ensure it's up to date
         },
+
+        // Usage Limit Methods
+        checkLimit: (feature) => {
+            let isPro = false;
+            let usage = null;
+
+            // Get current state synchronously for check
+            update(s => {
+                isPro = s.isPro;
+                usage = s.usage;
+                return s;
+            });
+
+            if (isPro) return true;
+
+            if (feature === 'script') {
+                return usage.scriptsGenerated < FREE_LIMITS.scripts;
+            } else if (feature === 'podcast') {
+                return (usage.podcastsGenerated || 0) < FREE_LIMITS.podcasts;
+            } else if (feature === 'deepDive') {
+                return usage.deepDives < FREE_LIMITS.deepDives;
+            }
+
+            return true;
+        },
+
+        incrementUsage: async (feature) => {
+            let currentUsage = null;
+
+            update(s => {
+                currentUsage = { ...s.usage };
+                if (feature === 'script') {
+                    currentUsage.scriptsGenerated++;
+                } else if (feature === 'podcast') {
+                    currentUsage.podcastsGenerated = (currentUsage.podcastsGenerated || 0) + 1;
+                } else if (feature === 'deepDive') {
+                    currentUsage.deepDives++;
+                }
+                return { ...s, usage: currentUsage };
+            });
+
+            await chrome.storage.local.set({ usage: currentUsage });
+        },
+
+        getLimits: () => FREE_LIMITS,
 
         // Dev mode helpers (remove in production)
         upgrade: async () => {
@@ -212,6 +306,7 @@ function createSubscriptionStore() {
                 error: null,
                 loading: false
             }));
+            await loadUsage();
         }
     };
 }

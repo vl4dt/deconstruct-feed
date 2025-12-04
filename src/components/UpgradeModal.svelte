@@ -13,56 +13,50 @@
     const PADDING_VENDOR_ID = "YOUR_VENDOR_ID";
     const PRICING = {
         monthly: {
-            price: "$4.99",
+            price: "$9.99",
             priceId: "pri_xxx_monthly",
             period: "/month",
-            description: "Perfect for trying out Pro features",
+            description: "Perfect for creators starting out",
         },
         annual: {
-            price: "$49.00",
+            price: "$99.00",
             priceId: "pri_xxx_annual",
             period: "/year",
             save: "Save 17%",
             description: "Best value for power users",
         },
-        lifetime: {
-            price: "$79.00",
-            priceId: "pri_xxx_lifetime",
-            period: "one-time",
-            description: "Pay once, use forever",
-        },
     };
 
     const PRO_FEATURES = [
         {
-            icon: "🚀",
-            title: "Unlimited Topics",
-            desc: "Track as many topics as you want",
+            icon: "🎬",
+            title: "Viral Video Scripts",
+            desc: "Generate unlimited scripts for YouTube & TikTok",
         },
         {
-            icon: "🤖",
-            title: "Advanced AI (Gemini)",
-            desc: "Premium AI model for better insights",
+            icon: "🧠",
+            title: "Deep Dive Research",
+            desc: "Research complex topics 10x faster",
+        },
+        {
+            icon: "🔥",
+            title: "Trend Spotting",
+            desc: "Be the first to cover breaking trends",
         },
         {
             icon: "✨",
             title: "Unlimited Analyses",
-            desc: "No limits on summaries & scripts",
+            desc: "No limits on summaries or insights",
         },
         {
-            icon: "🔥",
-            title: "Trending Topics",
-            desc: "Stay ahead with trending news",
+            icon: "🤖",
+            title: "Advanced AI (Gemini)",
+            desc: "Premium AI model for better quality",
         },
         {
-            icon: "🎬",
-            title: "Video Scripts",
-            desc: "Generate scripts for your content",
-        },
-        {
-            icon: "🧠",
-            title: "Deep Dive Analysis",
-            desc: "In-depth AI-powered research",
+            icon: "💼",
+            title: "Commercial License",
+            desc: "Full rights to your generated content",
         },
     ];
 
@@ -106,7 +100,7 @@
                     <div>
                         <h3>{$t("upgradeToPro")}</h3>
                         <p class="header-subtitle">
-                            Unlock the full power of AI-driven news curation
+                            Turn news into content in seconds with AI
                         </p>
                     </div>
                 </div>
@@ -170,34 +164,6 @@
                             </div>
                             <p class="tier-description">
                                 {PRICING.annual.description}
-                            </p>
-                        </div>
-                    </label>
-
-                    <label
-                        class="pricing-card"
-                        class:selected={selectedTier === "lifetime"}
-                    >
-                        <input
-                            type="radio"
-                            name="tier"
-                            value="lifetime"
-                            bind:group={selectedTier}
-                        />
-                        <div class="card-content">
-                            <div class="card-header">
-                                <span class="tier-name">Lifetime</span>
-                            </div>
-                            <div class="price-section">
-                                <span class="price"
-                                    >{PRICING.lifetime.price}</span
-                                >
-                                <span class="period"
-                                    >{PRICING.lifetime.period}</span
-                                >
-                            </div>
-                            <p class="tier-description">
-                                {PRICING.lifetime.description}
                             </p>
                         </div>
                     </label>
@@ -323,7 +289,7 @@
 
     .pricing-cards {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 0.75rem;
         margin-bottom: 1.25rem;
     }

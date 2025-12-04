@@ -196,7 +196,7 @@
             id: "gemini",
             name: "Google Gemini",
             description: "Powerful cloud AI. Requires API Key.",
-            badge: "Free Tier",
+            badge: "Pro",
         },
         {
             id: "anthropic",
