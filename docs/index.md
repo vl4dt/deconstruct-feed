@@ -7,20 +7,8 @@ Welcome to the Deconstruct Feed documentation portal. Here you'll find comprehen
 ### [User Guide](USER_GUIDE.md)
 Complete guide covering all features, settings, and troubleshooting for Deconstruct Feed users.
 
-### [Developer Guide](DEVELOPER_GUIDE.md)
-Architecture, development setup, and contribution guidelines for developers.
-
-### [API Documentation](API.md)
-Detailed API reference for AI services, news fetching, and storage.
-
-### [Architecture](ARCHITECTURE.md)
-System design, data flow, and technical architecture overview.
-
 ### [AI Providers Guide](AI_PROVIDERS.md)
 Setup and configuration for Chrome AI, Gemini, Local LLM, OpenAI, and Anthropic.
-
-### [Testing Guide](TESTING.md)
-Unit testing, integration testing, and E2E testing documentation.
 
 ## ⚖️ Legal
 

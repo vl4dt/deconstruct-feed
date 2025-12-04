@@ -243,7 +243,7 @@
 
     function openUserGuide() {
         chrome.tabs.create({
-            url: "https://github.com/vl4dt/deconstruct-feed/blob/main/docs/USER_GUIDE.md",
+            url: "https://deconstruct-feed.vercel.app/USER_GUIDE.html",
         });
     }
 </script>

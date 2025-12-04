@@ -1,6 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Deconstruct Feed",
+  "version": "1.0.0",
+  "description": "AI-powered news aggregator and analyzer that helps you understand news better",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
     "scripting",
     "declarativeNetRequest",
-    "offscreen"
+    "offscreen",
+    "alarms",
+    "contextMenus"
   ],
   "host_permissions": [
     "<all_urls>"

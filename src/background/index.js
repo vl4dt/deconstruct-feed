@@ -68,13 +68,13 @@ function getInactivityDays() {
 // Set the extension icon based on attention flag
 function setIcon(isAttention) {
     const path = isAttention ? {
-        '16': '../../icons/attention_16.png',
-        '48': '../../icons/attention_48.png',
-        '128': '../../icons/attention_128.png'
+        '16': '/icons/attention_16.png',
+        '48': '/icons/attention_48.png',
+        '128': '/icons/attention_128.png'
     } : {
-        '16': '../../icons/logo_16.png',
-        '48': '../../icons/logo_48.png',
-        '128': '../../icons/logo_128.png'
+        '16': '/icons/logo_16.png',
+        '48': '/icons/logo_48.png',
+        '128': '/icons/logo_128.png'
     };
     chrome.action.setIcon({ path });
 }
