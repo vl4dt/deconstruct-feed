@@ -1,5 +1,6 @@
 {
   "name": "deconstruct-feed",
+  "description": "Turn news into content in seconds. Deconstruct Feed supercharges your news curation with AI to research complex topics 10x faster, spot trends, and generate viral video scripts instantly.",
   "private": true,
   "version": "0.0.0",
   "type": "module",

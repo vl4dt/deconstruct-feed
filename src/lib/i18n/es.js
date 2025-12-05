@@ -1,5 +1,5 @@
 export default {
-    appTitle: "NewsLens AI",
+    appTitle: "Deconstruct Feed",
     trendingTopics: "Temas en Tendencia",
     myFeed: "Mi Feed",
     refreshNews: "Actualizar Noticias",
@@ -86,14 +86,14 @@ export default {
 
     // Onboarding
     onboarding: {
-        welcome: "¡Bienvenido a NewsLens AI!",
-        tagline: "Tu compañero de noticias inteligente impulsado por IA",
+        welcome: "¡Bienvenido a Deconstruct Feed!",
+        tagline: "Convierte noticias en contenido en segundos con IA",
         step1Title: "Elige tus Intereses",
         step1Description: "Selecciona los temas que te gustaría seguir (elige hasta 5):",
         step2Title: "Elige Proveedor de IA",
         step2Description: "Selecciona cómo quieres analizar los artículos de noticias:",
         step3Title: "¡Todo Listo!",
-        step3Description: "NewsLens AI está listo para curar noticias para ti.",
+        step3Description: "Deconstruct Feed está listo para curar noticias para ti.",
         addCustomTopic: "O añade un tema personalizado...",
         recommended: "Recomendado",
         skip: "Omitir",

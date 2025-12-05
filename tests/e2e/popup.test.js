@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('NewsLens AI Extension - Popup', () => {
+test.describe('Deconstruct Feed Extension - Popup', () => {
     test('should load popup and display feed', async ({ page, extensionId }) => {
         await page.goto(`chrome-extension://${extensionId}/popup.html`);
 
@@ -44,7 +44,7 @@ test.describe('NewsLens AI Extension - Popup', () => {
     });
 });
 
-test.describe('NewsLens AI Extension - Settings', () => {
+test.describe('Deconstruct Feed Extension - Settings', () => {
     test('should toggle AI provider', async ({ page, extensionId }) => {
         await page.goto(`chrome-extension://${extensionId}/popup.html`);
         await page.waitForSelector('.popup-container');
@@ -88,7 +88,7 @@ test.describe('NewsLens AI Extension - Settings', () => {
     });
 });
 
-test.describe('NewsLens AI Extension - News Feed', () => {
+test.describe('Deconstruct Feed Extension - News Feed', () => {
     test('should load news articles', async ({ page, extensionId }) => {
         await page.goto(`chrome-extension://${extensionId}/popup.html`);
         await page.waitForSelector('.popup-container');

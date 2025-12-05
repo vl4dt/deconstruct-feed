@@ -1,8 +1,8 @@
 # Deconstruct Feed
 
-**Deconstruct your news feed with AI analysis, bias detection, and smart curation.**
+**Turn news into content in seconds. Deconstruct Feed supercharges your news curation with AI to research complex topics 10x faster, spot trends, and generate viral video scripts instantly.**
 
-Deconstruct Feed is a powerful Chrome extension that curates personalized news feeds based on your interests and leverages advanced AI to help you understand, analyze, and repurpose content. Whether you're a news enthusiast, content creator, or just staying informed, Deconstruct Feed is your intelligent news companion.
+Deconstruct Feed is an intelligence engine for creators, researchers, and news junkies. Stop drowning in noise and start creating value. Whether you're looking for your next viral video idea or trying to understand a complex global event, Deconstruct Feed gives you the tools to analyze, synthesize, and create.
 
 ## ✨ Key Features
 

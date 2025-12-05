@@ -1,31 +1,30 @@
-# NewsLens AI - Smart News Curator & Analyst
+# Deconstruct Feed - Turn News Into Content
 
-Transform how you consume and create news with NewsLens AI. This powerful extension curates a personalized news feed based on your interests and leverages advanced AI to help you understand, analyze, and repurpose content.
+**Turn news into content in seconds. Deconstruct Feed supercharges your news curation with AI to research complex topics 10x faster, spot trends, and generate viral video scripts instantly.**
 
-## Key Features
+## 🚀 Supercharge Your Content Workflow
 
-*   **AI-Powered Analysis**: Instantly summarize articles, check for media bias, and get deep-dive insights using on-device Chrome AI (privacy-focused) or Gemini.
-*   **Smart Curation**: Follow your favorite topics and get a clean, distraction-free feed of the latest news.
-*   **Content Creation Tools**: Automatically generate YouTube video scripts and Podcast scripts from any article—perfect for creators.
-*   **Bias & Objectivity Check**: Uncover hidden biases and emotional language in news stories with a single click.
-*   **Smart Translation**: Read news from around the world with AI-powered translation that preserves context and tone.
-*   **Trending Topics**: Stay ahead of the curve with real-time trending news analysis.
-# NewsLens AI - Smart News Curator & Analyst
+Deconstruct Feed isn't just a news reader—it's an intelligence engine for creators, researchers, and news junkies. Stop drowning in noise and start creating value.
 
-Transform how you consume and create news with NewsLens AI. This powerful extension curates a personalized news feed based on your interests and leverages advanced AI to help you understand, analyze, and repurpose content.
+### ⚡ Key Features
 
-## Key Features
+*   **Viral Video Scripts**: Automatically generate engaging scripts for YouTube, TikTok, and Shorts from any article or topic.
+*   **10x Faster Research**: Get deep-dive analysis on complex topics, identifying themes, contradictions, and key insights across multiple sources.
+*   **Trend Spotting**: Be the first to cover breaking trends with real-time analysis and keyword tracking.
+*   **Bias Detection**: Uncover hidden biases and emotional language to ensure your content is objective and trustworthy.
+*   **Smart Curation**: A distraction-free, personalized feed that learns what matters to you.
+*   **Privacy-First AI**: Leverages Chrome's on-device AI for fast, private processing that keeps your data secure.
 
-*   **AI-Powered Analysis**: Instantly summarize articles, check for media bias, and get deep-dive insights using on-device Chrome AI (privacy-focused) or Gemini.
-*   **Smart Curation**: Follow your favorite topics and get a clean, distraction-free feed of the latest news.
-*   **Content Creation Tools**: Automatically generate YouTube video scripts and Podcast scripts from any article—perfect for creators.
-*   **Bias & Objectivity Check**: Uncover hidden biases and emotional language in news stories with a single click.
-*   **Smart Translation**: Read news from around the world with AI-powered translation that preserves context and tone.
-*   **Trending Topics**: Stay ahead of the curve with real-time trending news analysis.
-*   **Privacy First**: Utilizes Chrome's built-in on-device AI for fast, private processing whenever available.
+## 🎯 Perfect For
 
-Whether you're a news junkie, a content creator, or just want to stay informed without the noise, NewsLens AI is your intelligent news companion.
+*   **Content Creators**: Never run out of content ideas. Turn trending news into scripts in one click.
+*   **Researchers**: Synthesize information from dozens of articles in seconds.
+*   **News Enthusiasts**: Understand the *why* behind the headlines without the fluff.
 
-## Documentation & Support
+## 🔒 Privacy & Security
 
-Need help getting started? For detailed instructions, visit our [User Guide](https://deconstruct-feed.vercel.app/docs/USER_GUIDE).
+Your privacy is our priority. Deconstruct Feed utilizes Chrome's built-in on-device AI whenever available, meaning your reading habits and analysis data stay on your machine.
+
+---
+
+**Deconstruct the noise. Create the future.**

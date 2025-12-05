@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Deconstruct Feed",
   "version": "1.0.0",
-  "description": "AI-powered news aggregator and analyzer that helps you understand news better",
+  "description": "Turn news into content in seconds. Deconstruct Feed supercharges your news curation with AI to research complex topics 10x faster, spot trends, and generate viral video scripts instantly.",
   "permissions": [
     "storage",
     "activeTab",

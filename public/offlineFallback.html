@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsLens AI - Offline</title>
+    <title>Deconstruct Feed - Offline</title>
     <style>
         * {
             margin: 0;
@@ -39,8 +40,17 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.05); }
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
         }
 
         h1 {
@@ -77,8 +87,15 @@
         }
 
         @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
         }
 
         .tip {
@@ -96,13 +113,14 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="icon">📡</div>
         <h1>You're Offline</h1>
-        <p>NewsLens AI needs an internet connection to fetch fresh news.</p>
+        <p>Deconstruct Feed needs an internet connection to fetch fresh news.</p>
         <p>Your saved articles and cached content are still available in the extension.</p>
-        
+
         <div class="status">
             <span class="status-dot"></span>
             <span>No Network Connection</span>
@@ -125,7 +143,7 @@
                     <p>Your connection has been restored.</p>
                 </div>
             `;
-            
+
             // Close this tab after a short delay
             setTimeout(() => {
                 window.close();
@@ -133,4 +151,5 @@
         });
     </script>
 </body>
+
 </html>

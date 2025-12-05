@@ -1,4 +1,4 @@
-# NewsLens AI - Testing Guide
+# Deconstruct Feed - Testing Guide
 
 ## Onboarding & Progressive Disclosure Testing
 

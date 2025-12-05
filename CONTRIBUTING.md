@@ -1,6 +1,6 @@
-# Contributing to NewsLens AI
+# Contributing to Deconstruct Feed
 
-This guide is for the NewsLens AI development team. It outlines our development standards, workflows, and best practices.
+This guide is for the Deconstruct Feed development team. It outlines our development standards, workflows, and best practices.
 
 ## Table of Contents
 
@@ -47,8 +47,8 @@ We are committed to providing a welcoming and inspiring community for all. Pleas
 1. **Fork the Repository**
    ```bash
    # Fork on GitHub, then clone your fork
-   git clone https://github.com/YOUR-USERNAME/newslens-ai.git
-   cd newslens-ai
+   git clone https://github.com/YOUR-USERNAME/deconstruct-feed.git
+   cd deconstruct-feed
    ```
 
 2. **Install Dependencies**
@@ -383,4 +383,4 @@ Contributors will be recognized in:
 
 ---
 
-Thank you for contributing to NewsLens AI! Your efforts help make news consumption better for everyone. 🎉
+Thank you for contributing to Deconstruct Feed! Your efforts help make news consumption better for everyone. 🎉
