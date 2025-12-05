@@ -7,6 +7,7 @@ export default {
     cancel: "Abbrechen",
     settings: "Einstellungen",
     back: "Zurück",
+    refresh: "Aktualisieren",
     summarize: "Zusammenfassen",
     bias: "Voreingenommenheit",
     script: "Skript",

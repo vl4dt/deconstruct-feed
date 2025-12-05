@@ -170,7 +170,6 @@ export default {
     // Paywall & Pricing
     freeLimitReached: "Free Limit Reached",
     upgradeToExport: "Upgrade to Pro to export unlimited scripts and deep dives.",
-    upgradeToPro: "Upgrade to Pro",
     viralVideoScripts: "Viral Video Scripts",
     deepDiveResearch: "Deep Dive Research",
     trendSpotting: "Trend Spotting",

@@ -7,6 +7,7 @@ export default {
     cancel: "Cancelar",
     settings: "Configurações",
     back: "Voltar",
+    refresh: "Atualizar",
     summarize: "Resumir",
     bias: "Viés",
     script: "Script",
