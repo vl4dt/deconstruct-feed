@@ -4,6 +4,7 @@ Welcome to Deconstruct Feed! This comprehensive guide will help you get the most
 
 ## Table of Contents
 
+- [Chrome AI Setup](#chrome-ai-setup-gemini-nano)
 - [Getting Started](#getting-started)
 - [News Feed Management](#news-feed-management)
 - [AI Analysis Features](#ai-analysis-features)
@@ -15,6 +16,115 @@ Welcome to Deconstruct Feed! This comprehensive guide will help you get the most
 - [Pro Features](#pro-features)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
 - [Troubleshooting](#troubleshooting)
+
+## Chrome AI Setup (Gemini Nano)
+
+Chrome AI (powered by Gemini Nano) provides free, privacy-focused AI capabilities that run entirely on your device. This section covers how to enable Chrome AI for use with Deconstruct Feed.
+
+### Hardware Requirements
+
+Before setting up Chrome AI, ensure your system meets these requirements:
+
+| Requirement | Minimum |
+|-------------|---------|
+| **GPU VRAM** | 4GB or more |
+| **Free Storage** | 22GB in Chrome profile directory |
+| **Operating System** | Windows 10/11, macOS 13+, Linux, or ChromeOS (Chromebook Plus) |
+| **Chrome Version** | 127 or higher |
+
+> **Note**: Chrome AI runs on-device using your GPU. Performance varies based on hardware capability.
+
+### Step 1: Install or Update Chrome
+
+You need Chrome version 127 or higher. For the latest AI features, consider using:
+
+- **Chrome Stable** (v127+): [Download Chrome](https://www.google.com/chrome/)
+- **Chrome Dev**: [Download Chrome Dev](https://www.google.com/chrome/dev/)
+- **Chrome Canary** (latest features): [Download Chrome Canary](https://www.google.com/chrome/canary/)
+
+To check your Chrome version:
+1. Open Chrome
+2. Go to `chrome://version`
+3. Look for the version number (should be 127 or higher)
+
+### Step 2: Enable Chrome Developer Mode & Flags
+
+Chrome AI requires enabling specific experimental flags:
+
+#### Enable Prompt API for Gemini Nano
+1. Open Chrome and navigate to: `chrome://flags/#prompt-api-for-gemini-nano`
+2. Find "Prompt API for Gemini Nano"
+3. Set the dropdown to **"Enabled"** (or "Enabled multilingual" for multi-language support)
+4. **Do not restart yet** - continue to the next flag
+
+#### Enable On-Device Model
+1. Navigate to: `chrome://flags/#optimization-guide-on-device-model`
+2. Find "Enables optimization guide on device model"
+3. Set the dropdown to **"Enabled BypassPerfRequirement"**
+   - The "BypassPerfRequirement" option helps ensure the model downloads even if Chrome thinks your hardware may be insufficient
+
+#### Restart Chrome
+1. Click the **"Relaunch"** button at the bottom of the page
+2. Chrome will restart with the new flags enabled
+
+### Step 3: Download the Chrome AI Model
+
+After enabling the flags, you need to trigger the model download:
+
+1. Navigate to: `chrome://components`
+2. Scroll down to find **"Optimization Guide On Device Model"**
+3. Click **"Check for update"**
+4. The model will begin downloading (~2GB)
+   - Download time depends on your internet connection
+   - The model downloads in the background
+5. Wait for the "Status" to show a version number (e.g., "2024.x.x.x")
+
+> **Tip**: You may need to click "Check for update" multiple times and wait a few minutes between attempts. The download happens in the background.
+
+### Step 4: Verify Chrome AI is Working
+
+There are several ways to verify Chrome AI is properly installed:
+
+#### Method 1: DevTools Console
+1. Open any webpage in Chrome
+2. Press **F12** to open DevTools
+3. Go to the **Console** tab
+4. Type: `await LanguageModel.availability();`
+5. Press Enter
+6. Expected result: `"available"`
+
+#### Method 2: On-Device Internals
+1. Navigate to: `chrome://on-device-internals`
+2. Check the **Model Status** tab
+3. Look for any error messages
+
+#### Method 3: Test in Deconstruct Feed
+1. Open Deconstruct Feed
+2. Go to Settings → AI Provider
+3. Select "Chrome Built-in AI"
+4. Try summarizing an article
+5. If it works, Chrome AI is configured correctly!
+
+### Troubleshooting Chrome AI Setup
+
+**Model Not Downloading**
+- Ensure you have at least 22GB free storage
+- Try clicking "Check for update" multiple times in `chrome://components`
+- Restart Chrome completely and try again
+- Check your internet connection
+
+**"Not Available" Status**
+- Verify both flags are enabled correctly
+- Ensure Chrome version is 127+
+- Check hardware requirements (especially GPU VRAM)
+- Try Chrome Canary if using stable Chrome
+
+**Performance Issues**
+- Close other GPU-intensive applications
+- First use may be slower while the model initializes
+- Consider using a cloud AI provider if your hardware struggles
+
+---
 
 ## Getting Started
 

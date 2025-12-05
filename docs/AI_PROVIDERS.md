@@ -21,61 +21,107 @@ Deconstruct Feed supports multiple AI providers, giving you flexibility in choos
 - **Model**: Gemini Nano
 - **Best For**: Privacy-conscious users, everyday use, no API costs
 
-### Requirements
+### Hardware Requirements
 
-- Chrome 127+ (Stable), or Chrome Dev/Canary
-- Supported operating system (Windows, maclinux, Chrome OS)
-- ~500MB disk space for model download
+| Requirement | Minimum | Notes |
+|-------------|---------|-------|
+| **GPU VRAM** | 4GB+ | More VRAM = better performance |
+| **Free Storage** | 22GB | In Chrome profile directory |
+| **Operating System** | Windows 10/11, macOS 13+, Linux, ChromeOS | Chromebook Plus for ChromeOS |
+| **Chrome Version** | 127+ | Chrome Dev/Canary recommended for latest features |
 
 ### Setup
 
-1. **Update Chrome**
-   - Download latest [Chrome Canary](https://www.google.com/chrome/canary/) or Chrome Dev
-   - Or ensure Chrome Stable is version 127+
+#### 1. Update Chrome
 
-2. **Enable Chrome AI**
-   - Open `chrome://flags/#optimization-guide-on-device-model`
-   - Set to "Enabled BypassPerfRequirement"
-   - Open `chrome://flags/#prompt-api-for-gemini-nano`
-   - Set to "Enabled"
-   - Restart Chrome
+- Download latest [Chrome Canary](https://www.google.com/chrome/canary/) or Chrome Dev
+- Or ensure Chrome Stable is version 127+
+- Check version at `chrome://version`
 
-3. **Download Model**
-   - Open Deconstruct Feed
-   - Wait for model download (automatic, ~200-500MB)
-   - Check progress in `chrome://components/`
-   - Look for "Optimization Guide On Device Model"
+#### 2. Enable Chrome Flags
 
-4. **Select in Deconstruct Feed**
-   - Go to Settings → AI Provider
-   - Select "Chrome Built-in AI"
-   - No API key needed!
+Open Chrome and enable these experimental flags:
+
+**Flag 1: Prompt API**
+1. Navigate to `chrome://flags/#prompt-api-for-gemini-nano`
+2. Set to **"Enabled"** or **"Enabled multilingual"**
+
+**Flag 2: On-Device Model**
+1. Navigate to `chrome://flags/#optimization-guide-on-device-model`
+2. Set to **"Enabled BypassPerfRequirement"**
+   
+> **Important**: The "BypassPerfRequirement" option ensures the model downloads even if Chrome's hardware check fails.
+
+**Restart Chrome**
+- Click the "Relaunch" button that appears at the bottom of the flags page
+
+#### 3. Download Model
+
+After enabling flags and restarting Chrome:
+
+1. Navigate to `chrome://components/`
+2. Find **"Optimization Guide On Device Model"**
+3. Click **"Check for update"**
+4. Wait for download to complete (~2GB)
+   - Model downloads in background
+   - May take several minutes depending on connection
+5. Status should show a version number when complete (e.g., "2024.x.x.x")
+
+> **Tip**: You may need to click "Check for update" multiple times. Wait a few minutes between attempts.
+
+#### 4. Verify Installation
+
+**Method 1: DevTools Console**
+1. Open any webpage
+2. Press F12 to open DevTools
+3. In Console tab, type: `await LanguageModel.availability();`
+4. Expected result: `"available"`
+
+**Method 2: On-Device Internals**
+1. Navigate to `chrome://on-device-internals`
+2. Check Model Status tab for any errors
+
+#### 5. Select in Deconstruct Feed
+
+1. Go to Settings → AI Provider
+2. Select "Chrome Built-in AI"
+3. No API key needed!
+4. Try summarizing an article to verify
 
 ### Troubleshooting
 
 **Model Not Downloading**
-- Check `chrome://components`
-- Look for "Optimization Guide On Device Model"
-- Click "Check for update"
-- Wait a few minutes and refresh
+- Check `chrome://components` for "Optimization Guide On Device Model"
+- Click "Check for update" multiple times
+- Wait a few minutes between attempts
+- Verify you have 22GB+ free storage
+- Restart Chrome completely
 
 **Chrome AI Not Available**
-- Verify Chrome version: `chrome://version`
-- Ensure flags are enabled correctly
-- Restart Chrome completely
-- Clear Chrome cache if persistent
+- Verify Chrome version at `chrome://version` (need 127+)
+- Ensure both flags are enabled correctly
+- Check `chrome://on-device-internals` for errors
+- Restart Chrome after changing flags
+- Clear Chrome cache if persistent issues
 
 **Performance Issues**
 - Model runs on-device, performance varies by hardware
-- Close other Chrome tabs to free resources
+- Close other GPU-intensive applications
 - First run may be slower (model initialization)
+- Consider closing unused Chrome tabs
+
+**Download Progress**
+- Currently, download progress is not visible in the extension UI
+- Check `chrome://components` for download status
+- Model download happens in background
 
 ### Limitations
 
 - May not be as powerful as cloud models (GPT-4, Claude)
-- Requires modern hardware
-- Output quality varies
+- Requires modern hardware with dedicated GPU
+- Output quality varies by task complexity
 - Still in experimental stage
+- Some features may change as Chrome AI matures
 
 ---
 
